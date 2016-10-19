@@ -70,6 +70,7 @@ func onStart(glctx gl.Context) {
 	// - GLSL Version: #version 100
 	// http://www.shaderific.com/blog/2014/3/13/tutorial-how-to-update-a-shader-for-opengl-es-30
 	// http://stackoverflow.com/questions/29888213/solved-qopenglshader-cant-compile-glsl-120-on-android
+	// https://github.com/mattdesl/lwjgl-basics/wiki/GLSL-Versions
 	
 	//if gl.Version() == "GL_ES_3_0" {
 	//	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_3_0, shared.FSHADER_OPENGL_ES_3_0)
