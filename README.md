@@ -12,8 +12,8 @@ gomobile init
 ```
 ## Todo (very ill-defined)
 - [x] Prototype
-- [ ] Building using Linux and run demo
-- [ ] Properly centralize the shared code between gomobile+opengl_2_es and go+opengl_4_1
+- [x] Building using Linux and run demo
+- [ ] ~~Add ecs and~~ properly centralize the shared code between gomobile+opengl_2_es and go+opengl_4_1
 - [ ] Drawing anything better than triangles
 - [ ] Add mouse and touch support
 - [ ] Improving shaders (texture support)
