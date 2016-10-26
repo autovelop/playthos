@@ -1,4 +1,0 @@
-#!/bin/bash
-#go build -v -o ../builds/Linux/ desktop/desktop.go
-#gomobile build -target=android prototype
-#gomobile build -target=ios prototype

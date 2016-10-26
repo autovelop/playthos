@@ -2,8 +2,7 @@ package main
 
 import (
 	"encoding/binary"
-	"log"
-	"shared"
+	"gde_core"
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
@@ -12,6 +11,7 @@ import (
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/gl"
+	"log"
 )
 
 var (
@@ -61,7 +61,7 @@ func main() {
 
 func onStart(glctx gl.Context) {
 	log.Printf("----------------- OpenGL Version: %v ----------------- ", gl.Version())
-	
+
 	// Samsung S6
 	// - OpenGL ES Version: GL_ES_3_0 (possibly GL_ES_3_1 soon)
 	// - GLSL Version: #version 100 / #version 300 es / #version 310 es
@@ -71,14 +71,14 @@ func onStart(glctx gl.Context) {
 	// http://www.shaderific.com/blog/2014/3/13/tutorial-how-to-update-a-shader-for-opengl-es-30
 	// http://stackoverflow.com/questions/29888213/solved-qopenglshader-cant-compile-glsl-120-on-android
 	// https://github.com/mattdesl/lwjgl-basics/wiki/GLSL-Versions
-	
+
 	//if gl.Version() == "GL_ES_3_0" {
 	//	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_3_0, shared.FSHADER_OPENGL_ES_3_0)
 	//} else if gl.Version() == "GL_ES_2_0" {
 	// For now we will rather only support OPENGL_ES_2_0
 	//	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_2_0, shared.FSHADER_OPENGL_ES_2_0)
 	//}
-	
+
 	// For now we will rather only support OPENGL_ES_2_0
 	var err error
 	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_2_0, shared.FSHADER_OPENGL_ES_2_0)
@@ -86,7 +86,7 @@ func onStart(glctx gl.Context) {
 		log.Printf("error creating GL program: %v", err)
 		return
 	}
-	
+
 	buf = glctx.CreateBuffer()
 	glctx.BindBuffer(gl.ARRAY_BUFFER, buf)
 	glctx.BufferData(gl.ARRAY_BUFFER, triangleData, gl.STATIC_DRAW)
@@ -111,6 +111,7 @@ func onPaint(glctx gl.Context, sz size.Event) {
 	glctx.DrawArrays(gl.TRIANGLES, 0, 3)
 	glctx.DisableVertexAttribArray(position)
 }
+
 var triangleData = f32.Bytes(binary.LittleEndian,
 	-0.5, 0.5,
 	0.5, 0.5,
