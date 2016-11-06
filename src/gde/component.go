@@ -1,5 +1,12 @@
 package gde
 
+type Component struct {
+	ComponentRoutine
+	Properties map[string]interface{}
+}
+
 type ComponentRoutine interface {
-	Add(*Entity)
+	Init()
+	GetProperty(string) interface{}
+	SetProperty(string, interface{})
 }

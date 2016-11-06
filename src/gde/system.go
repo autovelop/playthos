@@ -2,7 +2,7 @@ package gde
 
 type SystemRoutine interface {
 	Init()
-	Update()
+	Update(*map[string]EntityRoutine)
 	End()
 	Add(*Engine)
 	Property(string) interface{}

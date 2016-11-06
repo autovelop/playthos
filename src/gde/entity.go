@@ -1,16 +1,18 @@
 package gde
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Entity struct {
 	EntityRoutine
 	Id         string
-	Components map[string]ComponentRoutine
+	components map[string]ComponentRoutine
 }
 
 func (e *Entity) Init() {
 	fmt.Println("Engine.Init() executed")
-	e.Components = make(map[string]ComponentRoutine)
+	e.components = make(map[string]ComponentRoutine)
 }
 
 func (e *Entity) Add(engine *Engine) {
@@ -23,6 +25,20 @@ func (e *Entity) Get() *Entity {
 	return e
 }
 
+func (e *Entity) AddComponent(component ComponentRoutine) {
+	fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
+	e.components[fmt.Sprintf("%T", component)] = component
+}
+
+func (e *Entity) Component(componentType string) ComponentRoutine {
+	fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
+	return e.components[componentType]
+}
+func (e *Entity) Components() map[string]ComponentRoutine {
+	fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
+	return e.components
+}
+
 func (e *Entity) GetId() string {
 	fmt.Println("Entity.GetId() returned string")
 	return e.Id
@@ -32,5 +48,8 @@ type EntityRoutine interface {
 	GetId() string
 	Get() *Entity
 	Add(*Engine)
+	AddComponent(ComponentRoutine)
+	Component(string) ComponentRoutine
+	Components() map[string]ComponentRoutine
 	Init()
 }

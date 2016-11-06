@@ -15,7 +15,7 @@ func (e *Engine) Init() {
 func (e *Engine) Update() {
 	fmt.Println("Engine.Update() executed")
 	for _, v := range e.Systems {
-		v.Update()
+		v.Update(&e.Entities)
 	}
 }
 func (e *Engine) GetEntity(id string) EntityRoutine {

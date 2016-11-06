@@ -30,8 +30,10 @@ bin
 
 src/github.com
 src/golang.org
-<<<<<<< HEAD
 
 *.directory
-=======
->>>>>>> 2175e2767f1fb67c90f0f66e12fdb82ff9fcda7c
+
+*.swo
+*.swp
+
+*.vim
