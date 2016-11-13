@@ -11,6 +11,10 @@ type RenderRoutine interface {
 	LoadRenderer(*Renderer)
 }
 
+func (r *Render) Init()                                     {}
+func (r *Render) End()                                      {}
+func (r *Render) Update(entities *map[string]EntityRoutine) {}
+
 const (
 	VSHADER_OPENGL_ES_2_0 = `#version 100
   attribute vec4 position;

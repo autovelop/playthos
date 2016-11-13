@@ -8,12 +8,10 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 
 	"gde"
-	"gde/components"
-	"gde/systems"
 )
 
 type RenderOpenGL struct {
-	systems.Render
+	gde.Render
 
 	Window        *glfw.Window
 	VertexArrayId uint32
@@ -42,14 +40,14 @@ func (r *RenderOpenGL) Init() {
 
 	// Create vertex shader
 	vshader := gl.CreateShader(gl.VERTEX_SHADER)
-	vsources, vfree := gl.Strs(VSHADER_OPENGL_ES_2_0)
+	vsources, vfree := gl.Strs(gde.VSHADER_OPENGL_ES_2_0)
 	gl.ShaderSource(vshader, 1, vsources, nil)
 	vfree()
 	gl.CompileShader(vshader)
 
 	// Create fragment shader
 	fshader := gl.CreateShader(gl.FRAGMENT_SHADER)
-	fsources, ffree := gl.Strs(FSHADER_OPENGL_ES_2_0)
+	fsources, ffree := gl.Strs(gde.FSHADER_OPENGL_ES_2_0)
 	gl.ShaderSource(fshader, 1, fsources, nil)
 	ffree()
 	gl.CompileShader(fshader)
@@ -78,9 +76,9 @@ func (r *RenderOpenGL) Init() {
 }
 
 func (r *RenderOpenGL) Update(entities *map[string]gde.EntityRoutine) {
-	fmt.Println("Render.Update() started")
+	// fmt.Println("Render.Update() started")
 	if !r.Window.ShouldClose() {
-		fmt.Println("Render.Update() executed")
+		// fmt.Println("Render.Update() executed")
 
 		gl.ClearColor(0.2, 0.3, 0.3, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -90,29 +88,27 @@ func (r *RenderOpenGL) Update(entities *map[string]gde.EntityRoutine) {
 		transformLoc := gl.GetUniformLocation(r.ShaderProgram, gl.Str("transform\x00"))
 		for _, v := range *entities {
 
-			vao := v.Component(fmt.Sprintf("%T", &components.Renderer{})).GetProperty("VAO")
-			fmt.Printf("VAO: %v\n", vao)
+			vao := v.Component(fmt.Sprintf("%T", &gde.Renderer{})).GetProperty("VAO")
 			switch vao := vao.(type) {
 			case uint32:
 				gl.BindVertexArray(vao)
 			}
 
 			var transform mgl32.Mat4
-			trans := v.Component(fmt.Sprintf("%T", &components.Transform{}))
+			trans := v.Component(fmt.Sprintf("%T", &gde.Transform{}))
 
 			pos := trans.GetProperty("Position")
 			switch pos := pos.(type) {
-			case mgl32.Vec3:
-				transform = mgl32.Translate3D(pos.X(), pos.Y(), pos.Z())
-				fmt.Printf("%v / %v / %v\n", pos.X(), pos.Y(), pos.Z())
+			case gde.Vector3:
+				transform = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
 			}
 
 			rot := trans.GetProperty("Rotation")
 			switch rot := rot.(type) {
-			case mgl32.Vec3:
-				transform = transform.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X())).Mat4())
-				transform = transform.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y())).Mat4())
-				transform = transform.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z())).Mat4())
+			case gde.Vector3:
+				transform = transform.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
+				transform = transform.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
+				transform = transform.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
 			}
 
 			gl.UniformMatrix4fv(transformLoc, 1, false, &transform[0])
@@ -126,10 +122,10 @@ func (r *RenderOpenGL) Update(entities *map[string]gde.EntityRoutine) {
 		glfw.PollEvents()
 	} else {
 		glfw.Terminate()
-		// once thid happens, make sure render system is removed from engine so that another game loop doesn't occur
+		// when thid happens, make sure render system is removed from engine so that another game loop doesn't occur
 	}
 }
-func (r *RenderOpenGL) LoadRenderer(renderer *components.Renderer) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
+func (r *RenderOpenGL) LoadRenderer(renderer *gde.Renderer) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
 	// Bind vertex array object. This must wrap around the mesh creation because it is how we are going to access it later when we draw
 	var vertexArrayID uint32
 	gl.GenVertexArrays(1, &vertexArrayID)
@@ -153,14 +149,8 @@ func (r *RenderOpenGL) LoadRenderer(renderer *components.Renderer) { // USE ENGI
 
 	// Unbind Vertex array object
 	renderer.SetProperty("VAO", vertexArrayID)
-	fmt.Printf("VAO Load: %v\n", vertexArrayID)
+	// fmt.Printf("VAO Load: %v\n", vertexArrayID)
 	gl.BindVertexArray(0)
-}
-
-func (r *RenderOpenGL) Add(engine *gde.Engine) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
-	// fmt.Println("Render.Add(Engine) executed")
-	engine.Systems[fmt.Sprintf("%T", &systems.Render{})] = systems.RenderRoutine(r)
-	// engine.Systems[fmt.Sprintf("%T", &systems.Render{})] = systems.RenderRoutine(r)
 }
 
 func key_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
@@ -173,21 +163,3 @@ func key_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action
 
 func (r *RenderOpenGL) Shutdown() {
 }
-
-const (
-	// layout (location = 0) attribute vec4 position;
-	VSHADER_OPENGL_ES_2_0 = `#version 100
-  attribute vec4 position;
-  uniform mat4 transform;
-  void main() {
-	gl_Position = transform * position;
-  }`
-
-	FSHADER_OPENGL_ES_2_0 = `#version 100
-  precision mediump float;
-  uniform vec4 color;
-  void main() {
-	//gl_FragColor = color;
-	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-  }`
-)

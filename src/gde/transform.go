@@ -1,13 +1,11 @@
-package components
+package gde
 
 import (
 	"fmt"
-
-	"gde"
 )
 
 type Transform struct {
-	gde.Component
+	Component
 	// gde.ComponentRoutine
 }
 

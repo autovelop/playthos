@@ -1,4 +1,4 @@
-package geometry
+package gde
 
 type Vector3 struct {
 	X float32

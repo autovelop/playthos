@@ -11,12 +11,10 @@ import (
 	"golang.org/x/mobile/gl"
 
 	"gde"
-	"gde/components"
-	"gde/systems"
 )
 
 type RenderOpenGLES struct {
-	systems.Render
+	gde.Render
 
 	ShaderProgram gl.Program
 	Context       gl.Context
@@ -31,7 +29,7 @@ func (r *RenderOpenGLES) Init() {
 	// Create program
 	var shaderProgram gl.Program
 	var err error
-	shaderProgram, err = glutil.CreateProgram(r.Context, VSHADER_OPENGL_ES_2_0, FSHADER_OPENGL_ES_2_0)
+	shaderProgram, err = glutil.CreateProgram(r.Context, gde.VSHADER_OPENGL_ES_2_0, gde.FSHADER_OPENGL_ES_2_0)
 	if err != nil {
 		log.Printf("error creating GL program: %v", err)
 		return
@@ -50,19 +48,19 @@ func (r *RenderOpenGLES) Update(entities *map[string]gde.EntityRoutine) {
 
 	transformLoc := r.Context.GetUniformLocation(r.ShaderProgram, "transform")
 	for _, v := range *entities {
-		vb := v.Component(fmt.Sprintf("%T", &components.Renderer{})).GetProperty("VB")
+		vb := v.Component(fmt.Sprintf("%T", &gde.Renderer{})).GetProperty("VB")
 		switch vb := vb.(type) {
 		case gl.Buffer:
 			r.Context.BindBuffer(gl.ARRAY_BUFFER, vb)
 		}
 
-		eb := v.Component(fmt.Sprintf("%T", &components.Renderer{})).GetProperty("EB")
+		eb := v.Component(fmt.Sprintf("%T", &gde.Renderer{})).GetProperty("EB")
 		switch eb := eb.(type) {
 		case gl.Buffer:
 			r.Context.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, eb)
 		}
 
-		position := v.Component(fmt.Sprintf("%T", &components.Renderer{})).GetProperty("EB")
+		position := v.Component(fmt.Sprintf("%T", &gde.Renderer{})).GetProperty("EB")
 		switch position := position.(type) {
 		case gl.Attrib:
 			// Need to figure out again what this is for...
@@ -71,20 +69,20 @@ func (r *RenderOpenGLES) Update(entities *map[string]gde.EntityRoutine) {
 		}
 
 		var transform mgl32.Mat4
-		trans := v.Component(fmt.Sprintf("%T", &components.Transform{}))
+		trans := v.Component(fmt.Sprintf("%T", &gde.Transform{}))
 
 		pos := trans.GetProperty("Position")
 		switch pos := pos.(type) {
-		case mgl32.Vec3:
-			transform = mgl32.Translate3D(pos.X(), pos.Y(), pos.Z())
+		case gde.Vector3:
+			transform = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
 		}
 
 		rot := trans.GetProperty("Rotation")
 		switch rot := rot.(type) {
-		case mgl32.Vec3:
-			transform = transform.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X())).Mat4())
-			transform = transform.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y())).Mat4())
-			transform = transform.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z())).Mat4())
+		case gde.Vector3:
+			transform = transform.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
+			transform = transform.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
+			transform = transform.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
 		}
 
 		r.Context.UniformMatrix4fv(transformLoc, transform[:])
@@ -92,7 +90,7 @@ func (r *RenderOpenGLES) Update(entities *map[string]gde.EntityRoutine) {
 	}
 }
 
-func (r *RenderOpenGLES) LoadRenderer(renderer *components.Renderer) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
+func (r *RenderOpenGLES) LoadRenderer(renderer *gde.Renderer) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
 	var vertexBuffer = r.Context.CreateBuffer()
 	r.Context.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
 	r.Context.BufferData(gl.ARRAY_BUFFER, renderer.Mesh.VerticesByteArray(), gl.STATIC_DRAW)
@@ -109,23 +107,8 @@ func (r *RenderOpenGLES) LoadRenderer(renderer *components.Renderer) { // USE EN
 	renderer.SetProperty("POSITION", position)
 }
 
-func (r *RenderOpenGLES) Add(engine *gde.Engine) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
-	engine.Systems[fmt.Sprintf("%T", &systems.Render{})] = systems.RenderRoutine(r)
-}
 func (r *RenderOpenGLES) Shutdown() {
+	r.Context.DeleteProgram(r.ShaderProgram)
+	// CLEAN UP BUFFERS
+	// r.Context.DeleteBuffer(buf)
 }
-
-const (
-	VSHADER_OPENGL_ES_2_0 = `#version 100
-  attribute vec4 position;
-  uniform mat4 transform;
-  void main() {
-	gl_Position = transform * position;
-  }`
-
-	FSHADER_OPENGL_ES_2_0 = `#version 100
-  precision mediump float;
-  void main() {
-	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-  }`
-)
