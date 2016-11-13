@@ -8,7 +8,7 @@ import (
 
 type Transform struct {
 	gde.Component
-	gde.ComponentRoutine
+	// gde.ComponentRoutine
 }
 
 func (r *Transform) Init() {

@@ -31,11 +31,11 @@ func (e *Entity) AddComponent(component ComponentRoutine) {
 }
 
 func (e *Entity) Component(componentType string) ComponentRoutine {
-	fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
+	// fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
 	return e.components[componentType]
 }
 func (e *Entity) Components() map[string]ComponentRoutine {
-	fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
+	// fmt.Println("Entity.Component(componentType) returned ComponentRoutine{}")
 	return e.components
 }
 

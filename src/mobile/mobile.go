@@ -1,66 +1,124 @@
 package main
 
 import (
-	"encoding/binary"
-	"gde_core"
+	// "encoding/binary"
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/exp/f32"
-	"golang.org/x/mobile/exp/gl/glutil"
+	// "golang.org/x/mobile/event/touch"
+	// "golang.org/x/mobile/exp/f32"
+	// "golang.org/x/mobile/exp/gl/glutil"
+	"github.com/go-gl/mathgl/mgl32"
 	"golang.org/x/mobile/gl"
 	"log"
+
+	"gde"
+	"gde/components"
+	"gde/geometry"
+	"gde/systems"
+	"gde/systems/opengles"
 )
 
-var (
-	program  gl.Program
-	position gl.Attrib
-	buf      gl.Buffer
+// var (
 
-	green  float32
-	touchX float32
-	touchY float32
-)
+// 	green  float32
+// 	touchX float32
+// 	touchY float32
+// )
 
 func main() {
 	app.Main(func(a app.App) {
-		var glctx gl.Context
-		var sz size.Event
+		// Create game engine
+		engine := &gde.Engine{}
+		engine.Init()
+
+		render := &opengles.RenderOpenGLES{}
+		render.Add(engine)
+
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
-					glctx, _ = e.DrawContext.(gl.Context)
-					onStart(glctx)
+					render.Context, _ = e.DrawContext.(gl.Context)
+					onStart(engine)
 					a.Send(paint.Event{})
 				case lifecycle.CrossOff:
-					onStop(glctx)
-					glctx = nil
+					onStop(engine)
+					render.Context = nil
 				}
 			case size.Event:
-				sz = e
-				touchX = float32(sz.WidthPx / 2)
-				touchY = float32(sz.HeightPx / 2)
+				render.Size = e
+				// 		touchX = float32(engine.sz.WidthPx / 2)
+				// 		touchY = float32(engine.sz.HeightPx / 2)
 			case paint.Event:
-				if glctx == nil || e.External {
+				if render.Context == nil || e.External {
 					continue
 				}
-				onPaint(glctx, sz)
+				onPaint(engine)
 				a.Publish()
 				a.Send(paint.Event{})
-			case touch.Event:
-				touchX = e.X
-				touchY = e.Y
+				// 	case touch.Event:
+				// 		touchX = e.X
+				// 		touchY = e.Y
 			}
 		}
 	})
 }
 
-func onStart(glctx gl.Context) {
+func onStart(engine *gde.Engine) {
 	log.Printf("----------------- OpenGL Version: %v ----------------- ", gl.Version())
+
+	render, err := engine.GetSystem(&systems.Render{}).(systems.RenderRoutine)
+	if !err {
+		log.Println(err)
+		return
+	}
+	render.Init()
+
+	// Simple Quad mesh renderer
+	renderer := &components.Renderer{}
+	renderer.Init()
+
+	renderer.LoadMesh(&geometry.Mesh{
+		Vertices: []float32{
+			0.1, 0.1, 0.0,
+			0.1, -0.1, 0.0,
+			-0.1, -0.1, 0.0,
+			-0.1, 0.1, 0.0,
+		},
+		Indicies: []uint8{
+			0, 1, 3,
+			1, 2, 3,
+		},
+	})
+	render.LoadRenderer(renderer)
+
+	// Create player entity
+	player := &gde.Entity{Id: "Player"}
+	player.Init()
+	player.Add(engine)
+
+	transform := &components.Transform{}
+	transform.Init()
+	transform.SetProperty("Position", mgl32.Vec3{0.2, -0.5, 0})
+	transform.SetProperty("Rotation", mgl32.Vec3{0, 0, 45})
+
+	player.AddComponent(transform)
+	player.AddComponent(renderer)
+
+	box := &gde.Entity{Id: "Box"}
+	box.Init()
+	box.Add(engine)
+
+	box_transform := &components.Transform{}
+	box_transform.Init()
+	box_transform.SetProperty("Position", mgl32.Vec3{0.2, 0.5, 0})
+	box_transform.SetProperty("Rotation", mgl32.Vec3{0, 0, 0})
+	box.AddComponent(box_transform)
+
+	box.AddComponent(renderer)
 
 	// Samsung S6
 	// - OpenGL ES Version: GL_ES_3_0 (possibly GL_ES_3_1 soon)
@@ -71,49 +129,14 @@ func onStart(glctx gl.Context) {
 	// http://www.shaderific.com/blog/2014/3/13/tutorial-how-to-update-a-shader-for-opengl-es-30
 	// http://stackoverflow.com/questions/29888213/solved-qopenglshader-cant-compile-glsl-120-on-android
 	// https://github.com/mattdesl/lwjgl-basics/wiki/GLSL-Versions
-
-	//if gl.Version() == "GL_ES_3_0" {
-	//	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_3_0, shared.FSHADER_OPENGL_ES_3_0)
-	//} else if gl.Version() == "GL_ES_2_0" {
-	// For now we will rather only support OPENGL_ES_2_0
-	//	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_2_0, shared.FSHADER_OPENGL_ES_2_0)
-	//}
-
-	// For now we will rather only support OPENGL_ES_2_0
-	var err error
-	program, err = glutil.CreateProgram(glctx, shared.VSHADER_OPENGL_ES_2_0, shared.FSHADER_OPENGL_ES_2_0)
-	if err != nil {
-		log.Printf("error creating GL program: %v", err)
-		return
-	}
-
-	buf = glctx.CreateBuffer()
-	glctx.BindBuffer(gl.ARRAY_BUFFER, buf)
-	glctx.BufferData(gl.ARRAY_BUFFER, triangleData, gl.STATIC_DRAW)
-	log.Printf("----------------- OpenGL Version: %v ----------------- ", gl.Version())
-	position = glctx.GetAttribLocation(program, "position")
 }
 
-func onStop(glctx gl.Context) {
-	glctx.DeleteProgram(program)
-	glctx.DeleteBuffer(buf)
+func onStop(engine *gde.Engine) {
+  engine.
+	// render.Context.DeleteProgram(program)
+	// render.Context.DeleteBuffer(buf)
 }
 
-func onPaint(glctx gl.Context, sz size.Event) {
-	glctx.ClearColor(1, 0, 0, 1)
-	glctx.Clear(gl.COLOR_BUFFER_BIT)
-
-	glctx.UseProgram(program)
-
-	glctx.BindBuffer(gl.ARRAY_BUFFER, buf)
-	glctx.EnableVertexAttribArray(position)
-	glctx.VertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0)
-	glctx.DrawArrays(gl.TRIANGLES, 0, 3)
-	glctx.DisableVertexAttribArray(position)
+func onPaint(engine *gde.Engine) {
+	engine.Update()
 }
-
-var triangleData = f32.Bytes(binary.LittleEndian,
-	-0.5, 0.5,
-	0.5, 0.5,
-	0.5, -0.5,
-)
