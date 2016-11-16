@@ -5,6 +5,5 @@ package gde
 type SystemRoutine interface {
 	Init()
 	Update(*map[string]EntityRoutine)
-	End()
-	Shutdown()
+	Stop()
 }

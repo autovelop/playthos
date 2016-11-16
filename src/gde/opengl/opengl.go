@@ -33,7 +33,6 @@ func (r *RenderOpenGL) Init() {
 		panic(err)
 	}
 	window.MakeContextCurrent()
-	window.SetKeyCallback(key_callback)
 	r.Window = window
 
 	// gl.Viewport(0, 0, 360, 360)
@@ -153,13 +152,5 @@ func (r *RenderOpenGL) LoadRenderer(renderer *gde.Renderer) { // USE ENGINE VARI
 	gl.BindVertexArray(0)
 }
 
-func key_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-
-	fmt.Println("Render.Update() executed")
-	if key == glfw.KeyEscape && action == glfw.Press {
-		w.SetShouldClose(true)
-	}
-}
-
-func (r *RenderOpenGL) Shutdown() {
+func (r *RenderOpenGL) Stop() {
 }

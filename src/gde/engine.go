@@ -13,7 +13,9 @@ type Engine struct {
 
 const (
 	SystemRender = iota
-	SystemInput
+	SystemInputKeyboard
+	SystemInputPointer
+	SystemInputTouch
 	SystemAnimation
 	SystemNetwork
 	SystemPhysics
@@ -33,7 +35,7 @@ func (e *Engine) Update() {
 
 func (e *Engine) Shutdown() {
 	for _, v := range e.Systems {
-		v.Shutdown()
+		v.Stop()
 	}
 }
 
@@ -53,53 +55,66 @@ func (e *Engine) AddSystem(sys int, sysRoutine SystemRoutine) SystemRoutine {
 	return e.Systems[sys]
 }
 
-func (e *Engine) LoadScene(scene *Scene) {
-	render, err := e.GetSystem(SystemRender).(RenderRoutine)
-	if !err {
-		log.Println(err)
-		return
-	}
+// func (e *Engine) LoadScene(scene *Scene) {
+// 	render, err := e.GetSystem(SystemRender).(RenderRoutine)
+// 	if !err {
+// 		log.Println(err)
+// 		return
+// 	}
 
-	// Simple Quad mesh renderer
-	renderer := &Renderer{}
-	renderer.Init()
-	renderer.LoadMesh(&Mesh{
-		Vertices: []float32{
-			0.1, 0.1, 0.0,
-			0.1, -0.1, 0.0,
-			-0.1, -0.1, 0.0,
-			-0.1, 0.1, 0.0,
-		},
-		Indicies: []uint8{
-			0, 1, 3,
-			1, 2, 3,
-		},
-	})
-	render.LoadRenderer(renderer)
+// 	// Simple Quad mesh renderer
+// 	renderer := &Renderer{}
+// 	renderer.Init()
+// 	renderer.LoadMesh(&Mesh{
+// 		Vertices: []float32{
+// 			0.1, 0.1, 0.0,
+// 			0.1, -0.1, 0.0,
+// 			-0.1, -0.1, 0.0,
+// 			-0.1, 0.1, 0.0,
+// 		},
+// 		Indicies: []uint8{
+// 			0, 1, 3,
+// 			1, 2, 3,
+// 		},
+// 	})
+// 	render.LoadRenderer(renderer)
 
-	// Create player entity
-	player := &Entity{Id: "Player"}
-	player.Init()
-	player.Add(e)
+// 	// Create player entity
+// 	player := &Entity{Id: "Player"}
+// 	player.Init()
+// 	player.Add(e)
 
-	transform := &Transform{}
-	transform.Init()
-	transform.SetProperty("Position", Vector3{0.2, -0.5, 0})
-	transform.SetProperty("Rotation", Vector3{0, 0, 45})
+// 	transform := &Transform{}
+// 	transform.Init()
+// 	transform.SetProperty("Position", Vector3{0.2, -0.5, 0})
+// 	transform.SetProperty("Rotation", Vector3{0, 0, 45})
 
-	player.AddComponent(transform)
-	player.AddComponent(renderer)
+// 	player.AddComponent(transform)
+// 	player.AddComponent(renderer)
 
-	// Create box entity
-	box := &Entity{Id: "Box"}
-	box.Init()
-	box.Add(e)
+// 	// Create box entity
+// 	box := &Entity{Id: "Box"}
+// 	box.Init()
+// 	box.Add(e)
 
-	box_transform := &Transform{}
-	box_transform.Init()
-	box_transform.SetProperty("Position", Vector3{0.2, 0.5, 0})
-	box_transform.SetProperty("Rotation", Vector3{0, 0, 0})
-	box.AddComponent(box_transform)
+// 	box_transform := &Transform{}
+// 	box_transform.Init()
+// 	box_transform.SetProperty("Position", Vector3{0.2, 0.5, 0})
+// 	box_transform.SetProperty("Rotation", Vector3{0, 0, 0})
+// 	box.AddComponent(box_transform)
 
-	box.AddComponent(renderer)
-}
+// 	box.AddComponent(renderer)
+
+// 	// Create box entity 2
+// 	box2 := &Entity{Id: "Box2"}
+// 	box2.Init()
+// 	box2.Add(e)
+
+// 	box2_transform := &Transform{}
+// 	box2_transform.Init()
+// 	box2_transform.SetProperty("Position", Vector3{-0.2, 0.5, 0})
+// 	box2_transform.SetProperty("Rotation", Vector3{0, 0, 0})
+// 	box2.AddComponent(box2_transform)
+
+// 	box2.AddComponent(renderer)
+// }
