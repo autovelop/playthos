@@ -15,8 +15,8 @@ gomobile init
 - [x] Building using Linux and run demo
 - [x] Add ecs and properly centralize the shared code between gomobile+opengl_2_es and go+opengl_4_1
 - [x] Drawing anything better than triangles
-- [ ] Add ~~keyboard~~, mouse, and touch support
-- [ ] Improving shaders (texture support)
+- [x] Add keyboard, mouse, and touch support
+- [x] Improving shaders (texture support)
 - [ ] Improving shaders (font support)
 - [ ] Add TCP support
 - [ ] Improving shaders (animations)
