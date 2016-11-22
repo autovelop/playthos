@@ -107,7 +107,7 @@ func (r *RenderOpenGLES) LoadRenderer(renderer *gde.Renderer) { // USE ENGINE VA
 	renderer.SetProperty("POSITION", position)
 }
 
-func (r *RenderOpenGLES) Shutdown() {
+func (r *RenderOpenGLES) Stop() {
 	r.Context.DeleteProgram(r.ShaderProgram)
 	// CLEAN UP BUFFERS
 	// r.Context.DeleteBuffer(buf)

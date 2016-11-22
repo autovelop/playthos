@@ -1,4 +1,4 @@
-package input
+package keyboard
 
 import (
 	"fmt"
@@ -39,8 +39,8 @@ func (i *Keyboard) Update(entities *map[string]gde.EntityRoutine) {
 func (i *Keyboard) Stop() {
 }
 
-func (i *Keyboard) Bind(key int, callback func()) {
-	fmt.Printf("Bind - %v\n", key)
+func (i *Keyboard) BindOn(key int, callback func()) {
+	fmt.Printf("Key BindOn - %v\n", key)
 	i.keymap[key] = callback
 }
 

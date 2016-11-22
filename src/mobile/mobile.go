@@ -5,12 +5,13 @@ import (
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
-	// "golang.org/x/mobile/event/touch"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/gl"
 	"log"
 
 	"gde"
 	"gde/opengles"
+	touchPkg "gde/touch"
 )
 
 // var (
@@ -37,8 +38,10 @@ func main() {
 		engine.Init()
 
 		render := &opengles.RenderOpenGLES{}
-		// render.Add(engine)
 		engine.AddSystem(gde.SystemRender, render)
+
+		touchSys := &touchPkg.Touch{}
+		engine.AddSystem(gde.SystemInputTouch, touchSys)
 
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
@@ -63,9 +66,10 @@ func main() {
 				onPaint(engine)
 				a.Publish()
 				a.Send(paint.Event{})
-				// 	case touch.Event:
-				// 		touchX = e.X
-				// 		touchY = e.Y
+			case touch.Event:
+				touchSys.Touch(0, e.X, e.Y)
+				// touchX = e.X
+				// touchY = e.Y
 			}
 		}
 	})
@@ -81,7 +85,8 @@ func onStart(engine *gde.Engine) {
 	}
 	render.Init()
 
-	engine.LoadScene(&gde.Scene{})
+	scene := &gde.Scene{}
+	scene.LoadScene(engine)
 }
 
 func onStop(engine *gde.Engine) {

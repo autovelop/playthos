@@ -7,8 +7,9 @@ import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 
 	"gde"
-	"gde/input"
+	"gde/keyboard"
 	"gde/opengl"
+	"gde/pointer"
 )
 
 func init() {
@@ -31,21 +32,23 @@ func main() {
 	render := &opengl.RenderOpenGL{}
 	engine.AddSystem(gde.SystemRender, render)
 	render.Init()
+	window := render.GetWindow()
 
 	// Create keyboard input system
-	keyInput := &input.Keyboard{Window: render.Window}
+	// window.GetUserPointer().
+	keyInput := &keyboard.Keyboard{Window: window}
 	engine.AddSystem(gde.SystemInputKeyboard, keyInput)
 	keyInput.Init()
 
 	// Escape
-	keyInput.Bind(256, func() {
+	keyInput.BindOn(256, func() {
 		keyInput.Window.SetShouldClose(true)
 	})
 
 	// Create pointer input system
-	mouseInput := &input.Pointer{}
-	engine.AddSystem(gde.SystemInputPointer, mouseInput)
-	mouseInput.Init()
+	pointerInput := &pointer.Pointer{Window: window}
+	engine.AddSystem(gde.SystemInputPointer, pointerInput)
+	pointerInput.Init()
 
 	scene := &gde.Scene{}
 	scene.LoadScene(engine)

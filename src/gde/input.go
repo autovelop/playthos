@@ -1,10 +1,9 @@
 package gde
 
-type Input struct {
-}
-
-type InputRoutine interface {
+type Input interface {
 	SystemRoutine
 
-	Bind(int, func())
+	BindOn(int, func())
+	BindAt(int, func(float64, float64))
+	BindMove(func(float64, float64))
 }

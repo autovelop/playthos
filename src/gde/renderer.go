@@ -8,7 +8,8 @@ type Renderer struct {
 	Component
 	// gde.ComponentRoutine
 
-	Mesh *Mesh
+	Mesh    *Mesh
+	Texture *Texture
 }
 
 func (r *Renderer) Init() {
@@ -19,6 +20,10 @@ func (r *Renderer) Init() {
 // Make this happen on the Render System
 func (r *Renderer) LoadMesh(mesh *Mesh) {
 	r.Mesh = mesh
+}
+
+func (r *Renderer) LoadTexture(texture *Texture) {
+	r.Texture = texture
 }
 
 func (r *Renderer) GetProperty(key string) interface{} {
