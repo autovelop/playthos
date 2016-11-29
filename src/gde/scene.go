@@ -21,10 +21,10 @@ func (s *Scene) LoadScene(engine *Engine) {
 	renderer.Init()
 	renderer.LoadMesh(&Mesh{
 		Vertices: []float32{
-			0.1, 0.1, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
-			0.1, -0.1, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
-			-0.1, -0.1, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-			-0.1, 0.1, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+			0.2, 0.2, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
+			0.2, -0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+			-0.0, -0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+			-0.0, 0.2, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0,
 		},
 		Indicies: []uint8{
 			0, 1, 3,
@@ -34,6 +34,7 @@ func (s *Scene) LoadScene(engine *Engine) {
 	texture := &Texture{FilePath: "weapon.png"}
 	texture.ReadTexture()
 	renderer.LoadTexture(texture)
+
 	render.LoadRenderer(renderer)
 
 	// Create player entity
@@ -49,14 +50,14 @@ func (s *Scene) LoadScene(engine *Engine) {
 	player.AddComponent(transform)
 	player.AddComponent(renderer)
 
-	// Create box entity
+	// Create background entity
 	box := &Entity{Id: "Box"}
 	box.Init()
 	box.Add(engine)
 
 	box_transform := &Transform{}
 	box_transform.Init()
-	box_transform.SetProperty("Position", Vector3{0.2, 1.8, 0})
+	box_transform.SetProperty("Position", Vector3{0.05, 0.05, 0})
 	box_transform.SetProperty("Rotation", Vector3{0, 0, 0})
 
 	box.AddComponent(box_transform)
@@ -76,7 +77,42 @@ func (s *Scene) LoadScene(engine *Engine) {
 	box2.AddComponent(box2_transform)
 	box2.AddComponent(renderer)
 
-	// Lets test keyboard support
+	// Creatae a text box
+	heading := &Entity{Id: "Heading"}
+	heading.Init()
+	heading.Add(engine)
+
+	text_transform := &Transform{}
+	text_transform.Init()
+	text_transform.SetProperty("Position", Vector3{0.0, 0.0, 0})
+
+	// Simple Quad mesh text renderer
+	text_renderer := &TextRenderer{}
+	text_renderer.Init()
+	text_renderer.LoadMesh(&Mesh{
+		Vertices: []float32{
+			1.0, 2.0, -0.1, 1.0, 0.0, 0.0,
+			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
+			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
+			0.0, 2.0, -0.1, 0.0, 1.0, 1.0,
+		},
+		Indicies: []uint8{
+			0, 1, 3,
+			1, 2, 3,
+		},
+	})
+
+	font := &Font{}
+	font.NewFont()
+	text := &Text{"Hello! Last key pressed: ", font}
+	text_renderer.SetProperty("Text", text.TextToVec2())
+
+	render.LoadTextRenderer(text_renderer)
+
+	heading.AddComponent(text_transform)
+	heading.AddComponent(text_renderer)
+
+	// // Lets test keyboard support
 	keyInput, err := engine.GetSystem(SystemInputKeyboard).(Input)
 	if !err {
 		log.Println(err)
@@ -87,6 +123,8 @@ func (s *Scene) LoadScene(engine *Engine) {
 	keyInput.BindOn(262, func() {
 		box2_position.X += 0.1
 		box2_transform.SetProperty("Position", box2_position)
+		textTmp := &Text{text.GetText() + "Right", font}
+		text_renderer.SetProperty("Text", textTmp.TextToVec2())
 	})
 
 	// Left arrow
@@ -97,32 +135,31 @@ func (s *Scene) LoadScene(engine *Engine) {
 
 	// Up arrow
 	keyInput.BindOn(265, func() {
-		box2_position.Y += 0.1
+		box2_position.Y -= 0.1
 		box2_transform.SetProperty("Position", box2_position)
 	})
 
 	// Down arrow
 	keyInput.BindOn(264, func() {
-		box2_position.Y -= 0.1
+		box2_position.Y += 0.1
 		box2_transform.SetProperty("Position", box2_position)
 	})
 
-	// Lets test pointer support
-	pointerInput, err := engine.GetSystem(SystemInputPointer).(Input)
-	if !err {
-		log.Printf("Pointer Input system not started/found\nERROR:\n%v\n\n", err)
-		return
-	}
+	// // Lets test pointer support
+	// pointerInput, err := engine.GetSystem(SystemInputPointer).(Input)
+	// if !err {
+	// 	log.Printf("Pointer Input system not started/found\nERROR:\n%v\n\n", err)
+	// 	return
+	// }
 
-	// pointer Move
-	pointerInput.BindMove(func(x float64, y float64) {
-		// log.Printf("%v, %v", x, y)
-		box2_position.X = float32(x/360) * 1
-		box2_position.Y = float32(y/640) * 2
-		box2_transform.SetProperty("Position", box2_position)
-	})
+	// // pointer Move
+	// pointerInput.BindMove(func(x float64, y float64) {
+	// 	box2_position.X = float32(x/360) * 1
+	// 	box2_position.Y = float32(y/640) * 2
+	// 	box2_transform.SetProperty("Position", box2_position)
+	// })
 
-	// // Left click
+	// Left click
 	// pointerInput.BindAt(0, func(x float64, y float64) {
 	// 	box2_position.Y += 0.1
 	// 	box2_transform.SetProperty("Position", box2_position)

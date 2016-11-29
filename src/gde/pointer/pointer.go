@@ -45,7 +45,9 @@ func (i *Pointer) ButtonUp(key int) {
 }
 
 func pointer_callback(w *glfw.Window, x float64, y float64) {
-	pointerInput.move(x, y)
+	if pointerInput.move != nil {
+		pointerInput.move(x, y)
+	}
 }
 
 func pointer_button_callback(w *glfw.Window, key glfw.Key, action glfw.Action) {
