@@ -3,6 +3,7 @@ package gde
 type Render struct {
 	OpenGL string
 	GLSL   string
+	Device *Device
 }
 
 type RenderRoutine interface {
@@ -16,7 +17,6 @@ func (r *Render) Init()                                     {}
 func (r *Render) End()                                      {}
 func (r *Render) Update(entities *map[string]EntityRoutine) {}
 
-// gl_Position = projection * view * model * position;
 const (
 	VSHADER_OPENGL_ES_2_0 = `#version 120
   attribute vec4 pos;

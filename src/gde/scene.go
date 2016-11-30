@@ -31,8 +31,8 @@ func (s *Scene) LoadScene(engine *Engine) {
 			1, 2, 3,
 		},
 	})
-	texture := &Texture{FilePath: "weapon.png"}
-	texture.ReadTexture()
+	texture := &Texture{}
+	texture.NewTexture("weapon.png")
 	renderer.LoadTexture(texture)
 
 	render.LoadRenderer(renderer)

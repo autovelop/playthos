@@ -1,11 +1,8 @@
 package opengl
 
 import (
-	// "bytes"
-	// "encoding/binary"
 	"fmt"
 	"os"
-	// "strconv"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -25,26 +22,27 @@ type RenderOpenGL struct {
 
 func (r *RenderOpenGL) Init() {
 	r.OpenGL = "OpenGL 4"
-	r.GLSL = "100"
+	r.GLSL = "120"
+
+	r.Device = &gde.Device{}
+	r.Device.NewDevice(360, 640, 360, 640)
 
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
 
-	// var window *glfw.Window
-	window, err := glfw.CreateWindow(360, 640, "Cube", nil, nil)
+	window, err := glfw.CreateWindow(int(r.Device.ScreenW), int(r.Device.ScreenH), "Cube", nil, nil)
 	if err != nil {
 		panic(err)
 	}
 	window.MakeContextCurrent()
 	r.window = window
 
-	gl.Viewport(0, 0, 360, 640)
+	gl.Viewport(0, 0, r.Device.RenderW, r.Device.RenderH)
 
 	r.ShaderProgram = r.NewShader(gde.VSHADER_OPENGL_ES_2_0, gde.FSHADER_OPENGL_ES_2_0)
 	r.TextShaderProgram = r.NewShader(gde.VSHADER_OPENGL_ES_2_0_TEXT, gde.FSHADER_OPENGL_ES_2_0_TEXT)
-	fmt.Println(r)
 	gl.Enable(gl.DEPTH_TEST)
 }
 
@@ -119,21 +117,13 @@ func (r *RenderOpenGL) NewShader(vShader string, fShader string) uint32 {
 	// Use this program for all upcoming render calls
 	gl.UseProgram(shaderProgram)
 
-	// r.ShaderProgram = shaderProgram
-
 	gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 
 	return shaderProgram
-	// if glError := gl.GetError(); glError != 0 {
-	// 	fmt.Printf("gl.GetError: %v", glError)
-	// 	return
-	// }
 }
 
 func (r *RenderOpenGL) Update(entities *map[string]gde.EntityRoutine) {
-	// fmt.Println("Render.Update() started")
 	if !r.window.ShouldClose() {
-		// fmt.Println("Render.Update() executed")
 
 		gl.ClearColor(0.2, 0.3, 0.3, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -211,10 +201,6 @@ func (r *RenderOpenGL) Update(entities *map[string]gde.EntityRoutine) {
 		text_model_uni := gl.GetUniformLocation(r.TextShaderProgram, gl.Str("model\x00"))
 
 		text_arr_uni := gl.GetUniformLocation(r.TextShaderProgram, gl.Str("textarr\x00"))
-		// view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-		// view_uni = gl.GetUniformLocation(r.TextShaderProgram, gl.Str("view\x00"))
-		// proj_uni = gl.GetUniformLocation(r.TextShaderProgram, gl.Str("projection\x00"))
-		// model_uni = gl.GetUniformLocation(r.TextShaderProgram, gl.Str("model\x00"))
 
 		for _, v := range *entities {
 			textRenderer := v.Component(fmt.Sprintf("%T", &gde.TextRenderer{}))
@@ -243,11 +229,8 @@ func (r *RenderOpenGL) Update(entities *map[string]gde.EntityRoutine) {
 			text_arr := textRenderer.GetProperty("Text")
 			switch text_arr := text_arr.(type) {
 			case []mgl32.Vec2:
-				fmt.Println(len(text_arr[2]))
 				gl.Uniform2fv(text_arr_uni, int32(len(text_arr)), &text_arr[0][0])
 			}
-
-			// fmt.Println(pos)
 
 			gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
 		}
