@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build Linux
-go build -v -o ../builds/Linux/demo desktop/desktop.go
+go build -v -o ../builds/Linux/demo build_pc/pc.go
 
 # Build Android
 # gomobile build -target=android -o=../builds/Android/demo.apk mobile
