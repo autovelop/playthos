@@ -4,9 +4,9 @@
 GoGG! is a game engine being developed for a planned game editor called GG!Edit.
 
 #### Targeted platforms:
-PC - Windows, MacOS, Linux
-Mobile - Android, iOS
-Other - Web, ARM
+- PC:Windows, MacOS, Linux
+- Mobile: Android, iOS
+- Other: Web, ARM
 
 Currently the engine is actively being developed for Linux and Android untill a stable alpha version is completed.
 
