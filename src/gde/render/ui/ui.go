@@ -5,7 +5,6 @@ import (
 	"gde/render"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"log"
 )
 
 type UI struct {
@@ -30,12 +29,13 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 	view_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("view\x00"))
 
 	var proj mgl32.Mat4
-	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
+	proj = mgl32.Ortho(0, 360, 640, 0, 0, 10)
 	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
 
 	proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
 	model_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("model\x00"))
 	text_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("textarr\x00"))
+	text_start_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("textstart\x00"))
 
 	for _, v := range *entities {
 		uiRenderer := v.GetComponent(&UIRenderer{})
@@ -56,28 +56,35 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 		pos := trans.GetProperty("Position")
 		switch pos := pos.(type) {
 		case render.Vector3:
-			scaledX := (pos.X / float32(u.Platform.RenderW))
-			scaledY := (pos.Y / float32(u.Platform.RenderH)) * u.Platform.AspectRatio
+			scaledX := pos.X // float32(u.Platform.RenderW)
+			scaledY := pos.Y // float32(u.Platform.RenderH) * u.Platform.AspectRatio
 			model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
-		}
 
-		scale := trans.GetProperty("Dimensions")
-		switch scale := scale.(type) {
-		case render.Vector3:
-			scaledX := (scale.X / float32(u.Platform.RenderW))
-			scaledY := (scale.Y / float32(u.Platform.RenderH))
-			log.Printf("## %v, %v, %v ##", scaledX, scaledY, scale.Z)
-			model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, scale.Z))
-		}
+			scale := trans.GetProperty("Dimensions")
+			switch scale := scale.(type) {
+			case render.Vector3:
+				scaledX := scale.X // float32(u.Platform.RenderW)
+				scaledY := scale.Y // float32(u.Platform.RenderH)
+				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, scale.Z))
 
-		gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
-		gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
-		gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
+				gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
+				gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
+				gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
 
-		text_arr := uiRenderer.GetProperty("Text")
-		switch text_arr := text_arr.(type) {
-		case []mgl32.Vec2:
-			gl.Uniform2fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
+				text_arr := uiRenderer.GetProperty("Text")
+				switch text_arr := text_arr.(type) {
+				case []mgl32.Vec2:
+					gl.Uniform2fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
+
+					text_start := uiRenderer.GetProperty("TextStart")
+					switch text_start := text_start.(type) {
+					case render.Vector2:
+						// this is crazy
+						text_start_mgl := mgl32.Vec4{pos.X + text_start.X, scale.Y - 8 + (640 - scale.Y) - pos.Y + -text_start.Y, 0, 0}
+						gl.Uniform4fv(text_start_uni, 1, &text_start_mgl[0])
+					}
+				}
+			}
 		}
 
 		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
@@ -92,10 +99,10 @@ func (u *UI) Stop() {
 func (r *UI) LoadRenderer(renderer render.RendererRoutine) {
 	renderer.LoadMesh(&render.Mesh{
 		Vertices: []float32{
-			1.0, 2.0, -0.1, 1.0, 0.0, 0.0,
+			1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
 			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
 			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-			0.0, 2.0, -0.1, 0.0, 1.0, 1.0,
+			0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
 		},
 		Indicies: []uint8{
 			0, 1, 3,
@@ -143,12 +150,10 @@ const (
   uniform mat4 projection;
 
   varying vec3 colOut;
-  varying vec4 posOut;
 
   void main() {
 	gl_Position = projection * view * model * pos;
 	colOut = col;
-	posOut = pos;
   }
   ` + "\x00"
 
@@ -156,14 +161,14 @@ const (
   // precision mediump float;
 
   uniform vec2 textarr[100];
+  uniform vec4 textstart;
 
   varying vec3 colOut;
-  varying vec4 posOut;
 
   #define CHAR_SIZE vec2(6, 7)
   #define CHAR_SPACING vec2(6, 9)
 
-  #define DOWN_SCALE 2.0
+  #define DOWN_SCALE 1.0
 
   vec2 start_pos = vec2(0,0);
   vec2 print_pos = vec2(0,0);
@@ -339,7 +344,7 @@ const (
 
 	// BEGIN_TEXT(posOut.x, posOut.y * 320)
 	// BEGIN_TEXT(posOut.x, posOut.y * ((640  / DOWN_SCALE) - CHAR_SIZE.y))
-	BEGIN_TEXT(posOut.x, posOut.y)
+	BEGIN_TEXT(textstart.x, textstart.y)
 	for(int i = 0; i < textarr.length(); i++)
 	{
 	  col+=char(textarr[i],uv)*text_color;

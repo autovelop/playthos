@@ -13,7 +13,7 @@ import (
 // calc things like new lines etc.
 type TextRenderer struct {
 	engine.Component
-
+	render.RendererRoutine
 	Mesh *render.Mesh
 	Text *Text
 }

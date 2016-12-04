@@ -38,6 +38,7 @@ func (r *OpenGL) Init() {
 	r.ShaderProgram = render.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 	// r.TextShaderProgram = r.NewShader(gde.VSHADER_OPENGL_ES_2_0_TEXT, gde.FSHADER_OPENGL_ES_2_0_TEXT)
 	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable(gl.FRONT_AND_BACK)
 }
 
 func (r *OpenGL) Update(entities *map[string]*engine.Entity) {

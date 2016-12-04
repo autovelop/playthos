@@ -17,18 +17,6 @@ type UIRenderer struct {
 func (r *UIRenderer) Init() {
 	log.Printf("UIRenderer > Init")
 	r.Properties = make(map[string]interface{})
-	// r.Mesh = &render.Mesh{
-	// 	Vertices: []float32{
-	// 		1.0, 2.0, -0.1, 1.0, 0.0, 0.0,
-	// 		1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
-	// 		0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-	// 		0.0, 2.0, -0.1, 0.0, 1.0, 1.0,
-	// 	},
-	// 	Indicies: []uint8{
-	// 		0, 1, 3,
-	// 		1, 2, 3,
-	// 	},
-	// }
 }
 
 func (r *UIRenderer) GetProperty(key string) interface{} {
