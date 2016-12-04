@@ -5,7 +5,7 @@ import (
 	"gde/render"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	// "log"
+	"log"
 )
 
 type UI struct {
@@ -25,17 +25,17 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 	// THIS IS PAINFULL. JUST BITE THE BULLET!
 	gl.UseProgram(u.ShaderProgram)
 
-	var text_view mgl32.Mat4
-	text_view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	text_view_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("view\x00"))
+	var view mgl32.Mat4
+	view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	view_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("view\x00"))
 
-	var text_proj mgl32.Mat4
-	text_proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
+	var proj mgl32.Mat4
+	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
 	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
 
-	text_proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
-	text_model_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("model\x00"))
-	text_arr_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("textarr\x00"))
+	proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
+	model_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("model\x00"))
+	text_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("textarr\x00"))
 
 	for _, v := range *entities {
 		uiRenderer := v.GetComponent(&UIRenderer{})
@@ -49,25 +49,35 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 			gl.BindVertexArray(vao)
 		}
 
-		var text_model mgl32.Mat4
+		// var model mgl32.Mat4
+		model := mgl32.Ident4()
 		trans := v.GetComponent(&render.Transform{})
 
 		pos := trans.GetProperty("Position")
 		switch pos := pos.(type) {
 		case render.Vector3:
-			scaledX := pos.X / float32(u.Platform.RenderW)
-			scaledY := pos.Y / float32(u.Platform.RenderH)
-			text_model = mgl32.Translate3D(scaledX, scaledY, pos.Z)
+			scaledX := (pos.X / float32(u.Platform.RenderW))
+			scaledY := (pos.Y / float32(u.Platform.RenderH)) * u.Platform.AspectRatio
+			model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
 		}
 
-		gl.UniformMatrix4fv(text_model_uni, 1, false, &text_model[0])
-		gl.UniformMatrix4fv(text_view_uni, 1, false, &text_view[0])
-		gl.UniformMatrix4fv(text_proj_uni, 1, false, &text_proj[0])
+		scale := trans.GetProperty("Dimensions")
+		switch scale := scale.(type) {
+		case render.Vector3:
+			scaledX := (scale.X / float32(u.Platform.RenderW))
+			scaledY := (scale.Y / float32(u.Platform.RenderH))
+			log.Printf("## %v, %v, %v ##", scaledX, scaledY, scale.Z)
+			model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, scale.Z))
+		}
+
+		gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
+		gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
+		gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
 
 		text_arr := uiRenderer.GetProperty("Text")
 		switch text_arr := text_arr.(type) {
 		case []mgl32.Vec2:
-			gl.Uniform2fv(text_arr_uni, int32(len(text_arr)), &text_arr[0][0])
+			gl.Uniform2fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
 		}
 
 		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))

@@ -57,9 +57,12 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	// First create a UI system
 	sys_ui := &ui.UI{Platform: game.GetPlatform()}
-	// game.AddSystem(engine.SystemUI, sys_ui)
 	sys_render.AddSubSystem(sys_ui)
 	sys_ui.Init()
+
+	// Load a simple font
+	font := &ui.Font{}
+	font.NewFont()
 
 	ent_box := &engine.Entity{Id: "Box"}
 	ent_box.Init()
@@ -67,12 +70,19 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	ent_box_comp_transform := &render.Transform{}
 	ent_box_comp_transform.Init()
-	ent_box_comp_transform.SetProperty("Position", render.Vector3{100, 100, 0})
+	ent_box_comp_transform.SetProperty("Position", render.Vector3{0, -10, 0})
 	ent_box_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 0})
+	ent_box_comp_transform.SetProperty("Dimensions", render.Vector3{360, 640, 1})
 	ent_box.AddComponent(ent_box_comp_transform)
 
 	comp_ui_renderer := &ui.UIRenderer{}
 	comp_ui_renderer.Init()
+
+	text := &ui.Text{}
+	text.SetFont(font)
+	text.SetText("Hello! Last key pressed: ")
+	comp_ui_renderer.SetProperty("Text", text.TextToVec2())
+
 	ent_box.AddComponent(comp_ui_renderer)
 
 	sys_ui.LoadRenderer(comp_ui_renderer)

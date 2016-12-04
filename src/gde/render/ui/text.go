@@ -13,8 +13,20 @@ type Text struct {
 // 	t.length = len(t.text)
 // }
 
+func (t *Text) SetText(text string) {
+	t.text = text
+}
+
 func (t *Text) GetText() string {
 	return t.text
+}
+
+func (t *Text) SetFont(font *Font) {
+	t.font = font
+}
+
+func (t *Text) GetFont() *Font {
+	return t.font
 }
 
 func (t *Text) TextToVec2() []mgl32.Vec2 {
