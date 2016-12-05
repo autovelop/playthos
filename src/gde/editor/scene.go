@@ -70,9 +70,9 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	ent_box_comp_transform := &render.Transform{}
 	ent_box_comp_transform.Init()
-	ent_box_comp_transform.SetProperty("Position", render.Vector3{120, 50, 0})
-	ent_box_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 0})
-	ent_box_comp_transform.SetProperty("Dimensions", render.Vector3{100, 170, 1})
+	ent_box_comp_transform.SetProperty("Position", render.Vector3{0, 100, 0})
+	// ent_box_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 0})
+	ent_box_comp_transform.SetProperty("Dimensions", render.Vector3{360, 440, 1})
 	ent_box.AddComponent(ent_box_comp_transform)
 
 	comp_ui_renderer := &ui.UIRenderer{}
@@ -80,8 +80,8 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	text := &ui.Text{}
 	text.SetFont(font)
-	text.SetText("Hello! Last key pressed: ")
-	comp_ui_renderer.SetProperty("Text", text.TextToVec2())
+	text.SetText(`Hello! Last key pressed.\/" Lorem ipsum testing more testing testing more`)
+	comp_ui_renderer.SetProperty("Text", text.TextToVec4())
 	comp_ui_renderer.SetProperty("TextStart", render.Vector2{10, 10})
 
 	ent_box.AddComponent(comp_ui_renderer)

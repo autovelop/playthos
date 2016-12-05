@@ -124,6 +124,9 @@ const (
   }
   ` + "\x00"
 
+	// SHADER TODO LIST
+	// 0. Better understand shaders by doing research
+	// 1. Allow mesh color or texture
 	FSHADER_OPENGL_ES_2_0 = `#version 120
   // precision mediump float;
 
