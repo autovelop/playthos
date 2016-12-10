@@ -34,8 +34,10 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 
 	proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
 	model_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("model\x00"))
-	text_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("textarr\x00"))
-	text_start_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("textstart\x00"))
+	// dimensions_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("dimensions\x00"))
+	box_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("box\x00"))
+	text_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_arr\x00"))
+	text_scale_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_scale\x00"))
 
 	for _, v := range *entities {
 		uiRenderer := v.GetComponent(&UIRenderer{})
@@ -56,16 +58,18 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 		pos := trans.GetProperty("Position")
 		switch pos := pos.(type) {
 		case render.Vector3:
+			// gl.Uniform2fv(box_uni, 1, &[]float32{pos.X, pos.Y}[0])
 			scaledX := pos.X // float32(u.Platform.RenderW)
 			scaledY := pos.Y // float32(u.Platform.RenderH) * u.Platform.AspectRatio
 			model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
 
 			scale := trans.GetProperty("Dimensions")
 			switch scale := scale.(type) {
-			case render.Vector3:
+			case render.Vector2:
+
 				scaledX := scale.X // float32(u.Platform.RenderW)
 				scaledY := scale.Y // float32(u.Platform.RenderH)
-				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, scale.Z))
+				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
 
 				gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
 				gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
@@ -76,13 +80,29 @@ func (u *UI) Update(entities *map[string]*engine.Entity) {
 				case []mgl32.Vec4:
 					gl.Uniform4fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
 
-					text_start := uiRenderer.GetProperty("TextStart")
-					switch text_start := text_start.(type) {
-					case render.Vector2:
-						// this is crazy
-						text_start_mgl := mgl32.Vec2{pos.X + text_start.X, pos.Y + text_start.Y}
-						gl.Uniform2fv(text_start_uni, 1, &text_start_mgl[0])
+					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
+
+					text_scale := uiRenderer.GetProperty("Scale")
+					switch text_scale := text_scale.(type) {
+					case float64:
+						gl.Uniform1f(text_scale_uni, float32(text_scale))
 					}
+
+					text_padding := uiRenderer.GetProperty("Padding")
+					switch text_padding := text_padding.(type) {
+					case render.Vector4:
+						textBox.X += text_padding.W
+						textBox.Z -= text_padding.W
+						textBox.Z -= text_padding.Y
+
+						textBox.W -= text_padding.X
+						// ONLY APPLIES IF ALIGNED TO BOTTOM
+						textBox.Y -= text_padding.X
+						textBox.Y -= text_padding.Z
+					}
+					// THESE CAN BE float64?
+					gl.Uniform4fv(box_uni, 1, &[]float32{textBox.X, textBox.Y, textBox.Z, textBox.W}[0])
+
 				}
 			}
 		}
@@ -161,12 +181,12 @@ const (
 	// 1. Allow mesh color or texture
 	// 2. Send container width for #3 to work
 	FSHADER_OPENGL_ES_2_0_TEXT = `#version 120
-  uniform vec4 textarr[100];
-  uniform vec2 textstart;
+  uniform vec4 box;
+  uniform vec4 text_arr[15];
+  uniform float text_scale = 1.0;
 
   varying vec3 colOut;
 
-  #define DOWN_SCALE 2.0
 
   #define CHAR_SIZE vec2(8, 12)
   #define CHAR_SPACING vec2(8, 12)
@@ -183,7 +203,7 @@ const (
   // STILL DONT KNOW THIS ONE
   vec4 ch_lar = vec4(0x000000,0x10386C,0xC6C6FE,0x000000);
 
-  vec2 res = vec2(360.0, 640.0) / DOWN_SCALE;
+  vec2 res = vec2(360.0, 640.0) / text_scale;
   vec2 print_pos = vec2(0);
 
   //Extracts bit b from the given number.
@@ -238,19 +258,19 @@ const (
   float text(vec2 uv)
   {
 	float col = 0.0;
-	float end = floor((360.0 / DOWN_SCALE - textstart.x * DOWN_SCALE) / CHAR_SIZE.x);
+	float wrap = floor((box.z / text_scale) / CHAR_SIZE.x);
 
-	print_pos = vec2(textstart.x, res.y - textstart.y - STRHEIGHT(1.0));
+	print_pos = vec2(box.x / text_scale, (box.w / text_scale) - STRHEIGHT(1.0));
 
-	for(int i = 0; i < textarr.length(); i++)
+	for(int i = 0; i < text_arr.length(); i++)
 	{
-	  if (textarr[i].w == 1) {
-		print_pos = vec2(textstart.x, print_pos.y - STRHEIGHT(1.0));
+	  if (text_arr[i].w == 1) {
+		print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
 	  } else {
-		if (i > 0.0 && mod(i, end) == 0.0) {
-		  print_pos = vec2(textstart.x, print_pos.y - STRHEIGHT(1.0));
+		if (i > 0.0 && mod(i, wrap) == 0.0) {
+		  print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
 		}
-		col += char(textarr[i],uv); 
+		col += char(text_arr[i],uv); 
 	  }
 	}
 
@@ -259,8 +279,8 @@ const (
 
   void main()
   {
-	vec2 uv = gl_FragCoord.xy / DOWN_SCALE;
-	vec2 duv = floor(gl_FragCoord.xy / DOWN_SCALE);
+	vec2 uv = gl_FragCoord.xy / text_scale;
+	vec2 duv = floor(gl_FragCoord.xy / text_scale);
 
 	float pixel = text(duv);
 
@@ -273,7 +293,7 @@ const (
 
 // precision mediump float;
 
-//   uniform vec2 textarr[100];
+//   uniform vec2 text_arr[100];
 //   uniform vec4 textstart;
 
 //   varying vec3 colOut;
@@ -281,7 +301,7 @@ const (
 //   #define CHAR_SIZE vec2(6, 7)
 //   #define CHAR_SPACING vec2(6, 9)
 
-//   #define DOWN_SCALE 1.0
+//   #define text_scale 1.0
 
 //   vec2 start_pos = vec2(0,0);
 //   vec2 print_pos = vec2(0,0);
@@ -426,9 +446,9 @@ const (
 // 	// BEGIN_TEXT(posOut.x, posOut.y * 320)
 // 	// BEGIN_TEXT(posOut.x, posOut.y * ((640  / DOWN_SCALE) - CHAR_SIZE.y))
 // 	BEGIN_TEXT(textstart.x, textstart.y)
-// 	for(int i = 0; i < textarr.length(); i++)
+// 	for(int i = 0; i < text_arr.length(); i++)
 // 	{
-// 	  col+=char(textarr[i],uv)*text_color;
+// 	  col+=char(text_arr[i],uv)*text_color;
 // 	}
 
 // 	return col;

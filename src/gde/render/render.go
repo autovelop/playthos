@@ -68,7 +68,7 @@ func NewShader(vShader string, fShader string) uint32 {
 		logMsg := strings.Repeat("\x00", int(logLength+1))
 		gl.GetShaderInfoLog(fshader, logLength, nil, gl.Str(logMsg))
 
-		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", logMsg, vShader)
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", logMsg, fShader)
 		os.Exit(0)
 	}
 

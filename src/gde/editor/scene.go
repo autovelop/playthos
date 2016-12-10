@@ -3,6 +3,7 @@ package editor
 import (
 	"gde/engine"
 	"gde/render"
+	"gde/render/animation"
 	"gde/render/ui"
 	"log"
 )
@@ -41,17 +42,17 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 	sys_render.LoadRenderer(comp_renderer)
 
 	// Create player entity
-	ent_player := &engine.Entity{Id: "Player"}
-	ent_player.Init()
-	ent_player.Add(game)
+	// ent_player := &engine.Entity{Id: "Player"}
+	// ent_player.Init()
+	// ent_player.Add(game)
 
-	ent_player_comp_transform := &render.Transform{}
-	ent_player_comp_transform.Init()
-	ent_player_comp_transform.SetProperty("Position", render.Vector3{0.5, 1.0, 0})
-	ent_player_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 45})
+	// ent_player_comp_transform := &render.Transform{}
+	// ent_player_comp_transform.Init()
+	// ent_player_comp_transform.SetProperty("Position", render.Vector3{0.5, 1.0, 0})
+	// ent_player_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 45})
 
-	ent_player.AddComponent(ent_player_comp_transform)
-	ent_player.AddComponent(comp_renderer)
+	// ent_player.AddComponent(ent_player_comp_transform)
+	// ent_player.AddComponent(comp_renderer)
 
 	// Create UI entity
 
@@ -70,9 +71,9 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	ent_box_comp_transform := &render.Transform{}
 	ent_box_comp_transform.Init()
-	ent_box_comp_transform.SetProperty("Position", render.Vector3{0, 100, 0})
+	ent_box_comp_transform.SetProperty("Position", render.Vector3{20, 20, 0})
 	// ent_box_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 0})
-	ent_box_comp_transform.SetProperty("Dimensions", render.Vector3{360, 440, 1})
+	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{80, 600})
 	ent_box.AddComponent(ent_box_comp_transform)
 
 	comp_ui_renderer := &ui.UIRenderer{}
@@ -80,65 +81,31 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	text := &ui.Text{}
 	text.SetFont(font)
-	text.SetText(`Hello! Last key pressed.\/" Lorem ipsum testing more testing testing more`)
+	text.SetText(`Hello #gamedev! Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec mattis facilisis volutpat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eleifend in ex quis facilisis. Nulla non consequat justo. Nam blandit, neque a scelerisque laoreet, felis orci pretium risus, vel malesuada turpis ante quis augue. Donec in ullamcorper purus, vitae scelerisque odio. Ut ac luctus dolor, sit amet elementum nibh. Phasellus nunc nibh, pretium a ullamcorper vitae, fermentum ac nibh.`)
 	comp_ui_renderer.SetProperty("Text", text.TextToVec4())
-	comp_ui_renderer.SetProperty("TextStart", render.Vector2{10, 10})
+	comp_ui_renderer.SetProperty("Scale", 2.0)
+	comp_ui_renderer.SetProperty("Padding", render.Vector4{280 /*top*/, 10 /*right*/, 0 /*bottom*/, 10 /*left*/})
 
 	ent_box.AddComponent(comp_ui_renderer)
 
 	sys_ui.LoadRenderer(comp_ui_renderer)
 
-	// Simple UI comp_renderer
-	// ui_renderer := &Renderer{}
-	// ui_renderer.Init()
-	// ui_renderer.LoadMesh(&Mesh{
-	// 	Vertices: []float32{
-	// 		1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
-	// 		1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
-	// 		0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-	// 		0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-	// 	},
-	// 	Indicies: []uint8{
-	// 		0, 1, 3,
-	// 		1, 2, 3,
-	// 	},
-	// })
-	// render.LoadRenderer(ui_renderer)
+	// Officially the worst Animation system since forever!
+	sys_anim := &animation.Animation{}
+	sys_anim.Init()
+	game.AddSystem(engine.SystemAnimation, sys_anim)
 
-	// // Creatae a text box
-	// heading := &Entity{Id: "Heading"}
-	// heading.Init()
-	// heading.Add(engine)
-
-	// text_transform := &Transform{}
-	// text_transform.Init()
-	// text_transform.SetProperty("Position", Vector3{0.0, 0.0, 0})
-
-	// // Simple Quad mesh text renderer
-	// text_renderer := &TextRenderer{}
-	// text_renderer.Init()
-	// text_renderer.LoadMesh(&Mesh{
-	// 	Vertices: []float32{
-	// 		1.0, 2.0, -0.1, 1.0, 0.0, 0.0,
-	// 		1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
-	// 		0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-	// 		0.0, 2.0, -0.1, 0.0, 1.0, 1.0,
-	// 	},
-	// 	Indicies: []uint8{
-	// 		0, 1, 3,
-	// 		1, 2, 3,
-	// 	},
-	// })
-
-	// font := &Font{}
-	// font.NewFont()
-	// text := &Text{"Hello! Last key pressed: ", font}
-	// text_renderer.SetProperty("Text", text.TextToVec2())
-
-	// render.LoadTextRenderer(text_renderer)
-
-	// heading.AddComponent(text_transform)
-	// heading.AddComponent(text_renderer)
+	ent_box_comp_animator := &animation.Animator{EndFrame: 240, Start: func(frame int) {
+		ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{80, 600})
+	}, Step: func(frame int) {
+		dimensions := ent_box_comp_transform.GetProperty("Dimensions")
+		switch dimensions := dimensions.(type) {
+		case render.Vector2:
+			ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{dimensions.X + 1, dimensions.Y})
+		}
+	}}
+	ent_box_comp_animator.Init()
+	ent_box.AddComponent(ent_box_comp_animator)
 
 	// // // Lets test keyboard support
 	// keyInput, err := engine.GetSystem(SystemInputKeyboard).(Input)
