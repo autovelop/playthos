@@ -22,5 +22,9 @@ type RendererRoutine interface {
 	MeshVertices() []float32
 	MeshIndicies() []uint8
 
+	// Used for OpenGLES
+	MeshByteVertices() []byte
+	MeshByteIndicies() []byte
+
 	TextureRGBA() *image.RGBA
 }

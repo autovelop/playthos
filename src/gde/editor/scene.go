@@ -3,8 +3,9 @@ package editor
 import (
 	"gde/engine"
 	"gde/render"
-	"gde/render/animation"
-	"gde/render/ui"
+
+	// "gde/render/animation"
+	// "gde/render/ui"
 	"log"
 )
 
@@ -19,6 +20,10 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 		log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
 		return
 	}
+
+	// FANUS DOEN DIE VOLGENDE NEXT
+	// - SPLIT DIE TEXTURE LOADING SODAT MOBILE A ANDER PACKAGE GEBRUIK MET DIE NAAM X/MOBILE/ASSET: https://github.com/golang/mobile/blob/master/example/flappy/game.go
+	// - MAAK SEKER ALLES WERK
 
 	// Simple Quad mesh renderer
 	comp_renderer := &render.MeshRenderer{}
@@ -36,76 +41,82 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 		},
 	})
 	texture := &render.Texture{}
-	texture.NewTexture("weapon.png")
+	texture.NewTextureMobile("weapon.png")
 	comp_renderer.LoadTexture(texture)
 
 	sys_render.LoadRenderer(comp_renderer)
 
+	// fmt.Printf("\n%+v\n\n", game)
+
 	// Create player entity
-	// ent_player := &engine.Entity{Id: "Player"}
-	// ent_player.Init()
-	// ent_player.Add(game)
+	ent_player := &engine.Entity{Id: "Player"}
+	ent_player.Init()
+	ent_player.Add(game)
 
-	// ent_player_comp_transform := &render.Transform{}
-	// ent_player_comp_transform.Init()
-	// ent_player_comp_transform.SetProperty("Position", render.Vector3{0.5, 1.0, 0})
-	// ent_player_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 45})
+	ent_player_comp_transform := &render.Transform{}
+	ent_player_comp_transform.Init()
+	ent_player_comp_transform.SetProperty("Position", render.Vector3{0.5, 1.0, 0})
+	ent_player_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 45})
 
-	// ent_player.AddComponent(ent_player_comp_transform)
-	// ent_player.AddComponent(comp_renderer)
+	ent_player.AddComponent(ent_player_comp_transform)
+	ent_player.AddComponent(comp_renderer)
 
 	// Create UI entity
 
 	// First create a UI system
-	sys_ui := &ui.UI{Platform: game.GetPlatform()}
-	sys_render.AddSubSystem(sys_ui)
-	sys_ui.Init()
+	// sys_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
+	// if !err {
+	// 	log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
+	// 	return
+	// }
+	// // sys_ui := &ui.UI{Platform: game.GetPlatform()}
+	// sys_render.AddSubSystem(sys_ui)
+	// sys_ui.Init()
 
-	// Load a simple font
-	font := &ui.Font{}
-	font.NewFont()
+	// // Load a simple font
+	// font := &ui.Font{}
+	// font.NewFont()
 
-	ent_box := &engine.Entity{Id: "Box"}
-	ent_box.Init()
-	ent_box.Add(game)
+	// ent_box := &engine.Entity{Id: "Box"}
+	// ent_box.Init()
+	// ent_box.Add(game)
 
-	ent_box_comp_transform := &render.Transform{}
-	ent_box_comp_transform.Init()
-	ent_box_comp_transform.SetProperty("Position", render.Vector3{20, 20, 0})
-	// ent_box_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 0})
-	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{80, 600})
-	ent_box.AddComponent(ent_box_comp_transform)
+	// ent_box_comp_transform := &render.Transform{}
+	// ent_box_comp_transform.Init()
+	// ent_box_comp_transform.SetProperty("Position", render.Vector3{4, 4, 0})
+	// ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{352, 632})
+	// ent_box.AddComponent(ent_box_comp_transform)
 
-	comp_ui_renderer := &ui.UIRenderer{}
-	comp_ui_renderer.Init()
+	// comp_ui_renderer := &ui.UIRenderer{}
+	// comp_ui_renderer.Init()
 
-	text := &ui.Text{}
-	text.SetFont(font)
-	text.SetText(`Hello #gamedev! Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec mattis facilisis volutpat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eleifend in ex quis facilisis. Nulla non consequat justo. Nam blandit, neque a scelerisque laoreet, felis orci pretium risus, vel malesuada turpis ante quis augue. Donec in ullamcorper purus, vitae scelerisque odio. Ut ac luctus dolor, sit amet elementum nibh. Phasellus nunc nibh, pretium a ullamcorper vitae, fermentum ac nibh.`)
-	comp_ui_renderer.SetProperty("Text", text.TextToVec4())
-	comp_ui_renderer.SetProperty("Scale", 2.0)
-	comp_ui_renderer.SetProperty("Padding", render.Vector4{280 /*top*/, 10 /*right*/, 0 /*bottom*/, 10 /*left*/})
+	// text := &ui.Text{}
+	// text.SetFont(font)
+	// text.SetText(`Common Sword`)
+	// comp_ui_renderer.SetProperty("Text", text.TextToVec4())
+	// comp_ui_renderer.SetProperty("Scale", 2.0)
+	// comp_ui_renderer.SetProperty("Padding", render.Vector4{10 /*top*/, 10 /*right*/, 10 /*bottom*/, 10 /*left*/})
 
-	ent_box.AddComponent(comp_ui_renderer)
+	// ent_box.AddComponent(comp_ui_renderer)
 
-	sys_ui.LoadRenderer(comp_ui_renderer)
+	// sys_ui.LoadRenderer(comp_ui_renderer)
 
 	// Officially the worst Animation system since forever!
-	sys_anim := &animation.Animation{}
-	sys_anim.Init()
-	game.AddSystem(engine.SystemAnimation, sys_anim)
+	// sys_anim := &animation.Animation{}
+	// sys_anim.Init()
+	// game.AddSystem(engine.SystemAnimation, sys_anim)
 
-	ent_box_comp_animator := &animation.Animator{EndFrame: 240, Start: func(frame int) {
-		ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{80, 600})
-	}, Step: func(frame int) {
-		dimensions := ent_box_comp_transform.GetProperty("Dimensions")
-		switch dimensions := dimensions.(type) {
-		case render.Vector2:
-			ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{dimensions.X + 1, dimensions.Y})
-		}
-	}}
-	ent_box_comp_animator.Init()
-	ent_box.AddComponent(ent_box_comp_animator)
+	// ent_box_comp_animator := &animation.Animator{EndFrame: 240, Start: func(frame int) {
+	// 	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{80, 600})
+	// }, Step: func(frame int) {
+	// 	dimensions := ent_box_comp_transform.GetProperty("Dimensions")
+	// 	switch dimensions := dimensions.(type) {
+	// 	case render.Vector2:
+	// 		ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{dimensions.X + 1, dimensions.Y})
+	// 	}
+	// }}
+	// ent_box_comp_animator.Init()
+	// ent_box.AddComponent(ent_box_comp_animator)
 
 	// // // Lets test keyboard support
 	// keyInput, err := engine.GetSystem(SystemInputKeyboard).(Input)

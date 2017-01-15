@@ -15,33 +15,33 @@ type UIRenderer struct {
 }
 
 func (r *UIRenderer) Init() {
-	log.Printf("UIRenderer > Init")
+	// log.Printf("UIRenderer > Init")
 	r.Properties = make(map[string]interface{})
 }
 
 func (r *UIRenderer) GetProperty(key string) interface{} {
-	log.Printf("UIRenderer > Property > Get: %v", key)
+	// log.Printf("UIRenderer > Property > Get: %v", key)
 	return r.Properties[key]
 }
 
 func (r *UIRenderer) SetProperty(key string, val interface{}) {
-	log.Printf("UIRenderer > Property > Set: %v", key)
+	// log.Printf("UIRenderer > Property > Set: %v", key)
 	r.Properties[key] = val
 }
 
 func (r *UIRenderer) LoadMesh(mesh *render.Mesh) {
-	log.Printf("UIRenderer > Mesh > Load: %v", mesh)
+	// log.Printf("UIRenderer > Mesh > Load: %v", mesh)
 	r.Mesh = mesh
 }
 
 func (r *UIRenderer) LoadTexture(texture *render.Texture) {
-	log.Printf("UIRenderer > Texture > Load: %v", texture)
+	// log.Printf("UIRenderer > Texture > Load: %v", texture)
 	r.Texture = texture
 }
 
 // Make this happen on the Render System
 func (r *UIRenderer) MeshVertices() []float32 {
-	log.Printf("UIRenderer > Mesh > Vectices: %v", len(r.Mesh.Vertices))
+	// log.Printf("UIRenderer > Mesh > Vectices: %v", len(r.Mesh.Vertices))
 	return r.Mesh.Vertices
 }
 

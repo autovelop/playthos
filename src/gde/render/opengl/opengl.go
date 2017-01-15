@@ -1,6 +1,10 @@
 package opengl
 
 import (
+	"log"
+	"os"
+	"strings"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
@@ -35,7 +39,7 @@ func (r *OpenGL) Init() {
 	// gl.Viewport(0, 0, r.Device.RenderW, r.Device.RenderH)
 	gl.Viewport(0, 0, 360, 640)
 
-	r.ShaderProgram = render.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
+	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 	// r.TextShaderProgram = r.NewShader(gde.VSHADER_OPENGL_ES_2_0_TEXT, gde.FSHADER_OPENGL_ES_2_0_TEXT)
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.FRONT_AND_BACK)
@@ -95,7 +99,6 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 			texture := renderer.GetProperty("TEXTURE")
 			switch texture := texture.(type) {
 			case uint32:
-				// fmt.Printf("here %v \n\n\n", texture)
 				gl.ActiveTexture(gl.TEXTURE0)
 				gl.BindTexture(gl.TEXTURE_2D, texture)
 				gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
@@ -114,7 +117,7 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 		glfw.PollEvents()
 	} else {
 		glfw.Terminate()
-		// when thid happens, make sure render system is removed from engine so that another game loop doesn't occur
+		// when this happens, make sure render system is removed from engine so that another game loop doesn't occur
 	}
 }
 func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
@@ -147,9 +150,9 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
 	gl.EnableVertexAttribArray(2)
 
-	// Unbind Vertex array object
 	renderer.SetProperty("VAO", vertexArrayID)
-	// fmt.Printf("VAO Load: %v\n", vertexArrayID)
+
+	// Unbind Vertex array object
 	gl.BindVertexArray(0)
 
 	// Load texture
@@ -174,38 +177,6 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 	renderer.SetProperty("TEXTURE", texture)
 }
 
-// func (r *OpenGL) LoadTextRenderer(renderer *gde.TextRenderer) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
-// 	// Bind vertex array object. This must wrap around the mesh creation because it is how we are going to access it later when we draw
-// 	var vertexArrayID uint32
-// 	gl.GenVertexArrays(1, &vertexArrayID)
-// 	gl.BindVertexArray(vertexArrayID)
-
-// 	// Vertex buffer
-// 	var vertexBuffer uint32
-// 	gl.GenBuffers(1, &vertexBuffer)
-// 	gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-// 	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.Mesh.Vertices)*4, gl.Ptr(renderer.Mesh.Vertices), gl.STATIC_DRAW)
-
-// 	// Element buffer
-// 	var elementBuffer uint32
-// 	gl.GenBuffers(1, &elementBuffer)
-// 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
-// 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(renderer.Mesh.Indicies)*4, gl.Ptr(renderer.Mesh.Indicies), gl.STATIC_DRAW)
-
-// 	// Linking vertex attributes
-// 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(0))
-// 	gl.EnableVertexAttribArray(0)
-
-// 	// Linking fragment attributes
-// 	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
-// 	gl.EnableVertexAttribArray(1)
-
-// 	// Unbind Vertex array object
-// 	renderer.SetProperty("VAO", vertexArrayID)
-// 	// fmt.Printf("VAO Load: %v\n", vertexArrayID)
-// 	gl.BindVertexArray(0)
-// }
-
 func (r *OpenGL) AddSubSystem(system render.RenderRoutine) {
 	r.uiSystem = system
 }
@@ -215,4 +186,80 @@ func (r *OpenGL) Stop() {
 
 func (r *OpenGL) GetWindow() *glfw.Window {
 	return r.window
+}
+
+func (r *OpenGL) NewShader(vShader string, fShader string) uint32 {
+	version := gl.GoStr(gl.GetString(gl.VERSION))
+	log.Printf("Render > OpenGL > Version: %v", version)
+	// Create vertex shader
+	vshader := gl.CreateShader(gl.VERTEX_SHADER)
+	vsources, vfree := gl.Strs(vShader)
+	gl.ShaderSource(vshader, 1, vsources, nil)
+	vfree()
+	gl.CompileShader(vshader)
+	defer gl.DeleteShader(vshader)
+
+	var vstatus int32
+	gl.GetShaderiv(vshader, gl.COMPILE_STATUS, &vstatus)
+	if vstatus == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(vshader, gl.INFO_LOG_LENGTH, &logLength)
+
+		logMsg := strings.Repeat("\x00", int(logLength+1))
+		gl.GetShaderInfoLog(vshader, logLength, nil, gl.Str(logMsg))
+
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", logMsg, vShader)
+		os.Exit(0)
+	}
+
+	// Create fragment shader
+	fshader := gl.CreateShader(gl.FRAGMENT_SHADER)
+	fsources, ffree := gl.Strs(fShader)
+	gl.ShaderSource(fshader, 1, fsources, nil)
+	ffree()
+	gl.CompileShader(fshader)
+	defer gl.DeleteShader(fshader)
+
+	var fstatus int32
+	gl.GetShaderiv(fshader, gl.COMPILE_STATUS, &fstatus)
+	if fstatus == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(fshader, gl.INFO_LOG_LENGTH, &logLength)
+
+		logMsg := strings.Repeat("\x00", int(logLength+1))
+		gl.GetShaderInfoLog(fshader, logLength, nil, gl.Str(logMsg))
+
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", logMsg, fShader)
+		os.Exit(0)
+	}
+
+	// Create program
+	var shaderProgram uint32
+	shaderProgram = gl.CreateProgram()
+
+	gl.AttachShader(shaderProgram, vshader)
+	gl.AttachShader(shaderProgram, fshader)
+
+	// Link program
+	gl.LinkProgram(shaderProgram)
+
+	var statisLink int32
+	gl.GetProgramiv(shaderProgram, gl.LINK_STATUS, &statisLink)
+	if statisLink == gl.FALSE {
+		var logLength int32
+		gl.GetProgramiv(shaderProgram, gl.INFO_LOG_LENGTH, &logLength)
+
+		logMsg := strings.Repeat("\x00", int(logLength+1))
+		gl.GetProgramInfoLog(shaderProgram, logLength, nil, gl.Str(logMsg))
+
+		log.Printf("\n\n ### SHADER LINK ERROR ### \n%v\n\n", logMsg)
+		os.Exit(0)
+	}
+
+	// Use this program for all upcoming render calls
+	gl.UseProgram(shaderProgram)
+
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+
+	return shaderProgram
 }

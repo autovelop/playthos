@@ -9,9 +9,13 @@ import (
 	"golang.org/x/mobile/gl"
 	"log"
 
-	"gde"
-	"gde/opengles"
-	touchPkg "gde/touch"
+	"gde/editor"
+	"gde/engine"
+	// "gde/input/touch"
+	"gde/render"
+	"gde/render/opengles"
+	"gde/render/ui"
+	"gde/render/ui/uigles"
 )
 
 // var (
@@ -33,15 +37,23 @@ import (
 
 func main() {
 	app.Main(func(a app.App) {
-		// Create game engine
-		engine := &gde.Engine{RenderSystem: "OpenGLES"}
-		engine.Init()
 
-		render := &opengles.RenderOpenGLES{}
-		engine.AddSystem(gde.SystemRender, render)
+		// Determine platform automatically. Screen Dimensions, Screen Resolution, Screen Aspect Ratio, etc.
+		platform := &engine.Platform{}
+		platform.NewPlatform(360, 640, 360, 640)
 
-		touchSys := &touchPkg.Touch{}
-		engine.AddSystem(gde.SystemInputTouch, touchSys)
+		// Greate game engine
+		game := &engine.Engine{} // Set Device, OS, and OpenGL
+		game.Init(platform)
+
+		render := &opengles.OpenGLES{}
+		game.AddSystem(engine.SystemRender, render)
+
+		render_ui := &uigles.UIGLES{}
+		game.AddSystem(engine.SystemUI, render_ui)
+
+		// touchSys := &touchPkg.Touch{}
+		// engine.AddSystem(gde.SystemInputTouch, touchSys)
 
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
@@ -49,10 +61,10 @@ func main() {
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
 					render.Context, _ = e.DrawContext.(gl.Context)
-					onStart(engine)
+					onStart(game)
 					a.Send(paint.Event{})
 				case lifecycle.CrossOff:
-					onStop(engine)
+					onStop(game)
 					render.Context = nil
 				}
 			case size.Event:
@@ -63,11 +75,11 @@ func main() {
 				if render.Context == nil || e.External {
 					continue
 				}
-				onPaint(engine)
+				onPaint(game)
 				a.Publish()
 				a.Send(paint.Event{})
 			case touch.Event:
-				touchSys.Touch(0, e.X, e.Y)
+				// touchSys.Touch(0, e.X, e.Y)
 				// touchX = e.X
 				// touchY = e.Y
 			}
@@ -75,24 +87,29 @@ func main() {
 	})
 }
 
-func onStart(engine *gde.Engine) {
-	log.Printf("----------------- OpenGL Version: %v ----------------- ", gl.Version())
-
-	render, err := engine.GetSystem(gde.SystemRender).(gde.RenderRoutine)
+func onStart(game *engine.Engine) {
+	sys_render, err := game.GetSystem(engine.SystemRender).(render.RenderRoutine)
 	if !err {
-		log.Println(err)
+		log.Printf("android.go - %v", err)
 		return
 	}
-	render.Init()
+	sys_render.Init()
 
-	scene := &gde.Scene{}
-	scene.LoadScene(engine)
+	sys_render_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
+	if !err {
+		log.Printf("android.go - %v", err)
+		return
+	}
+	sys_render_ui.Init()
+
+	scene := &editor.Scene{}
+	scene.LoadScene(game)
 }
 
-func onStop(engine *gde.Engine) {
-	engine.Shutdown()
+func onStop(game *engine.Engine) {
+	game.Shutdown()
 }
 
-func onPaint(engine *gde.Engine) {
-	engine.Update()
+func onPaint(game *engine.Engine) {
+	game.Update()
 }

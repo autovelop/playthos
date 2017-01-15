@@ -1,7 +1,7 @@
 package render
 
 import (
-	"fmt"
+	// "fmt"
 	"gde/engine"
 )
 
@@ -10,7 +10,7 @@ type Transform struct {
 }
 
 func (t *Transform) Init() {
-	fmt.Println("Transform.Init() executed")
+	// fmt.Println("Transform.Init() executed")
 	t.Properties = make(map[string]interface{})
 }
 

@@ -2,13 +2,8 @@ package engine
 
 import (
 	"log"
+	"time"
 )
-
-type Engine struct {
-	Entities map[string]*Entity
-	Systems  map[int]System
-	platform *Platform
-}
 
 const (
 	SystemRender = iota
@@ -22,11 +17,35 @@ const (
 	SystemAudio
 )
 
+type Engine struct {
+	Entities      map[string]*Entity
+	Systems       map[int]System
+	debug         bool
+	platform      *Platform
+	frames        uint64
+	framesCounter time.Duration
+	frameTime     time.Duration
+	startTime     time.Time
+	lastTime      time.Time
+	unproccTime   time.Duration
+}
+
+func (e *Engine) Printf(format string, data ...interface{}) {
+	log.Printf("Engine > Init", data)
+}
+
 func (e *Engine) Init(platform *Platform) {
-	log.Printf("Engine > Init")
+	if e.debug {
+		e.Printf("Engine > Init")
+	}
 	e.Entities = make(map[string]*Entity)
 	e.Systems = make(map[int]System)
 	e.platform = platform
+
+	e.frameTime = time.Duration(1000/60) * time.Millisecond
+	e.lastTime = time.Now()
+	e.startTime = time.Now()
+	// check out wolfengo
 }
 
 func (e *Engine) GetPlatform() *Platform {
@@ -34,9 +53,27 @@ func (e *Engine) GetPlatform() *Platform {
 }
 
 func (e *Engine) Update() {
-	// log.Printf("Engine > Update")
-	for _, v := range e.Systems {
-		v.Update(&e.Entities)
+	e.startTime = time.Now()
+	passedTime := e.startTime.Sub(e.lastTime)
+	e.lastTime = e.startTime
+
+	e.unproccTime += passedTime
+	e.framesCounter += passedTime
+
+	for e.unproccTime > e.frameTime {
+		// log.Printf("Engine > Update")
+		e.unproccTime -= e.frameTime
+		e.frames++
+
+		if e.framesCounter >= time.Second {
+			log.Printf("%d FPS\n", e.frames)
+			e.frames = 0
+			e.framesCounter -= time.Second
+		}
+		for _, v := range e.Systems {
+
+			v.Update(&e.Entities)
+		}
 	}
 }
 

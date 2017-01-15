@@ -5,12 +5,14 @@ import (
 	"runtime"
 
 	"github.com/go-gl/glfw/v3.2/glfw"
+	// "github.com/pkg/profile"
 
 	"gde/editor"
 	"gde/engine"
 	"gde/input/keyboard"
 	"gde/input/mouse"
 	"gde/render/opengl"
+	"gde/render/ui/uigl"
 )
 
 func init() {
@@ -18,6 +20,7 @@ func init() {
 }
 
 func main() {
+	// defer profile.Start(profile.ProfilePath(os.Getenv("HOME"))).Stop()
 
 	// Intialize GLFW
 	if err := glfw.Init(); err != nil {
@@ -38,6 +41,11 @@ func main() {
 	game.AddSystem(engine.SystemRender, render)
 	render.Init()
 	window := render.GetWindow()
+
+	// Create ui system
+	sys_ui := &uigl.UIGL{}
+	game.AddSystem(engine.SystemUI, sys_ui)
+	sys_ui.Init()
 
 	// Create keyboard input system
 	// window.GetUserPointer().
