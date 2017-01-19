@@ -16,7 +16,7 @@ type RenderRoutine interface {
 
 	LoadRenderer(RendererRoutine)
 	NewShader(string, string) uint32
-	AddSubSystem(RenderRoutine)
+	AddUISystem(*engine.Engine)
 }
 
 const (

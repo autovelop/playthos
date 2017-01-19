@@ -12,7 +12,6 @@ import (
 	"gde/input/keyboard"
 	"gde/input/mouse"
 	"gde/render/opengl"
-	"gde/render/ui/uigl"
 )
 
 func init() {
@@ -41,11 +40,6 @@ func main() {
 	game.AddSystem(engine.SystemRender, render)
 	render.Init()
 	window := render.GetWindow()
-
-	// Create ui system
-	sys_ui := &uigl.UIGL{}
-	game.AddSystem(engine.SystemUI, sys_ui)
-	sys_ui.Init()
 
 	// Create keyboard input system
 	// window.GetUserPointer().

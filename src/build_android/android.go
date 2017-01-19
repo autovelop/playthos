@@ -14,16 +14,7 @@ import (
 	// "gde/input/touch"
 	"gde/render"
 	"gde/render/opengles"
-	"gde/render/ui"
-	"gde/render/ui/uigles"
 )
-
-// var (
-
-// 	green  float32
-// 	touchX float32
-// 	touchY float32
-// )
 
 // Samsung S6
 // - OpenGL ES Version: GL_ES_3_0 (possibly GL_ES_3_1 soon)
@@ -49,8 +40,8 @@ func main() {
 		render := &opengles.OpenGLES{}
 		game.AddSystem(engine.SystemRender, render)
 
-		render_ui := &uigles.UIGLES{}
-		game.AddSystem(engine.SystemUI, render_ui)
+		// render_ui := &uigles.UIGLES{}
+		// game.AddSystem(engine.SystemUI, render_ui)
 
 		// touchSys := &touchPkg.Touch{}
 		// engine.AddSystem(gde.SystemInputTouch, touchSys)
@@ -94,13 +85,6 @@ func onStart(game *engine.Engine) {
 		return
 	}
 	sys_render.Init()
-
-	sys_render_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
-	if !err {
-		log.Printf("android.go - %v", err)
-		return
-	}
-	sys_render_ui.Init()
 
 	scene := &editor.Scene{}
 	scene.LoadScene(game)

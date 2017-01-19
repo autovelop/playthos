@@ -9,7 +9,6 @@ import (
 	"log"
 )
 
-// Loads data from file/db
 type Scene struct {
 	name string
 }
@@ -20,10 +19,6 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 		log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
 		return
 	}
-
-	// FANUS DOEN DIE VOLGENDE NEXT
-	// - SPLIT DIE TEXTURE LOADING SODAT MOBILE A ANDER PACKAGE GEBRUIK MET DIE NAAM X/MOBILE/ASSET: https://github.com/golang/mobile/blob/master/example/flappy/game.go
-	// - MAAK SEKER ALLES WERK
 
 	// Simple Quad mesh renderer
 	comp_renderer := &render.MeshRenderer{}
@@ -46,8 +41,6 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	sys_render.LoadRenderer(comp_renderer)
 
-	// fmt.Printf("\n%+v\n\n", game)
-
 	// Create player entity
 	ent_player := &engine.Entity{Id: "Player"}
 	ent_player.Init()
@@ -63,15 +56,16 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	// Create UI entity
 
-	// First create a UI system
+	// // First create a UI system
+	sys_render.AddUISystem(game)
 	// sys_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
 	// if !err {
 	// 	log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
 	// 	return
 	// }
-	// // sys_ui := &ui.UI{Platform: game.GetPlatform()}
-	// sys_render.AddSubSystem(sys_ui)
-	// sys_ui.Init()
+	// log.Printf("UI SYSTEM: %+v", sys_ui)
+	// // // sys_ui := &ui.UI{Platform: game.GetPlatform()}
+	// // sys_ui.Init()
 
 	// // Load a simple font
 	// font := &ui.Font{}

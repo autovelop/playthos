@@ -1,293 +1,208 @@
 package uigles
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
+
+	"golang.org/x/mobile/gl"
+
 	"gde/engine"
 	"gde/render"
 	"gde/render/ui"
+	"log"
 )
 
+// Die nuwe UIGLES system is in, maar maak seker dit werk selfde as UIGL system in terme van uniforms, attributes, shaders, en orho!
+
 type UIGLES struct {
+	Context   gl.Context
+	glProgram gl.Program
 	ui.UI
 	ui.UIRoutine
 }
 
 func (u *UIGLES) Init() {
+	log.Printf("UIGLES > Init")
 	// FIX HERE!!!
 	// u.ShaderProgram = render.NewShader(VSHADER_OPENGL_ES_2_0_TEXT, FSHADER_OPENGL_ES_2_0_TEXT)
+	u.ShaderProgram = u.NewShader(ui.VSHADER_OPENGL_ES_2_0_TEXT, ui.FSHADER_OPENGL_ES_2_0_TEXT)
 }
 
-func (u *UIGLES) AddSubSystem(system render.RenderRoutine) {}
-
 func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
-	// THIS IS PAINFULL. JUST BITE THE BULLET!
-	// gl.UseProgram(u.ShaderProgram)
+	u.Context.UseProgram(u.glProgram)
 
-	// var view mgl32.Mat4
-	// view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	// view_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("view\x00"))
+	var view mgl32.Mat4
+	view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	view_uni := u.Context.GetUniformLocation(u.glProgram, "view")
 
-	// var proj mgl32.Mat4
-	// proj = mgl32.Ortho(0, 360, 640, 0, 0, 10)
-	// // proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
+	var proj mgl32.Mat4
+	proj = mgl32.Ortho(0, 360, 2, 0, 0.1, 1000)
+	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
+	proj_uni := u.Context.GetUniformLocation(u.glProgram, "projection")
 
-	// proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
-	// model_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("model\x00"))
-	// // dimensions_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("dimensions\x00"))
-	// box_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("box\x00"))
-	// text_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_arr\x00"))
-	// text_scale_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_scale\x00"))
+	model_uni := u.Context.GetUniformLocation(u.glProgram, "model")
 
-	// for _, v := range *entities {
-	// 	uiRenderer := v.GetComponent(&ui.UIRenderer{})
-	// 	if uiRenderer == nil {
-	// 		continue
-	// 	}
+	for _, v := range *entities {
+		renderer := v.GetComponent(&render.MeshRenderer{})
+		if renderer == nil {
+			continue
+		}
+		vb := renderer.GetProperty("VB")
+		switch vb := vb.(type) {
+		case gl.Buffer:
+			u.Context.BindBuffer(gl.ARRAY_BUFFER, vb)
+		}
 
-	// 	vao := uiRenderer.GetProperty("VAO")
-	// 	switch vao := vao.(type) {
-	// 	case uint32:
-	// 		gl.BindVertexArray(vao)
-	// 	}
+		eb := renderer.GetProperty("EB")
+		switch eb := eb.(type) {
+		case gl.Buffer:
+			u.Context.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, eb)
+		}
 
-	// 	// var model mgl32.Mat4
-	// 	model := mgl32.Ident4()
-	// 	trans := v.GetComponent(&render.Transform{})
+		// position := renderer.GetProperty("EB")
+		// switch position := position.(type) {
+		// case gl.Attrib:
+		// 	// Need to figure out again what this is for...
+		// 	r.Context.EnableVertexAttribArray(position)
+		// 	r.Context.VertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0)
+		// }
 
-	// 	pos := trans.GetProperty("Position")
-	// 	switch pos := pos.(type) {
-	// 	case render.Vector3:
-	// 		// gl.Uniform2fv(box_uni, 1, &[]float32{pos.X, pos.Y}[0])
-	// 		scaledX := pos.X // float32(u.Platform.RenderW)
-	// 		scaledY := pos.Y // float32(u.Platform.RenderH) * u.Platform.AspectRatio
-	// 		model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
+		var model mgl32.Mat4
+		trans := v.GetComponent(&render.Transform{})
 
-	// 		scale := trans.GetProperty("Dimensions")
-	// 		switch scale := scale.(type) {
-	// 		case render.Vector2:
+		pos := trans.GetProperty("Position")
+		switch pos := pos.(type) {
+		case render.Vector3:
+			model = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
+		}
 
-	// 			scaledX := scale.X // float32(u.Platform.RenderW)
-	// 			scaledY := scale.Y // float32(u.Platform.RenderH)
-	// 			model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
+		// rot := trans.GetProperty("Rotation")
+		// switch rot := rot.(type) {
+		// case render.Vector3:
+		// 	model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
+		// 	model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
+		// 	model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
+		// }
 
-	// 			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
-	// 			gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
-	// 			gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
+		// texture := renderer.GetProperty("TEXTURE")
+		// switch texture := texture.(type) {
+		// case gl.Texture:
+		// 	u.Context.ActiveTexture(gl.TEXTURE0)
+		// 	u.Context.BindTexture(gl.TEXTURE_2D, texture)
+		// 	u.Context.Uniform1i(u.Context.GetUniformLocation(u.glProgram, "texture"), 0)
+		// }
 
-	// 			text_arr := uiRenderer.GetProperty("Text")
-	// 			switch text_arr := text_arr.(type) {
-	// 			case []mgl32.Vec4:
-	// 				gl.Uniform4fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
+		u.Context.UniformMatrix4fv(model_uni, model[:])
+		u.Context.UniformMatrix4fv(view_uni, view[:])
+		u.Context.UniformMatrix4fv(proj_uni, proj[:])
 
-	// 				textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
-
-	// 				text_scale := uiRenderer.GetProperty("Scale")
-	// 				switch text_scale := text_scale.(type) {
-	// 				case float64:
-	// 					gl.Uniform1f(text_scale_uni, float32(text_scale))
-	// 				}
-
-	// 				text_padding := uiRenderer.GetProperty("Padding")
-	// 				switch text_padding := text_padding.(type) {
-	// 				case render.Vector4:
-	// 					textBox.X += text_padding.W
-	// 					textBox.Z -= text_padding.W
-	// 					textBox.Z -= text_padding.Y
-
-	// 					textBox.W -= text_padding.X
-	// 					// ONLY APPLIES IF ALIGNED TO BOTTOM
-	// 					textBox.Y -= text_padding.X
-	// 					textBox.Y -= text_padding.Z
-	// 				}
-	// 				// THESE CAN BE float64?
-	// 				gl.Uniform4fv(box_uni, 1, &[]float32{textBox.X, textBox.Y, textBox.Z, textBox.W}[0])
-
-	// 			}
-	// 		}
-	// 	}
-
-	// 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
-	// }
-
-	// gl.BindVertexArray(0)
+		u.Context.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
+	}
+	u.Context.Flush()
+}
+func (r *UIGLES) AddUISystem(game *engine.Engine) {
 }
 
 func (u *UIGLES) Stop() {
+	u.Context.DeleteProgram(u.glProgram)
 }
 
-func (r *UIGLES) LoadRenderer(renderer render.RendererRoutine) {
-	// renderer.LoadMesh(&render.Mesh{
-	// 	Vertices: []float32{
-	// 		1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
-	// 		1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
-	// 		0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-	// 		0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
-	// 	},
-	// 	Indicies: []uint8{
-	// 		0, 1, 3,
-	// 		1, 2, 3,
-	// 	},
-	// })
-	// // Bind vertex array object. This must wrap around the mesh creation because it is how we are going to access it later when we draw
-	// var vertexArrayID uint32
-	// gl.GenVertexArrays(1, &vertexArrayID)
-	// gl.BindVertexArray(vertexArrayID)
+func (u *UIGLES) LoadRenderer(renderer render.RendererRoutine) {
+	// Vertex buffer
+	var vertexBuffer = u.Context.CreateBuffer()
+	u.Context.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+	u.Context.BufferData(gl.ARRAY_BUFFER, renderer.MeshByteVertices(), gl.STATIC_DRAW)
+	renderer.SetProperty("VB", vertexBuffer)
 
-	// // Vertex buffer
-	// var vertexBuffer uint32
-	// gl.GenBuffers(1, &vertexBuffer)
-	// gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-	// gl.BufferData(gl.ARRAY_BUFFER, len(renderer.MeshVertices())*4, gl.Ptr(renderer.MeshVertices()), gl.STATIC_DRAW)
+	// Element buffer
+	var elementBuffer = u.Context.CreateBuffer()
+	u.Context.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
+	u.Context.BufferData(gl.ELEMENT_ARRAY_BUFFER, renderer.MeshByteIndicies(), gl.STATIC_DRAW)
+	renderer.SetProperty("EB", elementBuffer)
 
-	// // Element buffer
-	// var elementBuffer uint32
-	// gl.GenBuffers(1, &elementBuffer)
-	// gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
-	// gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(renderer.MeshIndicies())*4, gl.Ptr(renderer.MeshIndicies()), gl.STATIC_DRAW)
+	// Linking vertex attributes
+	posAttrib := u.Context.GetAttribLocation(u.glProgram, "pos")
+	u.Context.VertexAttribPointer(posAttrib, 3, gl.FLOAT, false, 8*4, 0)
+	u.Context.EnableVertexAttribArray(posAttrib)
 
-	// // Linking vertex attributes
-	// gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(0))
-	// gl.EnableVertexAttribArray(0)
+	// Linking fragment attributes
+	colAttrib := u.Context.GetAttribLocation(u.glProgram, "col")
+	u.Context.VertexAttribPointer(colAttrib, 3, gl.FLOAT, false, 8*4, 3*4)
+	u.Context.EnableVertexAttribArray(colAttrib)
 
-	// // Linking fragment attributes
-	// gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
-	// gl.EnableVertexAttribArray(1)
+	// Linking texture attributes
+	// texAttrib := u.Context.GetAttribLocation(u.glProgram, "tex")
+	// u.Context.VertexAttribPointer(texAttrib, 2, gl.FLOAT, false, 8*4, 6*4)
+	// u.Context.EnableVertexAttribArray(texAttrib)
 
-	// // Unbind Vertex array object
-	// renderer.SetProperty("VAO", vertexArrayID)
-	// // fmt.Printf("VAO Load: %v\n", vertexArrayID)
-	// gl.BindVertexArray(0)
+	// texture := u.Context.CreateTexture()
+
+	// u.Context.BindTexture(gl.TEXTURE_2D, texture)
+	// u.Context.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	// u.Context.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	// u.Context.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	// u.Context.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	// u.Context.TexImage2D(
+	// 	gl.TEXTURE_2D,
+	// 	0,
+	// 	int(renderer.TextureRGBA().Rect.Size().X),
+	// 	int(renderer.TextureRGBA().Rect.Size().Y),
+	// 	gl.RGBA,
+	// 	gl.UNSIGNED_BYTE,
+	// 	renderer.TextureRGBA().Pix)
+	// renderer.SetProperty("TEXTURE", texture)
 }
 
-const (
-	VSHADER_OPENGL_ES_2_0_TEXT = `#version 120
-  attribute vec4 pos;
-  attribute vec3 col;
-
-  uniform mat4 model;
-  uniform mat4 view;
-  uniform mat4 projection;
-
-  varying vec3 colOut;
-
-  void main() {
-	gl_Position = projection * view * model * pos;
-	colOut = col;
-  }
-  ` + "\x00"
-
-	// SHADER TODO LIST
-	// 1. Allow mesh color or texture
-	// 2. Send container width for #3 to work
-	FSHADER_OPENGL_ES_2_0_TEXT = `#version 120
-  uniform vec4 box;
-  uniform vec4 text_arr[200];
-  uniform float text_scale = 1.0;
-
-  varying vec3 colOut;
-
-
-  #define CHAR_SIZE vec2(8, 12)
-  #define CHAR_SPACING vec2(8, 12)
-
-  #define STRWIDTH(c) (c * CHAR_SPACING.x)
-  #define STRHEIGHT(c) (c * CHAR_SPACING.y)
-
-  #define NORMAL 0
-  #define INVERT 1
-  #define UNDERLINE 2
-
-  int TEXT_MODE = NORMAL;
-
-  // STILL DONT KNOW THIS ONE
-  vec4 ch_lar = vec4(0x000000,0x10386C,0xC6C6FE,0x000000);
-
-  vec2 res = vec2(360.0, 640.0) / text_scale;
-  vec2 print_pos = vec2(0);
-
-  //Extracts bit b from the given number.
-  //Shifts bits right (num / 2^bit) then ANDs the result with 1 (mod(result,2.0)).
-  float extract_bit(float n, float b)
-  {
-	b = clamp(b,-1.0,24.0);
-	return floor(mod(floor(n / pow(2.0,floor(b))),2.0));   
-  }
-
-  //Returns the pixel at uv in the given bit-packed sprite.
-  float sprite(vec4 spr, vec2 size, vec2 uv)
-  {
-	uv = floor(uv);
-
-	//Calculate the bit to extract (x + y * width) (flipped on x-axis)
-	float bit = (size.x-uv.x-1.0) + uv.y * size.x;
-
-	//Clipping bound to remove garbage outside the sprite's boundaries.
-	bool bounds = all(greaterThanEqual(uv,vec2(0))) && all(lessThan(uv,size));
-
-	float pixels = 0.0;
-	pixels += extract_bit(spr.x, bit - 72.0);
-	pixels += extract_bit(spr.y, bit - 48.0);
-	pixels += extract_bit(spr.z, bit - 24.0);
-	pixels += extract_bit(spr.w, bit - 00.0);
-
-	return bounds ? pixels : 0.0;
-  }
-
-  //Prints a character and moves the print position forward by 1 character width.
-  float char(vec4 ch, vec2 uv)
-  {
-	if( TEXT_MODE == INVERT )
-	{
-	  //Inverts all of the bits in the character.
-	  ch = pow(2.0,24.0)-1.0-ch;
+func (u *UIGLES) NewShader(vShader string, fShader string) uint32 {
+	version := gl.Version()
+	log.Printf("Render > UIGLES > Version: %v", version)
+	// Create vertex shader
+	vshader := u.Context.CreateShader(gl.VERTEX_SHADER)
+	if vshader.Value == 0 {
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", "Could not create VERTEXT_SHADER", vShader)
 	}
-	if( TEXT_MODE == UNDERLINE )
-	{
-	  //Makes the bottom 8 bits all 1.
-	  //Shifts the bottom chunk right 8 bits to drop the lowest 8 bits,
-	  //then shifts it left 8 bits and adds 255 (binary 11111111).
-	  ch.w = floor(ch.w/256.0)*256.0 + 255.0;  
+	u.Context.ShaderSource(vshader, vShader)
+	u.Context.CompileShader(vshader)
+	defer u.Context.DeleteShader(vshader)
+	if u.Context.GetShaderi(vshader, gl.COMPILE_STATUS) == 0 {
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", u.Context.GetShaderInfoLog(vshader), vShader)
 	}
 
-	float px = sprite(ch, CHAR_SIZE, uv - print_pos);
-	print_pos.x += CHAR_SPACING.x;
-	return px;
-  }
-
-  float text(vec2 uv)
-  {
-	float col = 0.0;
-	float wrap = floor((box.z / text_scale) / CHAR_SIZE.x);
-
-	print_pos = vec2(box.x / text_scale, (box.w / text_scale) - STRHEIGHT(1.0));
-
-	for(int i = 0; i < text_arr.length(); i++)
-	{
-	  if (text_arr[i].w == 1) {
-		print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
-	  } else {
-		if (i > 0.0 && mod(i, wrap) == 0.0) {
-		  print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
-		}
-		col += char(text_arr[i],uv); 
-	  }
+	// Create fragment shader
+	fshader := u.Context.CreateShader(gl.FRAGMENT_SHADER)
+	if fshader.Value == 0 {
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", "Could not create FRAGMENT_SHADER", fShader)
+	}
+	u.Context.ShaderSource(fshader, fShader)
+	u.Context.CompileShader(fshader)
+	defer u.Context.DeleteShader(fshader)
+	if u.Context.GetShaderi(fshader, gl.COMPILE_STATUS) == 0 {
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", u.Context.GetShaderInfoLog(fshader), fShader)
 	}
 
-	return col;
-  }
+	shaderProgram := u.Context.CreateProgram()
+	u.glProgram = shaderProgram
+	if shaderProgram.Value == 0 {
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", "No GLES program available")
+	}
 
-  void main()
-  {
-	vec2 uv = gl_FragCoord.xy / text_scale;
-	vec2 duv = floor(gl_FragCoord.xy / text_scale);
+	u.Context.AttachShader(shaderProgram, vshader)
+	u.Context.AttachShader(shaderProgram, fshader)
 
-	float pixel = text(duv);
+	u.Context.LinkProgram(shaderProgram)
 
-	vec3 col = mix(vec3(1.0),vec3(0,0,0),pixel);
+	// Flag shaders for deletion when program is unlinked.
+	u.Context.DeleteShader(vshader)
+	u.Context.DeleteShader(fshader)
 
-	gl_FragColor =vec4(0.6, 0.6, 0.6, 0.6) * vec4(vec3(col), 1.0);
-  }
-  ` + "\x00"
-)
+	if u.Context.GetProgrami(shaderProgram, gl.LINK_STATUS) == 0 {
+		defer u.Context.DeleteProgram(shaderProgram)
+		log.Printf("\n\n ### SHADER LINK ERROR ### \n%v\n\n", u.Context.GetProgramInfoLog(shaderProgram))
+	}
+
+	// u.Context.UseProgram(shaderProgram)
+
+	return shaderProgram.Value
+}
 
 // precision mediump float;
 

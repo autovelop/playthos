@@ -95,7 +95,6 @@ func (t *Texture) NewTextureMobile(path string) bool {
 
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 	t.RGBA = rgba
-	log.Println("HERE")
 	return true
 }
 

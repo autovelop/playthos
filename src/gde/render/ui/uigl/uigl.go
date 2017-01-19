@@ -6,6 +6,9 @@ import (
 	"gde/render/ui"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"log"
+	"os"
+	"strings"
 )
 
 type UIGL struct {
@@ -14,11 +17,10 @@ type UIGL struct {
 }
 
 func (u *UIGL) Init() {
+	log.Printf("UIGL > Init")
 	// FIX HERE!!!
-	// u.ShaderProgram = render.NewShader(VSHADER_OPENGL_ES_2_0_TEXT, FSHADER_OPENGL_ES_2_0_TEXT)
+	u.ShaderProgram = u.NewShader(ui.VSHADER_OPENGL_ES_2_0_TEXT, ui.FSHADER_OPENGL_ES_2_0_TEXT)
 }
-
-func (u *UIGL) AddSubSystem(system render.RenderRoutine) {}
 
 func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 	// THIS IS PAINFULL. JUST BITE THE BULLET!
@@ -113,6 +115,85 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 	gl.BindVertexArray(0)
 }
 
+func (r *UIGL) NewShader(vShader string, fShader string) uint32 {
+	version := gl.GoStr(gl.GetString(gl.VERSION))
+	log.Printf("Render > UIGL > Version: %v", version)
+	// Create vertex shader
+	vshader := gl.CreateShader(gl.VERTEX_SHADER)
+	vsources, vfree := gl.Strs(vShader)
+	gl.ShaderSource(vshader, 1, vsources, nil)
+	vfree()
+	gl.CompileShader(vshader)
+	defer gl.DeleteShader(vshader)
+
+	var vstatus int32
+	gl.GetShaderiv(vshader, gl.COMPILE_STATUS, &vstatus)
+	if vstatus == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(vshader, gl.INFO_LOG_LENGTH, &logLength)
+
+		logMsg := strings.Repeat("\x00", int(logLength+1))
+		gl.GetShaderInfoLog(vshader, logLength, nil, gl.Str(logMsg))
+
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", logMsg, vShader)
+		os.Exit(0)
+	}
+
+	// Create fragment shader
+	fshader := gl.CreateShader(gl.FRAGMENT_SHADER)
+	fsources, ffree := gl.Strs(fShader)
+	gl.ShaderSource(fshader, 1, fsources, nil)
+	ffree()
+	gl.CompileShader(fshader)
+	defer gl.DeleteShader(fshader)
+
+	var fstatus int32
+	gl.GetShaderiv(fshader, gl.COMPILE_STATUS, &fstatus)
+	if fstatus == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(fshader, gl.INFO_LOG_LENGTH, &logLength)
+
+		logMsg := strings.Repeat("\x00", int(logLength+1))
+		gl.GetShaderInfoLog(fshader, logLength, nil, gl.Str(logMsg))
+
+		log.Printf("\n\n ### SHADER ERROR ### \n%v\n%v\n\n", logMsg, fShader)
+		os.Exit(0)
+	}
+
+	// Create program
+	var shaderProgram uint32
+	shaderProgram = gl.CreateProgram()
+
+	gl.AttachShader(shaderProgram, vshader)
+	gl.AttachShader(shaderProgram, fshader)
+
+	// Link program
+	gl.LinkProgram(shaderProgram)
+
+	var statisLink int32
+	gl.GetProgramiv(shaderProgram, gl.LINK_STATUS, &statisLink)
+	if statisLink == gl.FALSE {
+		var logLength int32
+		gl.GetProgramiv(shaderProgram, gl.INFO_LOG_LENGTH, &logLength)
+
+		logMsg := strings.Repeat("\x00", int(logLength+1))
+		gl.GetProgramInfoLog(shaderProgram, logLength, nil, gl.Str(logMsg))
+
+		log.Printf("\n\n ### SHADER LINK ERROR ### \n%v\n\n", logMsg)
+		os.Exit(0)
+	}
+
+	// Use this program for all upcoming render calls
+	gl.UseProgram(shaderProgram)
+
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+
+	return shaderProgram
+}
+
+func (u *UIGL) AddUISystem(game *engine.Engine) {
+}
+
 func (u *UIGL) Stop() {
 }
 
@@ -159,137 +240,6 @@ func (r *UIGL) LoadRenderer(renderer render.RendererRoutine) {
 	// fmt.Printf("VAO Load: %v\n", vertexArrayID)
 	gl.BindVertexArray(0)
 }
-
-const (
-	VSHADER_OPENGL_ES_2_0_TEXT = `#version 120
-  attribute vec4 pos;
-  attribute vec3 col;
-
-  uniform mat4 model;
-  uniform mat4 view;
-  uniform mat4 projection;
-
-  varying vec3 colOut;
-
-  void main() {
-	gl_Position = projection * view * model * pos;
-	colOut = col;
-  }
-  ` + "\x00"
-
-	// SHADER TODO LIST
-	// 1. Allow mesh color or texture
-	// 2. Send container width for #3 to work
-	FSHADER_OPENGL_ES_2_0_TEXT = `#version 120
-  uniform vec4 box;
-  uniform vec4 text_arr[200];
-  uniform float text_scale = 1.0;
-
-  varying vec3 colOut;
-
-
-  #define CHAR_SIZE vec2(8, 12)
-  #define CHAR_SPACING vec2(8, 12)
-
-  #define STRWIDTH(c) (c * CHAR_SPACING.x)
-  #define STRHEIGHT(c) (c * CHAR_SPACING.y)
-
-  #define NORMAL 0
-  #define INVERT 1
-  #define UNDERLINE 2
-
-  int TEXT_MODE = NORMAL;
-
-  // STILL DONT KNOW THIS ONE
-  vec4 ch_lar = vec4(0x000000,0x10386C,0xC6C6FE,0x000000);
-
-  vec2 res = vec2(360.0, 640.0) / text_scale;
-  vec2 print_pos = vec2(0);
-
-  //Extracts bit b from the given number.
-  //Shifts bits right (num / 2^bit) then ANDs the result with 1 (mod(result,2.0)).
-  float extract_bit(float n, float b)
-  {
-	b = clamp(b,-1.0,24.0);
-	return floor(mod(floor(n / pow(2.0,floor(b))),2.0));   
-  }
-
-  //Returns the pixel at uv in the given bit-packed sprite.
-  float sprite(vec4 spr, vec2 size, vec2 uv)
-  {
-	uv = floor(uv);
-
-	//Calculate the bit to extract (x + y * width) (flipped on x-axis)
-	float bit = (size.x-uv.x-1.0) + uv.y * size.x;
-
-	//Clipping bound to remove garbage outside the sprite's boundaries.
-	bool bounds = all(greaterThanEqual(uv,vec2(0))) && all(lessThan(uv,size));
-
-	float pixels = 0.0;
-	pixels += extract_bit(spr.x, bit - 72.0);
-	pixels += extract_bit(spr.y, bit - 48.0);
-	pixels += extract_bit(spr.z, bit - 24.0);
-	pixels += extract_bit(spr.w, bit - 00.0);
-
-	return bounds ? pixels : 0.0;
-  }
-
-  //Prints a character and moves the print position forward by 1 character width.
-  float char(vec4 ch, vec2 uv)
-  {
-	if( TEXT_MODE == INVERT )
-	{
-	  //Inverts all of the bits in the character.
-	  ch = pow(2.0,24.0)-1.0-ch;
-	}
-	if( TEXT_MODE == UNDERLINE )
-	{
-	  //Makes the bottom 8 bits all 1.
-	  //Shifts the bottom chunk right 8 bits to drop the lowest 8 bits,
-	  //then shifts it left 8 bits and adds 255 (binary 11111111).
-	  ch.w = floor(ch.w/256.0)*256.0 + 255.0;  
-	}
-
-	float px = sprite(ch, CHAR_SIZE, uv - print_pos);
-	print_pos.x += CHAR_SPACING.x;
-	return px;
-  }
-
-  float text(vec2 uv)
-  {
-	float col = 0.0;
-	float wrap = floor((box.z / text_scale) / CHAR_SIZE.x);
-
-	print_pos = vec2(box.x / text_scale, (box.w / text_scale) - STRHEIGHT(1.0));
-
-	for(int i = 0; i < text_arr.length(); i++)
-	{
-	  if (text_arr[i].w == 1) {
-		print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
-	  } else {
-		if (i > 0.0 && mod(i, wrap) == 0.0) {
-		  print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
-		}
-		col += char(text_arr[i],uv); 
-	  }
-	}
-
-	return col;
-  }
-
-  void main()
-  {
-	vec2 uv = gl_FragCoord.xy / text_scale;
-	vec2 duv = floor(gl_FragCoord.xy / text_scale);
-
-	float pixel = text(duv);
-
-	vec3 col = mix(vec3(1.0),vec3(0,0,0),pixel);
-
-	gl_FragColor =vec4(0.6, 0.6, 0.6, 0.6) * vec4(vec3(col), 1.0);
-  }
-  ` + "\x00"
-)
 
 // precision mediump float;
 

@@ -11,6 +11,7 @@ import (
 
 	"gde/engine"
 	"gde/render"
+	"gde/render/ui/uigl"
 )
 
 type OpenGL struct {
@@ -23,6 +24,7 @@ type OpenGL struct {
 }
 
 func (r *OpenGL) Init() {
+	log.Printf("OpenGL > Init")
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
 		panic(err)
@@ -40,7 +42,7 @@ func (r *OpenGL) Init() {
 	gl.Viewport(0, 0, 360, 640)
 
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
-	// r.TextShaderProgram = r.NewShader(gde.VSHADER_OPENGL_ES_2_0_TEXT, gde.FSHADER_OPENGL_ES_2_0_TEXT)
+
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.FRONT_AND_BACK)
 }
@@ -177,8 +179,12 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 	renderer.SetProperty("TEXTURE", texture)
 }
 
-func (r *OpenGL) AddSubSystem(system render.RenderRoutine) {
-	r.uiSystem = system
+func (r *OpenGL) AddUISystem(game *engine.Engine) {
+	// Create ui system
+	sys_ui := &uigl.UIGL{}
+	game.AddSystem(engine.SystemUI, sys_ui)
+	sys_ui.Init()
+	r.uiSystem = sys_ui
 }
 
 func (r *OpenGL) Stop() {

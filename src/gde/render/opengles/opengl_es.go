@@ -10,6 +10,7 @@ import (
 
 	"gde/engine"
 	"gde/render"
+	"gde/render/ui/uigles"
 )
 
 type OpenGLES struct {
@@ -19,9 +20,12 @@ type OpenGLES struct {
 	glProgram     gl.Program
 	Context       gl.Context
 	Size          size.Event
+
+	uiSystem render.RenderRoutine
 }
 
 func (r *OpenGLES) Init() {
+	log.Printf("OpenGLES > Init")
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 	r.Context.Viewport(0, 0, 360, 640)
 	r.Context.Enable(gl.DEPTH_TEST)
@@ -150,6 +154,14 @@ func (r *OpenGLES) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE
 	renderer.SetProperty("TEXTURE", texture)
 }
 
+func (r *OpenGLES) AddUISystem(game *engine.Engine) {
+	// Create ui system
+	sys_ui := &uigles.UIGLES{Context: r.Context}
+	game.AddSystem(engine.SystemUI, sys_ui)
+	sys_ui.Init()
+	r.uiSystem = sys_ui
+}
+
 func (r *OpenGLES) Stop() {
 	r.Context.DeleteProgram(r.glProgram)
 	// CLEAN UP BUFFERS
@@ -158,7 +170,9 @@ func (r *OpenGLES) Stop() {
 
 func (r *OpenGLES) NewShader(vShader string, fShader string) uint32 {
 	version := gl.Version()
+	glsl_version := r.Context.GetString(gl.SHADING_LANGUAGE_VERSION)
 	log.Printf("Render > OpenGL > Version: %v", version)
+	log.Printf("Render > OpenGL > GLSL Version: %v", glsl_version)
 	// Create vertex shader
 	vshader := r.Context.CreateShader(gl.VERTEX_SHADER)
 	if vshader.Value == 0 {
