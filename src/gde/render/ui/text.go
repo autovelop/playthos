@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
+	"gde/render"
+	// "github.com/go-gl/mathgl/mgl32"
 )
 
 type Text struct {
@@ -29,8 +30,8 @@ func (t *Text) GetFont() *Font {
 	return t.font
 }
 
-func (t *Text) TextToVec4() []mgl32.Vec4 {
-	text_slc := make([]mgl32.Vec4, len(t.text))
+func (t *Text) TextToVec4() []render.Vector4 {
+	text_slc := make([]render.Vector4, len(t.text))
 
 	for v := range text_slc {
 		text_slc[v] = t.font.GetVec4(string(t.text[v]))

@@ -14,10 +14,10 @@ import (
 // Die nuwe UIGLES system is in, maar maak seker dit werk selfde as UIGL system in terme van uniforms, attributes, shaders, en orho!
 
 type UIGLES struct {
-	Context   gl.Context
-	glProgram gl.Program
 	ui.UI
 	ui.UIRoutine
+	Context   gl.Context
+	glProgram gl.Program
 }
 
 func (u *UIGLES) Init() {
@@ -35,28 +35,41 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 	view_uni := u.Context.GetUniformLocation(u.glProgram, "view")
 
 	var proj mgl32.Mat4
-	proj = mgl32.Ortho(0, 360, 2, 0, 0.1, 1000)
+	proj = mgl32.Ortho(0, 360, 640, 0, 0, 10)
 	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
-	proj_uni := u.Context.GetUniformLocation(u.glProgram, "projection")
 
+	proj_uni := u.Context.GetUniformLocation(u.glProgram, "projection")
 	model_uni := u.Context.GetUniformLocation(u.glProgram, "model")
 
+	box_uni := u.Context.GetUniformLocation(u.glProgram, "box")
+	text_uni := u.Context.GetUniformLocation(u.glProgram, "text_arr")
+	text_scale_uni := u.Context.GetUniformLocation(u.glProgram, "text_scale")
+
+	log.Printf("%v\n", "-7")
 	for _, v := range *entities {
-		renderer := v.GetComponent(&render.MeshRenderer{})
+		log.Printf("%v\n", "-6")
+		renderer := v.GetComponent(&ui.UIRenderer{})
+		log.Printf("%v\n", "-5")
 		if renderer == nil {
 			continue
 		}
+
+		log.Printf("%v\n", "-4")
 		vb := renderer.GetProperty("VB")
+		log.Printf("%v\n", "-3")
 		switch vb := vb.(type) {
 		case gl.Buffer:
 			u.Context.BindBuffer(gl.ARRAY_BUFFER, vb)
 		}
 
+		log.Printf("%v\n", "-3")
 		eb := renderer.GetProperty("EB")
+		log.Printf("%v\n", "-2")
 		switch eb := eb.(type) {
 		case gl.Buffer:
 			u.Context.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, eb)
 		}
+		log.Printf("%v\n", "-1")
 
 		// position := renderer.GetProperty("EB")
 		// switch position := position.(type) {
@@ -66,14 +79,14 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 		// 	r.Context.VertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0)
 		// }
 
-		var model mgl32.Mat4
-		trans := v.GetComponent(&render.Transform{})
+		// var model mgl32.Mat4
+		// trans := v.GetComponent(&render.Transform{})
 
-		pos := trans.GetProperty("Position")
-		switch pos := pos.(type) {
-		case render.Vector3:
-			model = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
-		}
+		// pos := trans.GetProperty("Position")
+		// switch pos := pos.(type) {
+		// case render.Vector3:
+		// 	model = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
+		// }
 
 		// rot := trans.GetProperty("Rotation")
 		// switch rot := rot.(type) {
@@ -91,11 +104,78 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 		// 	u.Context.Uniform1i(u.Context.GetUniformLocation(u.glProgram, "texture"), 0)
 		// }
 
-		u.Context.UniformMatrix4fv(model_uni, model[:])
-		u.Context.UniformMatrix4fv(view_uni, view[:])
-		u.Context.UniformMatrix4fv(proj_uni, proj[:])
+		// u.Context.UniformMatrix4fv(model_uni, model[:])
+		// u.Context.UniformMatrix4fv(view_uni, view[:])
+		// u.Context.UniformMatrix4fv(proj_uni, proj[:])
 
-		u.Context.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
+		// u.Context.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
+
+		// var model mgl32.Mat4
+		model := mgl32.Ident4()
+		trans := v.GetComponent(&render.Transform{})
+
+		pos := trans.GetProperty("Position")
+		log.Printf("%v\n", "0")
+		switch pos := pos.(type) {
+		case render.Vector3:
+			// gl.Uniform2fv(box_uni, 1, &[]float32{pos.X, pos.Y}[0])
+			scaledX := pos.X // float32(u.Platform.RenderW)
+			scaledY := pos.Y // float32(u.Platform.RenderH) * u.Platform.AspectRatio
+			model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
+
+			log.Printf("%v\n", "1")
+			scale := trans.GetProperty("Dimensions")
+			switch scale := scale.(type) {
+			case render.Vector2:
+				log.Printf("%v\n", "2")
+
+				scaledX := scale.X // float32(u.Platform.RenderW)
+				scaledY := scale.Y // float32(u.Platform.RenderH)
+				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
+				log.Printf("%v\n", "3")
+
+				u.Context.UniformMatrix4fv(model_uni, model[:])
+				u.Context.UniformMatrix4fv(view_uni, view[:])
+				u.Context.UniformMatrix4fv(proj_uni, proj[:])
+				log.Printf("%v\n", "4")
+
+				text_arr := renderer.GetProperty("Text")
+				log.Printf("%v\n", text_arr)
+				switch text_arr := text_arr.(type) {
+				case []render.Vector4:
+					// FIND OUT IF THIS IS TYPE CASTING AND FIX IT
+					log.Printf("%v\n", "here")
+					// case []mgl32.Vec4:
+					u.Context.Uniform4fv(text_uni, text_arr[0].ToUniformFloat())
+
+					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
+
+					text_scale := renderer.GetProperty("Scale")
+					switch text_scale := text_scale.(type) {
+					case float64:
+						u.Context.Uniform1f(text_scale_uni, float32(text_scale))
+					}
+
+					text_padding := renderer.GetProperty("Padding")
+					switch text_padding := text_padding.(type) {
+					case render.Vector4:
+						textBox[0] += text_padding[3]
+						textBox[2] -= text_padding[3]
+						textBox[2] -= text_padding[1]
+
+						textBox[3] -= text_padding[0]
+						// ONLY APPLIES IF ALIGNED TO BOTTOM
+						textBox[1] -= text_padding[0]
+						textBox[1] -= text_padding[2]
+					}
+					// THESE CAN BE float64?
+					u.Context.Uniform4fv(box_uni, textBox.ToUniformFloat())
+
+				}
+			}
+		}
+
+		u.Context.DrawElements(gl.LINES, 6, gl.UNSIGNED_BYTE, 0)
 	}
 	u.Context.Flush()
 }
@@ -107,6 +187,18 @@ func (u *UIGLES) Stop() {
 }
 
 func (u *UIGLES) LoadRenderer(renderer render.RendererRoutine) {
+	renderer.LoadMesh(&render.Mesh{
+		Vertices: []float32{
+			1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
+			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
+			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
+			0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
+		},
+		Indicies: []uint8{
+			0, 1, 3,
+			1, 2, 3,
+		},
+	})
 	// Vertex buffer
 	var vertexBuffer = u.Context.CreateBuffer()
 	u.Context.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
@@ -199,7 +291,7 @@ func (u *UIGLES) NewShader(vShader string, fShader string) uint32 {
 		log.Printf("\n\n ### SHADER LINK ERROR ### \n%v\n\n", u.Context.GetProgramInfoLog(shaderProgram))
 	}
 
-	// u.Context.UseProgram(shaderProgram)
+	u.Context.UseProgram(shaderProgram)
 
 	return shaderProgram.Value
 }

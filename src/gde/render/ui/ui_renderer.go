@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"encoding/binary"
 	"gde/engine"
 	"gde/render"
+	"golang.org/x/mobile/exp/f32"
 	"image"
 	"log"
 )
@@ -46,6 +48,17 @@ func (r *UIRenderer) MeshVertices() []float32 {
 }
 
 func (r *UIRenderer) MeshIndicies() []uint8 {
+	log.Printf("UIRenderer > Mesh > Indicies: %v", len(r.Mesh.Indicies))
+	return r.Mesh.Indicies
+}
+
+func (r *UIRenderer) MeshByteVertices() []byte {
+	// log.Printf("UIRenderer > Mesh > Vectices: %v", len(r.Mesh.Vertices))
+	return f32.Bytes(binary.LittleEndian, r.Mesh.Vertices...)
+	// return r.Mesh.Vertices
+}
+
+func (r *UIRenderer) MeshByteIndicies() []byte {
 	log.Printf("UIRenderer > Mesh > Indicies: %v", len(r.Mesh.Indicies))
 	return r.Mesh.Indicies
 }

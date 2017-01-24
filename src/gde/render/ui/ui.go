@@ -52,11 +52,12 @@ const (
 	// 1. Allow mesh color or texture
 	// 2. Send container width for #3 to work
 	FSHADER_OPENGL_ES_2_0_TEXT = `#version 100
+	// ONLY IN GLES
   precision mediump float;
 
   uniform vec4 box;
   uniform vec4 text_arr[200];
-  uniform float text_scale = 1.0;
+  const float text_scale = 1.0;
 
   varying vec3 colOut;
 
@@ -80,15 +81,13 @@ const (
 
   //Extracts bit b from the given number.
   //Shifts bits right (num / 2^bit) then ANDs the result with 1 (mod(result,2.0)).
-  float extract_bit(float n, float b)
-  {
+  float extract_bit(float n, float b) {
 	b = clamp(b,-1.0,24.0);
 	return floor(mod(floor(n / pow(2.0,floor(b))),2.0));   
   }
 
   //Returns the pixel at uv in the given bit-packed sprite.
-  float sprite(vec4 spr, vec2 size, vec2 uv)
-  {
+  float sprite(vec4 spr, vec2 size, vec2 uv) {
 	uv = floor(uv);
 
 	//Calculate the bit to extract (x + y * width) (flipped on x-axis)
@@ -134,12 +133,14 @@ const (
 
 	print_pos = vec2(box.x / text_scale, (box.w / text_scale) - STRHEIGHT(1.0));
 
-	for(int i = 0; i < text_arr.length(); i++)
+	// for(int i = 0; i < text_arr.length(); i++)
+	for(int i = 0; i < 5; i++)
 	{
-	  if (text_arr[i].w == 1) {
+	  if (text_arr[i].w == 1.0) {
 		print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
 	  } else {
-		if (i > 0.0 && mod(i, wrap) == 0.0) {
+		if (i > 0 && mod(float(i), wrap) == 0.0) {
+		  // Warning: Expected prototype is 'mod (float, float)' ormod 'mod (vec2, float)' ormod 'mod (vec3, float)' ormod 'mod (vec4, float)' ormod 'mod (float, float)' ormod 'mod (vec2, vec2)' ormod 'mod (vec3, vec3)' ormod 'mod (vec4, vec4)'
 		  print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
 		}
 		col += char(text_arr[i],uv); 

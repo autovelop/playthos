@@ -2,10 +2,11 @@ package editor
 
 import (
 	"gde/engine"
+	// "gde/network"
 	"gde/render"
 
 	// "gde/render/animation"
-	// "gde/render/ui"
+	"gde/render/ui"
 	"log"
 )
 
@@ -56,44 +57,48 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	// Create UI entity
 
+	// network := &network.Network{}
+	// game.AddSystem(engine.SystemNetwork, network)
+	// network.Init()
+
 	// // First create a UI system
 	sys_render.AddUISystem(game)
-	// sys_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
-	// if !err {
-	// 	log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
-	// 	return
-	// }
-	// log.Printf("UI SYSTEM: %+v", sys_ui)
-	// // // sys_ui := &ui.UI{Platform: game.GetPlatform()}
-	// // sys_ui.Init()
+	sys_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
+	if !err {
+		log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
+		return
+	}
+	log.Printf("UI SYSTEM: %+v", sys_ui)
+	// // sys_ui := &ui.UI{Platform: game.GetPlatform()}
+	// sys_ui.Init()
 
-	// // Load a simple font
-	// font := &ui.Font{}
-	// font.NewFont()
+	// Load a simple font
+	font := &ui.Font{}
+	font.NewFont()
 
-	// ent_box := &engine.Entity{Id: "Box"}
-	// ent_box.Init()
-	// ent_box.Add(game)
+	ent_box := &engine.Entity{Id: "Box"}
+	ent_box.Init()
+	ent_box.Add(game)
 
-	// ent_box_comp_transform := &render.Transform{}
-	// ent_box_comp_transform.Init()
-	// ent_box_comp_transform.SetProperty("Position", render.Vector3{4, 4, 0})
-	// ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{352, 632})
-	// ent_box.AddComponent(ent_box_comp_transform)
+	ent_box_comp_transform := &render.Transform{}
+	ent_box_comp_transform.Init()
+	ent_box_comp_transform.SetProperty("Position", render.Vector3{4, 4, 0})
+	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{100, 100})
+	ent_box.AddComponent(ent_box_comp_transform)
 
-	// comp_ui_renderer := &ui.UIRenderer{}
-	// comp_ui_renderer.Init()
+	comp_ui_renderer := &ui.UIRenderer{}
+	comp_ui_renderer.Init()
 
-	// text := &ui.Text{}
-	// text.SetFont(font)
-	// text.SetText(`Common Sword`)
-	// comp_ui_renderer.SetProperty("Text", text.TextToVec4())
+	text := &ui.Text{}
+	text.SetFont(font)
+	text.SetText(`Common Sword`)
+	comp_ui_renderer.SetProperty("Text", text.TextToVec4())
 	// comp_ui_renderer.SetProperty("Scale", 2.0)
 	// comp_ui_renderer.SetProperty("Padding", render.Vector4{10 /*top*/, 10 /*right*/, 10 /*bottom*/, 10 /*left*/})
 
-	// ent_box.AddComponent(comp_ui_renderer)
+	ent_box.AddComponent(comp_ui_renderer)
 
-	// sys_ui.LoadRenderer(comp_ui_renderer)
+	sys_ui.LoadRenderer(comp_ui_renderer)
 
 	// Officially the worst Animation system since forever!
 	// sys_anim := &animation.Animation{}

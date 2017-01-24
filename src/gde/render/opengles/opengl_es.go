@@ -104,7 +104,14 @@ func (r *OpenGLES) Update(entities *map[string]*engine.Entity) {
 		r.Context.UniformMatrix4fv(proj_uni, proj[:])
 
 		r.Context.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
+
 	}
+
+	// CHECK IF THERE IS A UI SYSTEM AND UDPATE IT
+	if r.uiSystem != nil {
+		r.uiSystem.Update(entities)
+	}
+
 	r.Context.Flush()
 }
 

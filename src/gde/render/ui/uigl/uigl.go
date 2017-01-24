@@ -79,7 +79,7 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 
 				text_arr := uiRenderer.GetProperty("Text")
 				switch text_arr := text_arr.(type) {
-				case []mgl32.Vec4:
+				case []render.Vector4:
 					gl.Uniform4fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
 
 					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
@@ -93,17 +93,17 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 					text_padding := uiRenderer.GetProperty("Padding")
 					switch text_padding := text_padding.(type) {
 					case render.Vector4:
-						textBox.X += text_padding.W
-						textBox.Z -= text_padding.W
-						textBox.Z -= text_padding.Y
+						textBox[0] += text_padding[3]
+						textBox[2] -= text_padding[3]
+						textBox[2] -= text_padding[1]
 
-						textBox.W -= text_padding.X
+						textBox[3] -= text_padding[0]
 						// ONLY APPLIES IF ALIGNED TO BOTTOM
-						textBox.Y -= text_padding.X
-						textBox.Y -= text_padding.Z
+						textBox[1] -= text_padding[0]
+						textBox[1] -= text_padding[2]
 					}
 					// THESE CAN BE float64?
-					gl.Uniform4fv(box_uni, 1, &[]float32{textBox.X, textBox.Y, textBox.Z, textBox.W}[0])
+					gl.Uniform4fv(box_uni, 1, &textBox[0])
 
 				}
 			}
