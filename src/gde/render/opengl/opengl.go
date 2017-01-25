@@ -21,6 +21,7 @@ type OpenGL struct {
 	ShaderProgram uint32
 
 	uiSystem render.RenderRoutine
+	stepper  float32
 }
 
 func (r *OpenGL) Init() {
@@ -55,15 +56,19 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 
 		gl.UseProgram(r.ShaderProgram)
 
+		r.stepper += 0.1
+		if r.stepper > 2 {
+			r.stepper = 1.0
+		}
+
 		var view mgl32.Mat4
 		view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
 		view_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("view\x00"))
 
 		var proj mgl32.Mat4
 		proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
-		// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
-		proj_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("projection\x00"))
 
+		proj_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("projection\x00"))
 		model_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("model\x00"))
 
 		for _, v := range *entities {
@@ -94,10 +99,6 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
 			}
 
-			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
-			gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
-			gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
-
 			texture := renderer.GetProperty("TEXTURE")
 			switch texture := texture.(type) {
 			case uint32:
@@ -106,17 +107,20 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 				gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
 			}
 
+			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
+			gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
+			gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
+
 			gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
 		}
 		gl.BindVertexArray(0)
 
-		// CHECK IF THERE IS A UI SYSTEM AND UDPATE IT
-		if r.uiSystem != nil {
-			r.uiSystem.Update(entities)
+		// let the UI system swap the buffers and do poll events only if it exists
+		if r.uiSystem == nil {
+			r.window.SwapBuffers()
+			glfw.PollEvents()
 		}
 
-		r.window.SwapBuffers()
-		glfw.PollEvents()
 	} else {
 		glfw.Terminate()
 		// when this happens, make sure render system is removed from engine so that another game loop doesn't occur
@@ -180,8 +184,9 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 }
 
 func (r *OpenGL) AddUISystem(game *engine.Engine) {
+	log.Printf("\n\n\nOpenGL\n\n\n")
 	// Create ui system
-	sys_ui := &uigl.UIGL{}
+	sys_ui := &uigl.UIGL{Window: r.window}
 	game.AddSystem(engine.SystemUI, sys_ui)
 	sys_ui.Init()
 	r.uiSystem = sys_ui

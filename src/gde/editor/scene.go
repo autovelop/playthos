@@ -69,8 +69,6 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 		return
 	}
 	log.Printf("UI SYSTEM: %+v", sys_ui)
-	// // sys_ui := &ui.UI{Platform: game.GetPlatform()}
-	// sys_ui.Init()
 
 	// Load a simple font
 	font := &ui.Font{}
@@ -82,7 +80,7 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	ent_box_comp_transform := &render.Transform{}
 	ent_box_comp_transform.Init()
-	ent_box_comp_transform.SetProperty("Position", render.Vector3{4, 4, 0})
+	ent_box_comp_transform.SetProperty("Position", render.Vector3{0.35, 0.8, 0})
 	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{100, 100})
 	ent_box.AddComponent(ent_box_comp_transform)
 

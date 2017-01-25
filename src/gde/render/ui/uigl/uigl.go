@@ -5,6 +5,7 @@ import (
 	"gde/render"
 	"gde/render/ui"
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"log"
 	"os"
@@ -14,6 +15,7 @@ import (
 type UIGL struct {
 	ui.UI
 	ui.UIRoutine
+	Window *glfw.Window
 }
 
 func (u *UIGL) Init() {
@@ -31,12 +33,12 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 	view_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("view\x00"))
 
 	var proj mgl32.Mat4
-	proj = mgl32.Ortho(0, 360, 640, 0, 0, 10)
+	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
 	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
 
 	proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
 	model_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("model\x00"))
-	// dimensions_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("dimensions\x00"))
+
 	box_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("box\x00"))
 	text_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_arr\x00"))
 	text_scale_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_scale\x00"))
@@ -60,7 +62,6 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 		pos := trans.GetProperty("Position")
 		switch pos := pos.(type) {
 		case render.Vector3:
-			// gl.Uniform2fv(box_uni, 1, &[]float32{pos.X, pos.Y}[0])
 			scaledX := pos.X // float32(u.Platform.RenderW)
 			scaledY := pos.Y // float32(u.Platform.RenderH) * u.Platform.AspectRatio
 			model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
@@ -68,14 +69,9 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 			scale := trans.GetProperty("Dimensions")
 			switch scale := scale.(type) {
 			case render.Vector2:
-
-				scaledX := scale.X // float32(u.Platform.RenderW)
-				scaledY := scale.Y // float32(u.Platform.RenderH)
+				scaledX = scale.X / 360 // float32(u.Platform.RenderW)
+				scaledY = scale.Y / 640 // float32(u.Platform.RenderH)
 				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
-
-				gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
-				gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
-				gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
 
 				text_arr := uiRenderer.GetProperty("Text")
 				switch text_arr := text_arr.(type) {
@@ -107,11 +103,66 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 
 				}
 			}
+			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
+			gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
+			gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
 		}
 
 		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
 	}
 
+	gl.BindVertexArray(0)
+	u.Window.SwapBuffers()
+	glfw.PollEvents()
+}
+
+func (u *UIGL) AddUISystem(game *engine.Engine) {
+}
+
+func (u *UIGL) Stop() {
+}
+
+func (r *UIGL) LoadRenderer(renderer render.RendererRoutine) {
+	renderer.LoadMesh(&render.Mesh{
+		Vertices: []float32{
+			1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
+			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
+			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
+			0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
+		},
+		Indicies: []uint8{
+			0, 1, 3,
+			1, 2, 3,
+		},
+	})
+	// Bind vertex array object. This must wrap around the mesh creation because it is how we are going to access it later when we draw
+	var vertexArrayID uint32
+	gl.GenVertexArrays(1, &vertexArrayID)
+	gl.BindVertexArray(vertexArrayID)
+
+	// Vertex buffer
+	var vertexBuffer uint32
+	gl.GenBuffers(1, &vertexBuffer)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.MeshVertices())*4, gl.Ptr(renderer.MeshVertices()), gl.STATIC_DRAW)
+
+	// Element buffer
+	var elementBuffer uint32
+	gl.GenBuffers(1, &elementBuffer)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(renderer.MeshIndicies())*4, gl.Ptr(renderer.MeshIndicies()), gl.STATIC_DRAW)
+
+	// Linking vertex attributes
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(0))
+	gl.EnableVertexAttribArray(0)
+
+	// Linking fragment attributes
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+	gl.EnableVertexAttribArray(1)
+
+	// Unbind Vertex array object
+	renderer.SetProperty("VAO", vertexArrayID)
+	// fmt.Printf("VAO Load: %v\n", vertexArrayID)
 	gl.BindVertexArray(0)
 }
 
@@ -189,56 +240,6 @@ func (r *UIGL) NewShader(vShader string, fShader string) uint32 {
 	gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 
 	return shaderProgram
-}
-
-func (u *UIGL) AddUISystem(game *engine.Engine) {
-}
-
-func (u *UIGL) Stop() {
-}
-
-func (r *UIGL) LoadRenderer(renderer render.RendererRoutine) {
-	renderer.LoadMesh(&render.Mesh{
-		Vertices: []float32{
-			1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
-			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
-			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-			0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
-		},
-		Indicies: []uint8{
-			0, 1, 3,
-			1, 2, 3,
-		},
-	})
-	// Bind vertex array object. This must wrap around the mesh creation because it is how we are going to access it later when we draw
-	var vertexArrayID uint32
-	gl.GenVertexArrays(1, &vertexArrayID)
-	gl.BindVertexArray(vertexArrayID)
-
-	// Vertex buffer
-	var vertexBuffer uint32
-	gl.GenBuffers(1, &vertexBuffer)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.MeshVertices())*4, gl.Ptr(renderer.MeshVertices()), gl.STATIC_DRAW)
-
-	// Element buffer
-	var elementBuffer uint32
-	gl.GenBuffers(1, &elementBuffer)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(renderer.MeshIndicies())*4, gl.Ptr(renderer.MeshIndicies()), gl.STATIC_DRAW)
-
-	// Linking vertex attributes
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(0))
-	gl.EnableVertexAttribArray(0)
-
-	// Linking fragment attributes
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
-	gl.EnableVertexAttribArray(1)
-
-	// Unbind Vertex array object
-	renderer.SetProperty("VAO", vertexArrayID)
-	// fmt.Printf("VAO Load: %v\n", vertexArrayID)
-	gl.BindVertexArray(0)
 }
 
 // precision mediump float;

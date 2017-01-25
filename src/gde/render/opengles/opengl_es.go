@@ -27,12 +27,13 @@ type OpenGLES struct {
 func (r *OpenGLES) Init() {
 	log.Printf("OpenGLES > Init")
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
-	r.Context.Viewport(0, 0, 360, 640)
+	// r.Context.Viewport(0, 0, 720, 1280)
 	r.Context.Enable(gl.DEPTH_TEST)
 	r.Context.Enable(gl.FRONT_AND_BACK)
 }
 
 func (r *OpenGLES) Update(entities *map[string]*engine.Entity) {
+	log.Printf("\n\n\nOpenGLES UPDATE %+v\n\n\n", r.Context)
 	r.Context.ClearColor(0.2, 0.3, 0.3, 1)
 	r.Context.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -43,10 +44,10 @@ func (r *OpenGLES) Update(entities *map[string]*engine.Entity) {
 	view_uni := r.Context.GetUniformLocation(r.glProgram, "view")
 
 	var proj mgl32.Mat4
-	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
-	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
-	proj_uni := r.Context.GetUniformLocation(r.glProgram, "projection")
+	// still need to understand what is going on here and how it relates to device
+	proj = mgl32.Ortho(-2, 3, 6, -4, 0.1, 1000)
 
+	proj_uni := r.Context.GetUniformLocation(r.glProgram, "projection")
 	model_uni := r.Context.GetUniformLocation(r.glProgram, "model")
 
 	for _, v := range *entities {
@@ -104,15 +105,12 @@ func (r *OpenGLES) Update(entities *map[string]*engine.Entity) {
 		r.Context.UniformMatrix4fv(proj_uni, proj[:])
 
 		r.Context.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
-
 	}
 
-	// CHECK IF THERE IS A UI SYSTEM AND UDPATE IT
-	if r.uiSystem != nil {
-		r.uiSystem.Update(entities)
+	// let the ui system flush if it exists
+	if r.uiSystem == nil {
+		r.Context.Flush()
 	}
-
-	r.Context.Flush()
 }
 
 func (r *OpenGLES) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
@@ -163,6 +161,7 @@ func (r *OpenGLES) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE
 
 func (r *OpenGLES) AddUISystem(game *engine.Engine) {
 	// Create ui system
+	log.Printf("\n\n\nOpenGLES: %+v\n\n\n", r.Context)
 	sys_ui := &uigles.UIGLES{Context: r.Context}
 	game.AddSystem(engine.SystemUI, sys_ui)
 	sys_ui.Init()

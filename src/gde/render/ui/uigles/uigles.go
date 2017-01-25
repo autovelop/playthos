@@ -22,12 +22,12 @@ type UIGLES struct {
 
 func (u *UIGLES) Init() {
 	log.Printf("UIGLES > Init")
-	// FIX HERE!!!
-	// u.ShaderProgram = render.NewShader(VSHADER_OPENGL_ES_2_0_TEXT, FSHADER_OPENGL_ES_2_0_TEXT)
 	u.ShaderProgram = u.NewShader(ui.VSHADER_OPENGL_ES_2_0_TEXT, ui.FSHADER_OPENGL_ES_2_0_TEXT)
 }
 
 func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
+	log.Printf("\n\nUIGLES UPDATE %+v\n\n\n", u.Context)
+	// u.Context.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	u.Context.UseProgram(u.glProgram)
 
 	var view mgl32.Mat4
@@ -35,8 +35,8 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 	view_uni := u.Context.GetUniformLocation(u.glProgram, "view")
 
 	var proj mgl32.Mat4
-	proj = mgl32.Ortho(0, 360, 640, 0, 0, 10)
-	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
+	// still need to understand what is going on here and how it relates to device
+	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
 
 	proj_uni := u.Context.GetUniformLocation(u.glProgram, "projection")
 	model_uni := u.Context.GetUniformLocation(u.glProgram, "model")
@@ -45,31 +45,23 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 	text_uni := u.Context.GetUniformLocation(u.glProgram, "text_arr")
 	text_scale_uni := u.Context.GetUniformLocation(u.glProgram, "text_scale")
 
-	log.Printf("%v\n", "-7")
 	for _, v := range *entities {
-		log.Printf("%v\n", "-6")
 		renderer := v.GetComponent(&ui.UIRenderer{})
-		log.Printf("%v\n", "-5")
 		if renderer == nil {
 			continue
 		}
 
-		log.Printf("%v\n", "-4")
 		vb := renderer.GetProperty("VB")
-		log.Printf("%v\n", "-3")
 		switch vb := vb.(type) {
 		case gl.Buffer:
 			u.Context.BindBuffer(gl.ARRAY_BUFFER, vb)
 		}
 
-		log.Printf("%v\n", "-3")
 		eb := renderer.GetProperty("EB")
-		log.Printf("%v\n", "-2")
 		switch eb := eb.(type) {
 		case gl.Buffer:
 			u.Context.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, eb)
 		}
-		log.Printf("%v\n", "-1")
 
 		// position := renderer.GetProperty("EB")
 		// switch position := position.(type) {
@@ -115,37 +107,22 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 		trans := v.GetComponent(&render.Transform{})
 
 		pos := trans.GetProperty("Position")
-		log.Printf("%v\n", "0")
 		switch pos := pos.(type) {
 		case render.Vector3:
-			// gl.Uniform2fv(box_uni, 1, &[]float32{pos.X, pos.Y}[0])
 			scaledX := pos.X // float32(u.Platform.RenderW)
 			scaledY := pos.Y // float32(u.Platform.RenderH) * u.Platform.AspectRatio
 			model = model.Mul4(mgl32.Translate3D(scaledX, scaledY, pos.Z))
 
-			log.Printf("%v\n", "1")
 			scale := trans.GetProperty("Dimensions")
 			switch scale := scale.(type) {
 			case render.Vector2:
-				log.Printf("%v\n", "2")
-
-				scaledX := scale.X // float32(u.Platform.RenderW)
-				scaledY := scale.Y // float32(u.Platform.RenderH)
+				scaledX = scale.X / 360 // float32(u.Platform.RenderW)
+				scaledY = scale.Y / 640 // float32(u.Platform.RenderH)
 				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
-				log.Printf("%v\n", "3")
-
-				u.Context.UniformMatrix4fv(model_uni, model[:])
-				u.Context.UniformMatrix4fv(view_uni, view[:])
-				u.Context.UniformMatrix4fv(proj_uni, proj[:])
-				log.Printf("%v\n", "4")
 
 				text_arr := renderer.GetProperty("Text")
-				log.Printf("%v\n", text_arr)
 				switch text_arr := text_arr.(type) {
 				case []render.Vector4:
-					// FIND OUT IF THIS IS TYPE CASTING AND FIX IT
-					log.Printf("%v\n", "here")
-					// case []mgl32.Vec4:
 					u.Context.Uniform4fv(text_uni, text_arr[0].ToUniformFloat())
 
 					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
@@ -170,12 +147,14 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 					}
 					// THESE CAN BE float64?
 					u.Context.Uniform4fv(box_uni, textBox.ToUniformFloat())
-
 				}
 			}
+			u.Context.UniformMatrix4fv(model_uni, model[:])
+			u.Context.UniformMatrix4fv(view_uni, view[:])
+			u.Context.UniformMatrix4fv(proj_uni, proj[:])
 		}
 
-		u.Context.DrawElements(gl.LINES, 6, gl.UNSIGNED_BYTE, 0)
+		u.Context.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
 	}
 	u.Context.Flush()
 }
@@ -189,10 +168,10 @@ func (u *UIGLES) Stop() {
 func (u *UIGLES) LoadRenderer(renderer render.RendererRoutine) {
 	renderer.LoadMesh(&render.Mesh{
 		Vertices: []float32{
-			1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
-			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
-			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-			0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
+			1.0, 1.0, -0.2, 1.0, 0.0, 0.0,
+			1.0, 0.0, -0.2, 0.0, 1.0, 0.0,
+			0.0, 0.0, -0.2, 0.0, 0.0, 1.0,
+			0.0, 1.0, -0.2, 0.0, 1.0, 1.0,
 		},
 		Indicies: []uint8{
 			0, 1, 3,
@@ -213,12 +192,12 @@ func (u *UIGLES) LoadRenderer(renderer render.RendererRoutine) {
 
 	// Linking vertex attributes
 	posAttrib := u.Context.GetAttribLocation(u.glProgram, "pos")
-	u.Context.VertexAttribPointer(posAttrib, 3, gl.FLOAT, false, 8*4, 0)
+	u.Context.VertexAttribPointer(posAttrib, 3, gl.FLOAT, false, 6*4, 0)
 	u.Context.EnableVertexAttribArray(posAttrib)
 
 	// Linking fragment attributes
 	colAttrib := u.Context.GetAttribLocation(u.glProgram, "col")
-	u.Context.VertexAttribPointer(colAttrib, 3, gl.FLOAT, false, 8*4, 3*4)
+	u.Context.VertexAttribPointer(colAttrib, 3, gl.FLOAT, false, 6*4, 3*4)
 	u.Context.EnableVertexAttribArray(colAttrib)
 
 	// Linking texture attributes

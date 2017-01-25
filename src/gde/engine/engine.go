@@ -71,7 +71,7 @@ func (e *Engine) Update() {
 			e.framesCounter -= time.Second
 		}
 		for _, v := range e.Systems {
-
+			log.Printf("UPDATE: %T", v)
 			v.Update(&e.Entities)
 		}
 	}
