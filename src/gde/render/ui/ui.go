@@ -140,7 +140,7 @@ const (
 		print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
 	  } else {
 		if (i > 0 && mod(float(i), wrap) == 0.0) {
-		  // Warning: Expected prototype is 'mod (float, float)' ormod 'mod (vec2, float)' ormod 'mod (vec3, float)' ormod 'mod (vec4, float)' ormod 'mod (float, float)' ormod 'mod (vec2, vec2)' ormod 'mod (vec3, vec3)' ormod 'mod (vec4, vec4)'
+		  // Warning: Expected prototype is 'mod (float, float)'
 		  print_pos = vec2(box.x / text_scale, print_pos.y - STRHEIGHT(1.0));
 		}
 		col += char(text_arr[i],uv); 

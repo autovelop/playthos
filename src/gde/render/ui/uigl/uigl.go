@@ -33,7 +33,7 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 	view_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("view\x00"))
 
 	var proj mgl32.Mat4
-	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
+	proj = mgl32.Ortho(0, 480, 800, 0, 0.1, 1000)
 	// proj = mgl32.Perspective(mgl32.DegToRad(60.0), float32(320)/640, 0.01, 1000)
 
 	proj_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("projection\x00"))
@@ -69,8 +69,8 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 			scale := trans.GetProperty("Dimensions")
 			switch scale := scale.(type) {
 			case render.Vector2:
-				scaledX = scale.X / 360 // float32(u.Platform.RenderW)
-				scaledY = scale.Y / 640 // float32(u.Platform.RenderH)
+				scaledX = scale.X // float32(u.Platform.RenderW)
+				scaledY = scale.Y // float32(u.Platform.RenderH)
 				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
 
 				text_arr := uiRenderer.GetProperty("Text")
@@ -78,7 +78,8 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 				case []render.Vector4:
 					gl.Uniform4fv(text_uni, int32(len(text_arr)), &text_arr[0][0])
 
-					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
+					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, scale.Y /*w*/}
+					// textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
 
 					text_scale := uiRenderer.GetProperty("Scale")
 					switch text_scale := text_scale.(type) {

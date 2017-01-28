@@ -2,7 +2,7 @@ package editor
 
 import (
 	"gde/engine"
-	// "gde/network"
+	"gde/network"
 	"gde/render"
 
 	// "gde/render/animation"
@@ -49,7 +49,7 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	ent_player_comp_transform := &render.Transform{}
 	ent_player_comp_transform.Init()
-	ent_player_comp_transform.SetProperty("Position", render.Vector3{0.5, 1.0, 0})
+	ent_player_comp_transform.SetProperty("Position", render.Vector3{0.5, 1.0, 1.0})
 	ent_player_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 45})
 
 	ent_player.AddComponent(ent_player_comp_transform)
@@ -57,9 +57,9 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	// Create UI entity
 
-	// network := &network.Network{}
-	// game.AddSystem(engine.SystemNetwork, network)
-	// network.Init()
+	network := &network.Network{}
+	game.AddSystem(engine.SystemNetwork, network)
+	network.Init()
 
 	// // First create a UI system
 	sys_render.AddUISystem(game)
@@ -80,8 +80,8 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	ent_box_comp_transform := &render.Transform{}
 	ent_box_comp_transform.Init()
-	ent_box_comp_transform.SetProperty("Position", render.Vector3{0.35, 0.8, 0})
-	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{100, 100})
+	ent_box_comp_transform.SetProperty("Position", render.Vector3{120, 200, 0.5})
+	ent_box_comp_transform.SetProperty("Dimensions", render.Vector2{240, 400})
 	ent_box.AddComponent(ent_box_comp_transform)
 
 	comp_ui_renderer := &ui.UIRenderer{}
@@ -91,8 +91,8 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 	text.SetFont(font)
 	text.SetText(`Common Sword`)
 	comp_ui_renderer.SetProperty("Text", text.TextToVec4())
-	// comp_ui_renderer.SetProperty("Scale", 2.0)
-	// comp_ui_renderer.SetProperty("Padding", render.Vector4{10 /*top*/, 10 /*right*/, 10 /*bottom*/, 10 /*left*/})
+	comp_ui_renderer.SetProperty("Scale", 2.0)
+	// comp_ui_renderer.SetProperty("Padding", render.Vector4{0 /*top*/, 0 /*right*/, 0 /*bottom*/, 0 /*left*/})
 
 	ent_box.AddComponent(comp_ui_renderer)
 

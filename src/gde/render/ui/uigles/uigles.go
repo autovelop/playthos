@@ -26,7 +26,6 @@ func (u *UIGLES) Init() {
 }
 
 func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
-	log.Printf("\n\nUIGLES UPDATE %+v\n\n\n", u.Context)
 	// u.Context.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	u.Context.UseProgram(u.glProgram)
 
@@ -36,7 +35,7 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 
 	var proj mgl32.Mat4
 	// still need to understand what is going on here and how it relates to device
-	proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
+	proj = mgl32.Ortho(0, 480, 800, 0, 0.5, 10)
 
 	proj_uni := u.Context.GetUniformLocation(u.glProgram, "projection")
 	model_uni := u.Context.GetUniformLocation(u.glProgram, "model")
@@ -116,16 +115,16 @@ func (u *UIGLES) Update(entities *map[string]*engine.Entity) {
 			scale := trans.GetProperty("Dimensions")
 			switch scale := scale.(type) {
 			case render.Vector2:
-				scaledX = scale.X / 360 // float32(u.Platform.RenderW)
-				scaledY = scale.Y / 640 // float32(u.Platform.RenderH)
-				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0))
+				scaledX = scale.X // float32(u.Platform.RenderW)
+				scaledY = scale.Y // float32(u.Platform.RenderH)
+				model = model.Mul4(mgl32.Scale3D(scaledX, scaledY, 0.5))
 
 				text_arr := renderer.GetProperty("Text")
 				switch text_arr := text_arr.(type) {
 				case []render.Vector4:
 					u.Context.Uniform4fv(text_uni, text_arr[0].ToUniformFloat())
 
-					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, 640 - (pos.Y) /*w*/}
+					textBox := render.Vector4{pos.X /*x*/, pos.Y /*y*/, scale.X /*z*/, scale.Y /*w*/}
 
 					text_scale := renderer.GetProperty("Scale")
 					switch text_scale := text_scale.(type) {

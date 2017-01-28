@@ -2,7 +2,7 @@ package engine
 
 import (
 	"fmt"
-	"log"
+	// "log"
 )
 
 type Entity struct {
@@ -31,9 +31,10 @@ func (e *Entity) AddComponent(comp ComponentRoutine) {
 }
 
 func (e *Entity) GetComponent(comp interface{}) ComponentRoutine {
-	if e.components[fmt.Sprintf("%T", comp)] == nil {
-		log.Printf("Component %T does not exist for Entity (ID: %v)", comp, e.Id)
-	}
+	// if e.components[fmt.Sprintf("%T", comp)] == nil {
+	// 	log.Printf("Component %T does not exist for Entity (ID: %v)", comp, e.Id)
+	// 	// DO ERROR HANDLING HERE
+	// }
 	return e.components[fmt.Sprintf("%T", comp)]
 }
 

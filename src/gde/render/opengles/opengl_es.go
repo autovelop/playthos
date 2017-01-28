@@ -26,6 +26,7 @@ type OpenGLES struct {
 
 func (r *OpenGLES) Init() {
 	log.Printf("OpenGLES > Init")
+	r.Context.Viewport(0, 0, 480, 800)
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 	// r.Context.Viewport(0, 0, 720, 1280)
 	r.Context.Enable(gl.DEPTH_TEST)
@@ -33,7 +34,6 @@ func (r *OpenGLES) Init() {
 }
 
 func (r *OpenGLES) Update(entities *map[string]*engine.Entity) {
-	log.Printf("\n\n\nOpenGLES UPDATE %+v\n\n\n", r.Context)
 	r.Context.ClearColor(0.2, 0.3, 0.3, 1)
 	r.Context.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -108,9 +108,9 @@ func (r *OpenGLES) Update(entities *map[string]*engine.Entity) {
 	}
 
 	// let the ui system flush if it exists
-	if r.uiSystem == nil {
-		r.Context.Flush()
-	}
+	// if r.uiSystem == nil {
+	r.Context.Flush()
+	// }
 }
 
 func (r *OpenGLES) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE VARIABLES TO SEND RENDER SYSTEM VARIABLES
@@ -161,7 +161,6 @@ func (r *OpenGLES) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE
 
 func (r *OpenGLES) AddUISystem(game *engine.Engine) {
 	// Create ui system
-	log.Printf("\n\n\nOpenGLES: %+v\n\n\n", r.Context)
 	sys_ui := &uigles.UIGLES{Context: r.Context}
 	game.AddSystem(engine.SystemUI, sys_ui)
 	sys_ui.Init()

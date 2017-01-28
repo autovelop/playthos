@@ -21,7 +21,6 @@ type OpenGL struct {
 	ShaderProgram uint32
 
 	uiSystem render.RenderRoutine
-	stepper  float32
 }
 
 func (r *OpenGL) Init() {
@@ -32,7 +31,7 @@ func (r *OpenGL) Init() {
 	}
 
 	// window, err := glfw.CreateWindow(int(r.Device.ScreenW), int(r.Device.ScreenH), "Cube", nil, nil)
-	window, err := glfw.CreateWindow(360, 640, "Cube", nil, nil)
+	window, err := glfw.CreateWindow(480, 800, "Cube", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +39,7 @@ func (r *OpenGL) Init() {
 	r.window = window
 
 	// gl.Viewport(0, 0, r.Device.RenderW, r.Device.RenderH)
-	gl.Viewport(0, 0, 360, 640)
+	gl.Viewport(0, 0, 480, 800)
 
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 
@@ -55,11 +54,6 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.UseProgram(r.ShaderProgram)
-
-		r.stepper += 0.1
-		if r.stepper > 2 {
-			r.stepper = 1.0
-		}
 
 		var view mgl32.Mat4
 		view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
@@ -184,7 +178,6 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 }
 
 func (r *OpenGL) AddUISystem(game *engine.Engine) {
-	log.Printf("\n\n\nOpenGL\n\n\n")
 	// Create ui system
 	sys_ui := &uigl.UIGL{Window: r.window}
 	game.AddSystem(engine.SystemUI, sys_ui)
