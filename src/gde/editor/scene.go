@@ -7,11 +7,66 @@ import (
 
 	// "gde/render/animation"
 	"gde/render/ui"
+	"github.com/gorilla/websocket"
 	"log"
+	"net/http"
+	"time"
 )
 
 type Scene struct {
 	name string
+}
+
+var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+	return true
+}}
+
+func (s *Scene) CreateEditorServer(game *engine.Engine) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Print("upgrade:", err)
+			return
+		}
+		defer c.Close()
+		// for {
+		// mt, message, err := c.ReadMessage()
+		// if err != nil {
+		// 	log.Println("read:", err)
+		// 	break
+		// }
+		// log.Printf("recv: %s", message)
+		// err = c.WriteMessage(mt, message)
+		// if err != nil {
+		// 	log.Println("write:", err)
+		// 	break
+		// }
+		// }
+
+
+		GET ON CONNECT EVENT
+		SEND JSON OF ENTITIES TO CLIENT
+		ALLOW CLIENTS TO SEND NEW VALUES OF PROPERTIES BY PROPERTY NAME AND ENTITY ID AS JSON VALUE (SHOULD BE CONVERTED ACCORDINGLY)
+		BROADCAST UPDATE TO ALL CLIENTS
+
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case t := <-ticker.C:
+				err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+				if err != nil {
+					log.Println("write:", err)
+					return
+				}
+			}
+		}
+	})
+	go func() {
+		log.Fatal(http.ListenAndServe("192.168.1.104:8080", nil))
+	}()
 }
 
 func (s *Scene) LoadScene(game *engine.Engine) {
@@ -57,10 +112,6 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 
 	// Create UI entity
 
-	network := &network.Network{}
-	game.AddSystem(engine.SystemNetwork, network)
-	network.Init()
-
 	// // First create a UI system
 	sys_render.AddUISystem(game)
 	sys_ui, err := game.GetSystem(engine.SystemUI).(ui.UIRoutine)
@@ -97,6 +148,13 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 	ent_box.AddComponent(comp_ui_renderer)
 
 	sys_ui.LoadRenderer(comp_ui_renderer)
+
+	s.CreateEditorServer(game)
+
+	// THIS IS NOT REALLY REQUIRED BUT JUST USED TO DEBUGGING ON LOCAL MACHINE (testing broadcast etc.)
+	network := &network.Network{}
+	game.AddSystem(engine.SystemNetwork, network)
+	network.Init()
 
 	// Officially the worst Animation system since forever!
 	// sys_anim := &animation.Animation{}
