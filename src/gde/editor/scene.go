@@ -6,9 +6,11 @@ import (
 	"gde/render"
 
 	// "gde/render/animation"
+	"fmt"
 	"gde/render/ui"
 	"github.com/gorilla/websocket"
 	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -45,11 +47,10 @@ func (s *Scene) CreateEditorServer(game *engine.Engine) {
 		// }
 		// }
 
-
-		GET ON CONNECT EVENT
-		SEND JSON OF ENTITIES TO CLIENT
-		ALLOW CLIENTS TO SEND NEW VALUES OF PROPERTIES BY PROPERTY NAME AND ENTITY ID AS JSON VALUE (SHOULD BE CONVERTED ACCORDINGLY)
-		BROADCAST UPDATE TO ALL CLIENTS
+		// GET ON CONNECT EVENT
+		// SEND JSON OF ENTITIES TO CLIENT
+		// ALLOW CLIENTS TO SEND NEW VALUES OF PROPERTIES BY PROPERTY NAME AND ENTITY ID AS JSON VALUE (SHOULD BE CONVERTED ACCORDINGLY)
+		// BROADCAST UPDATE TO ALL CLIENTS
 
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
@@ -64,9 +65,38 @@ func (s *Scene) CreateEditorServer(game *engine.Engine) {
 			}
 		}
 	})
-	go func() {
-		log.Fatal(http.ListenAndServe("192.168.1.104:8080", nil))
-	}()
+	var ip net.IP
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Println(err)
+	}
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			log.Println(err)
+		}
+		for _, addr := range addrs {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+		}
+	}
+	address := "192.168.43.1:8080"
+	if len(fmt.Sprintf("%v", ip)) < 25 {
+		address = fmt.Sprintf("%v:8080", ip)
+	}
+	go func(address string) {
+		fmt.Println(address)
+		log.Fatal(http.ListenAndServe(address, nil))
+	}(address)
+
+	// THIS IS NOT REALLY REQUIRED BUT JUST USED TO DEBUGGING ON LOCAL MACHINE (testing broadcast etc.)
+	network := &network.Network{ServerIP: address}
+	game.AddSystem(engine.SystemNetwork, network)
+	network.Init()
 }
 
 func (s *Scene) LoadScene(game *engine.Engine) {
@@ -150,11 +180,6 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 	sys_ui.LoadRenderer(comp_ui_renderer)
 
 	s.CreateEditorServer(game)
-
-	// THIS IS NOT REALLY REQUIRED BUT JUST USED TO DEBUGGING ON LOCAL MACHINE (testing broadcast etc.)
-	network := &network.Network{}
-	game.AddSystem(engine.SystemNetwork, network)
-	network.Init()
 
 	// Officially the worst Animation system since forever!
 	// sys_anim := &animation.Animation{}

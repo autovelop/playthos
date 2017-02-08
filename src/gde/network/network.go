@@ -12,6 +12,7 @@ import (
 
 type Network struct {
 	engine.System
+	ServerIP string
 	// lastUpdate time.Time
 }
 
@@ -21,7 +22,7 @@ func (a *Network) Init() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: "192.168.1.104:8080", Path: "/"}
+	u := url.URL{Scheme: "ws", Host: a.ServerIP, Path: "/"}
 	log.Printf("connecting to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
