@@ -1,4 +1,7 @@
-# GoGG!
+# GoGG! (warning. under development)
+
+## Warning
+This engine is still under constant development and no stability is guaranteed
 
 ## Intro
 GoGG! is a game engine being developed for a planned game editor called GG!Edit.
