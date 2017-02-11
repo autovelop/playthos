@@ -7,12 +7,12 @@ import (
 
 type Entity struct {
 	Id         string
-	components map[string]ComponentRoutine
+	Components map[string]ComponentRoutine
 }
 
 func (e *Entity) Init() {
 	// log.Printf("Entity > Init")
-	e.components = make(map[string]ComponentRoutine)
+	e.Components = make(map[string]ComponentRoutine)
 }
 
 func (e *Entity) Add(engine *Engine) {
@@ -27,20 +27,20 @@ func (e *Entity) Get() *Entity {
 
 func (e *Entity) AddComponent(comp ComponentRoutine) {
 	// log.Printf("Entity > Component > Add: %T", comp)
-	e.components[fmt.Sprintf("%T", comp)] = comp
+	e.Components[fmt.Sprintf("%T", comp)] = comp
 }
 
 func (e *Entity) GetComponent(comp interface{}) ComponentRoutine {
-	// if e.components[fmt.Sprintf("%T", comp)] == nil {
+	// if e.Components[fmt.Sprintf("%T", comp)] == nil {
 	// 	log.Printf("Component %T does not exist for Entity (ID: %v)", comp, e.Id)
 	// 	// DO ERROR HANDLING HERE
 	// }
-	return e.components[fmt.Sprintf("%T", comp)]
+	return e.Components[fmt.Sprintf("%T", comp)]
 }
 
 func (e *Entity) GetComponents() map[string]ComponentRoutine {
-	// log.Printf("Entity > Components > Get: %v (count)", len(e.components))
-	return e.components
+	// log.Printf("Entity > Components > Get: %v (count)", len(e.Components))
+	return e.Components
 }
 
 func (e *Entity) GetId() string {

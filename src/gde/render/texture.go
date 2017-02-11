@@ -13,13 +13,17 @@ import (
 
 type Texture struct {
 	filePath    string
-	RGBA        *image.RGBA
+	rgba        *image.RGBA
 	Width       int
 	Height      int
 	AspectRatio float32
 }
 
 // TODO. OCD clean this fanus!
+
+func (t *Texture) GetRGBA() *image.RGBA {
+	return t.rgba
+}
 
 func (t *Texture) NewTexture(dir string, path string) bool {
 	t.filePath = path
@@ -61,7 +65,7 @@ func (t *Texture) NewTexture(dir string, path string) bool {
 	}
 
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-	t.RGBA = rgba
+	t.rgba = rgba
 	return true
 }
 
@@ -94,7 +98,7 @@ func (t *Texture) NewTextureMobile(path string) bool {
 	}
 
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-	t.RGBA = rgba
+	t.rgba = rgba
 	return true
 }
 

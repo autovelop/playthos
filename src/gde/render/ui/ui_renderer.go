@@ -64,6 +64,6 @@ func (r *UIRenderer) MeshByteIndicies() []byte {
 }
 
 func (r *UIRenderer) TextureRGBA() *image.RGBA {
-	log.Printf("UIRenderer > Texture > RGBA: %v", r.Texture.RGBA)
-	return r.Texture.RGBA
+	log.Printf("UIRenderer > Texture > RGBA: %v", r.Texture.GetRGBA())
+	return r.Texture.GetRGBA()
 }

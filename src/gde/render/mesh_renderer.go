@@ -10,9 +10,9 @@ import (
 
 type MeshRenderer struct {
 	engine.Component
-	RendererRoutine
-	Mesh    *Mesh
-	Texture *Texture
+	// RendererRoutine
+	mesh    *Mesh
+	texture *Texture
 }
 
 func (r *MeshRenderer) Init() {
@@ -32,36 +32,36 @@ func (r *MeshRenderer) SetProperty(key string, val interface{}) {
 
 func (r *MeshRenderer) LoadMesh(mesh *Mesh) {
 	// log.Printf("MeshRenderer > Mesh > Load: %v", mesh)
-	r.Mesh = mesh
+	r.mesh = mesh
 }
 
 func (r *MeshRenderer) LoadTexture(texture *Texture) {
 	// log.Printf("MeshRenderer > Texture > Load: %v", texture)
-	r.Texture = texture
+	r.texture = texture
 }
 
 // Make this happen on the Render System
 func (r *MeshRenderer) MeshVertices() []float32 {
 	// log.Printf("MeshRenderer > Mesh > Vectices: %v", len(r.Mesh.Vertices))
-	return r.Mesh.Vertices
+	return r.mesh.Vertices
 }
 
 func (r *MeshRenderer) MeshIndicies() []uint8 {
-	log.Printf("MeshRenderer > Mesh > Indicies: %v", len(r.Mesh.Indicies))
-	return r.Mesh.Indicies
+	log.Printf("MeshRenderer > Mesh > Indicies: %v", len(r.mesh.Indicies))
+	return r.mesh.Indicies
 }
 func (r *MeshRenderer) MeshByteVertices() []byte {
 	// log.Printf("MeshRenderer > Mesh > Vectices: %v", len(r.Mesh.Vertices))
-	return f32.Bytes(binary.LittleEndian, r.Mesh.Vertices...)
+	return f32.Bytes(binary.LittleEndian, r.mesh.Vertices...)
 	// return r.Mesh.Vertices
 }
 
 func (r *MeshRenderer) MeshByteIndicies() []byte {
-	log.Printf("MeshRenderer > Mesh > Indicies: %v", len(r.Mesh.Indicies))
-	return r.Mesh.Indicies
+	log.Printf("MeshRenderer > Mesh > Indicies: %v", len(r.mesh.Indicies))
+	return r.mesh.Indicies
 }
 
 func (r *MeshRenderer) TextureRGBA() *image.RGBA {
-	log.Printf("MeshRenderer > Texture > RGBA: %T", r.Texture.RGBA)
-	return r.Texture.RGBA
+	log.Printf("MeshRenderer > Texture > RGBA: %T", r.texture.GetRGBA())
+	return r.texture.GetRGBA()
 }
