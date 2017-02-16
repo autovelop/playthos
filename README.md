@@ -42,7 +42,7 @@ go get github.com/autovelop/golang-gde
 - [x] Create a UI system
 - [x] Refactor everything
 - [x] Do more thorough testing on Android, MacOS, and Windows platform.
-- [ ] Add WebSocket support (for multiplayer use)
+- [x] Add WebSocket support (for multiplayer use)
 - [ ] Improving shaders (animations)
 - [ ] Refactor everything again
 - [ ] Write tests
