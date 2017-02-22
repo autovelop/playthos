@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 )
 
 type Scene struct {
@@ -25,6 +26,15 @@ var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 
 type EditorAction struct {
 	Action uint
+	Data   string
+}
+
+type EditorUpdate struct {
+	Entity      string
+	Component   string
+	Property    string
+	SubProperty string
+	Value       string
 }
 
 func (s *Scene) CreateEditorServer(game *engine.Engine) {
@@ -47,11 +57,12 @@ func (s *Scene) CreateEditorServer(game *engine.Engine) {
 			var editor_action EditorAction
 			err_unmarshal := json.Unmarshal(message, &editor_action)
 			if err_unmarshal != nil {
-				fmt.Println("error:", err)
+				fmt.Println("error:", err_unmarshal)
+				fmt.Println("error:", string(message))
 			}
 
-			if editor_action.Action == 0 {
-
+			switch editor_action.Action {
+			case 0:
 				entity_json, err := json.Marshal(game.GetEntity("Player"))
 				if err != nil {
 					fmt.Println("error:", err)
@@ -62,6 +73,55 @@ func (s *Scene) CreateEditorServer(game *engine.Engine) {
 					log.Println("write:", err)
 					break
 				}
+			case 1:
+				fmt.Printf("%v", editor_action.Data)
+				var editor_update EditorUpdate
+				err_update_unmarshal := json.Unmarshal([]byte(editor_action.Data), &editor_update)
+				if err_update_unmarshal != nil {
+					fmt.Println("error:", err)
+				}
+				// fmt.Printf("%+v", game.GetEntity(editor_update.Entity))
+				fmt.Printf("%+v", game.GetEntity(editor_update.Entity).GetComponentByStr(editor_update.Component).GetProperty(editor_update.Property))
+				switch editor_update.Component {
+				case "*render.Transform":
+					{
+						vec3 := game.GetEntity(editor_update.Entity).GetComponentByStr(editor_update.Component).GetProperty(editor_update.Property)
+						switch vec3 := vec3.(type) {
+						case render.Vector3:
+							switch editor_update.SubProperty {
+							case "X":
+								v, err := strconv.ParseFloat(editor_update.Value, 64)
+								if err != nil {
+									fmt.Println("error:", err)
+								}
+								vec3.X = float32(v)
+								break
+							case "Y":
+								v, err := strconv.ParseFloat(editor_update.Value, 64)
+								if err != nil {
+									fmt.Println("error:", err)
+								}
+								vec3.Y = float32(v)
+								break
+							case "Z":
+								v, err := strconv.ParseFloat(editor_update.Value, 64)
+								if err != nil {
+									fmt.Println("error:", err)
+								}
+								vec3.Z = float32(v)
+								break
+							}
+							game.GetEntity(editor_update.Entity).GetComponentByStr(editor_update.Component).SetProperty(editor_update.Property, vec3)
+						}
+					}
+				}
+
+				// game.GetEntity(editor_update.Entity).GetComponentByStr(editor_update.Component).GetProperty(
+				// var vec3 render.Vector3
+				// err_vec3_unmarshal := json.Unmarshal([]byte(editor_update.Value), &vec3)
+				// if err_vec3_unmarshal != nil {
+				// 	fmt.Println("error:", err_vec3_unmarshal)
+				// }
 			}
 
 			// log.Printf("recv: %s", message)

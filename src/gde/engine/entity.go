@@ -31,11 +31,16 @@ func (e *Entity) AddComponent(comp ComponentRoutine) {
 }
 
 func (e *Entity) GetComponent(comp interface{}) ComponentRoutine {
+	// log.Printf("Entity > Component > Add: %T", comp)
 	// if e.Components[fmt.Sprintf("%T", comp)] == nil {
 	// 	log.Printf("Component %T does not exist for Entity (ID: %v)", comp, e.Id)
 	// 	// DO ERROR HANDLING HERE
 	// }
 	return e.Components[fmt.Sprintf("%T", comp)]
+}
+func (e *Entity) GetComponentByStr(comp string) ComponentRoutine {
+	// log.Printf("Entity > Component > Add: %v", comp)
+	return e.Components[comp]
 }
 
 func (e *Entity) GetComponents() map[string]ComponentRoutine {

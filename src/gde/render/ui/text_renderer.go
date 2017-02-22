@@ -15,7 +15,7 @@ type TextRenderer struct {
 	engine.Component
 	render.RendererRoutine
 	Mesh *render.Mesh
-	Text *Text
+	text *Text
 }
 
 func (r *TextRenderer) Init() {
@@ -29,7 +29,7 @@ func (r *TextRenderer) LoadMesh(mesh *render.Mesh) {
 }
 
 func (r *TextRenderer) LoadText(text *Text) {
-	r.Text = text
+	r.text = text
 }
 
 func (r *TextRenderer) GetProperty(key string) interface{} {
