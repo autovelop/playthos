@@ -18,9 +18,10 @@ var keyboardInput *KeyListener
 type KeyListener struct {
 	input.InputListener
 
-	keydown func()
-	keyup   func()
-	keymap  map[int]func()
+	keydown        func()
+	keyup          func()
+	keymap         map[int]func()
+	keymap_release map[int]func()
 
 	// TEMP - not a big fan of this because glfw should be its own input system
 	Window *glfw.Window
@@ -28,6 +29,7 @@ type KeyListener struct {
 
 func (i *KeyListener) Init() {
 	i.keymap = make(map[int]func())
+	i.keymap_release = make(map[int]func())
 	i.Window.SetKeyCallback(key_callback)
 	// TEMP - again, not a fan setting this globally :(
 	keyboardInput = i
@@ -47,6 +49,12 @@ func (i *KeyListener) BindOn(key int, callback func()) {
 	i.keymap[key] = callback
 }
 
+func (i *KeyListener) BindOnHold(key int, callback_press func(), callback_release func()) {
+	fmt.Printf("Key BindOn - %v\n", key)
+	i.keymap[key] = callback_press
+	i.keymap_release[key] = callback_release
+}
+
 func (i *KeyListener) KeyDown(key int) {
 	fmt.Printf("KeyDown - %v\n", key)
 }
@@ -64,5 +72,9 @@ func key_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action
 		}
 	} else if action == glfw.Release {
 		keyboardInput.KeyUp(int(key))
+		binding := keyboardInput.keymap_release[int(key)]
+		if binding != nil {
+			binding()
+		}
 	}
 }

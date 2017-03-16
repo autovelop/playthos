@@ -21,7 +21,6 @@ type Engine struct {
 	Entities      map[string]*Entity
 	Systems       map[int]System
 	debug         bool
-	platform      *Platform
 	frames        uint64
 	framesCounter time.Duration
 	frameTime     time.Duration
@@ -34,22 +33,17 @@ func (e *Engine) Printf(format string, data ...interface{}) {
 	log.Printf("Engine > Init", data)
 }
 
-func (e *Engine) Init(platform *Platform) {
+func (e *Engine) Init() {
 	if e.debug {
 		e.Printf("Engine > Init")
 	}
 	e.Entities = make(map[string]*Entity)
 	e.Systems = make(map[int]System)
-	e.platform = platform
 
 	e.frameTime = time.Duration(1000/60) * time.Millisecond
 	e.lastTime = time.Now()
 	e.startTime = time.Now()
 	// check out wolfengo
-}
-
-func (e *Engine) GetPlatform() *Platform {
-	return e.platform
 }
 
 func (e *Engine) Update() {

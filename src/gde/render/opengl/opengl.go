@@ -17,29 +17,45 @@ import (
 type OpenGL struct {
 	render.RenderRoutine
 
-	window        *glfw.Window
+	Window        *glfw.Window
 	ShaderProgram uint32
+
+	screenWidth  float32
+	screenHeight float32
+
+	Camera *render.Camera
 
 	uiSystem render.RenderRoutine
 }
 
 func (r *OpenGL) Init() {
 	log.Printf("OpenGL > Init")
+
+	r.screenWidth = 1600
+	r.screenHeight = 800
+
+	log.Printf("OpenGL > Screen > %v x %v", r.screenWidth, r.screenHeight)
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
 
+	r.Camera = &render.Camera{}
+	r.Camera.Init()
+
 	// window, err := glfw.CreateWindow(int(r.Device.ScreenW), int(r.Device.ScreenH), "Cube", nil, nil)
-	window, err := glfw.CreateWindow(480, 800, "Cube", nil, nil)
+	glfw.WindowHint(glfw.ContextVersionMajor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 3)
+	window, err := glfw.CreateWindow(int(r.screenWidth), int(r.screenHeight), "Cube", nil, nil)
 	if err != nil {
 		panic(err)
 	}
 	window.MakeContextCurrent()
-	r.window = window
+	r.Window = window
 
 	// gl.Viewport(0, 0, r.Device.RenderW, r.Device.RenderH)
-	gl.Viewport(0, 0, 480, 800)
+	// gl.Viewport(0, 0, r.screenWidth, r.screenHeight)
+	gl.Viewport(0, 0, int32(r.screenWidth), int32(r.screenHeight))
 
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 
@@ -48,19 +64,31 @@ func (r *OpenGL) Init() {
 }
 
 func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
-	if !r.window.ShouldClose() {
+	if !r.Window.ShouldClose() {
 
-		gl.ClearColor(0.2, 0.3, 0.3, 1)
+		gl.ClearColor(0.4, 0.3, 0.3, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.UseProgram(r.ShaderProgram)
 
 		var view mgl32.Mat4
-		view = mgl32.LookAtV(mgl32.Vec3{0, 0, 1}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+
+		lookat := r.Camera.GetProperty("LookAt")
+		switch lookat := lookat.(type) {
+		case render.Vector3:
+			lookfrom := r.Camera.GetProperty("LookFrom")
+			switch lookfrom := lookfrom.(type) {
+			case render.Vector3:
+				view = mgl32.LookAtV(mgl32.Vec3{lookat.X, lookat.Y, lookat.Z}, mgl32.Vec3{lookfrom.X, lookfrom.Y, lookfrom.Z}, mgl32.Vec3{0, 1, 0})
+			}
+		}
+
 		view_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("view\x00"))
 
 		var proj mgl32.Mat4
-		proj = mgl32.Ortho(0, 1, 2, 0, 0.1, 1000)
+		// ratio := r.screenWidth / r.screenHeight
+		// proj = mgl32.Ortho(-float32(r.screenWidth/r.screenHeight), float32(r.screenWidth/r.screenHeight), -float32(r.screenWidth/r.screenHeight), float32(r.screenWidth/r.screenHeight), 0.1, 1000)
+		proj = mgl32.Ortho(0, 1, 0.4, 0, -1.0, 10.0)
 
 		proj_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("projection\x00"))
 		model_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("model\x00"))
@@ -70,28 +98,32 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 			if renderer == nil {
 				continue
 			}
+
 			vao := renderer.GetProperty("VAO")
 			switch vao := vao.(type) {
 			case uint32:
 				gl.BindVertexArray(vao)
+				// log.Printf("OpenGL > Draw > VAO: %v", vao)
 			}
 
-			var model mgl32.Mat4
+			// var model mgl32.Mat4
+			model := mgl32.Ident4()
 			trans := v.GetComponent(&render.Transform{})
 
 			pos := trans.GetProperty("Position")
 			switch pos := pos.(type) {
 			case render.Vector3:
-				model = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
+				model = model.Mul4(mgl32.Translate3D(pos.X, pos.Y, pos.Z))
+				// log.Printf("OpenGL > Draw > Position: %v", pos)
 			}
 
-			rot := trans.GetProperty("Rotation")
-			switch rot := rot.(type) {
-			case render.Vector3:
-				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
-				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
-				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
-			}
+			// rot := trans.GetProperty("Rotation")
+			// switch rot := rot.(type) {
+			// case render.Vector3:
+			// 	model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
+			// 	model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
+			// 	model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
+			// }
 
 			texture := renderer.GetProperty("TEXTURE")
 			switch texture := texture.(type) {
@@ -99,21 +131,25 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 				gl.ActiveTexture(gl.TEXTURE0)
 				gl.BindTexture(gl.TEXTURE_2D, texture)
 				gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
+				// log.Printf("OpenGL > Draw > Texture: %v", texture)
 			}
 
 			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
 			gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
 			gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
+			// log.Printf("OpenGL > Draw > Model: %v", model)
+			// log.Printf("OpenGL > Draw > View: %v", view)
+			// log.Printf("OpenGL > Draw > Projection: %v", proj)
 
-			gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
+			gl.DrawElements(gl.TRIANGLES, 8, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
 		}
 		gl.BindVertexArray(0)
 
 		// let the UI system swap the buffers and do poll events only if it exists
-		if r.uiSystem == nil {
-			r.window.SwapBuffers()
-			glfw.PollEvents()
-		}
+		// if r.uiSystem == nil {
+		r.Window.SwapBuffers()
+		glfw.PollEvents()
+		// }
 
 	} else {
 		glfw.Terminate()
@@ -125,18 +161,21 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 	var vertexArrayID uint32
 	gl.GenVertexArrays(1, &vertexArrayID)
 	gl.BindVertexArray(vertexArrayID)
+	log.Printf("LoadRenderer > VAO > ID: %v", vertexArrayID)
 
 	// Vertex buffer
 	var vertexBuffer uint32
 	gl.GenBuffers(1, &vertexBuffer)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
 	gl.BufferData(gl.ARRAY_BUFFER, len(renderer.MeshVertices())*4, gl.Ptr(renderer.MeshVertices()), gl.STATIC_DRAW)
+	log.Printf("LoadRenderer > VBO > Verticies Length: %v", len(renderer.MeshVertices()))
 
 	// Element buffer
 	var elementBuffer uint32
 	gl.GenBuffers(1, &elementBuffer)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(renderer.MeshIndicies())*4, gl.Ptr(renderer.MeshIndicies()), gl.STATIC_DRAW)
+	log.Printf("LoadRenderer > EBO > Indicies Length: %v", len(renderer.MeshIndicies()))
 
 	// Linking vertex attributes
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
@@ -149,11 +188,6 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 	// Linking texture attributes
 	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
 	gl.EnableVertexAttribArray(2)
-
-	renderer.SetProperty("VAO", vertexArrayID)
-
-	// Unbind Vertex array object
-	gl.BindVertexArray(0)
 
 	// Load texture
 	var texture uint32
@@ -174,12 +208,21 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,
 		gl.Ptr(renderer.TextureRGBA().Pix))
+	log.Printf("LoadRenderer > Texture > ID: %v", texture)
+	log.Printf("LoadRenderer > Texture > Width: %v", int32(renderer.TextureRGBA().Rect.Size().X))
+	log.Printf("LoadRenderer > Texture > Height: %v", int32(renderer.TextureRGBA().Rect.Size().Y))
+	log.Printf("LoadRenderer > Texture > Pix Length: %v", len(renderer.TextureRGBA().Pix))
 	renderer.SetProperty("TEXTURE", texture)
+
+	renderer.SetProperty("VAO", vertexArrayID)
+
+	// Unbind Vertex array object
+	gl.BindVertexArray(0)
 }
 
 func (r *OpenGL) AddUISystem(game *engine.Engine) {
 	// Create ui system
-	sys_ui := &uigl.UIGL{Window: r.window}
+	sys_ui := &uigl.UIGL{Window: r.Window}
 	game.AddSystem(engine.SystemUI, sys_ui)
 	sys_ui.Init()
 	r.uiSystem = sys_ui
@@ -189,7 +232,11 @@ func (r *OpenGL) Stop() {
 }
 
 func (r *OpenGL) GetWindow() *glfw.Window {
-	return r.window
+	return r.Window
+}
+
+func (r *OpenGL) GetCamera() *render.Camera {
+	return r.Camera
 }
 
 func (r *OpenGL) NewShader(vShader string, fShader string) uint32 {

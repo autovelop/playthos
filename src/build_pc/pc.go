@@ -27,13 +27,9 @@ func main() {
 	}
 	defer glfw.Terminate()
 
-	// Determine platform automatically. Screen Dimensions, Screen Resolution, Screen Aspect Ratio, etc.
-	platform := &engine.Platform{}
-	platform.NewPlatform(360, 640, 360, 640)
-
 	// Greate game engine
 	game := &engine.Engine{} // Set Device, OS, and OpenGL
-	game.Init(platform)
+	game.Init()
 
 	// Create render system
 	render := &opengl.OpenGL{}
