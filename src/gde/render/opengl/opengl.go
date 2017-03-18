@@ -31,8 +31,10 @@ type OpenGL struct {
 func (r *OpenGL) Init() {
 	log.Printf("OpenGL > Init")
 
-	r.screenWidth = 1600
-	r.screenHeight = 800
+	r.screenWidth = 1024
+	r.screenHeight = 768
+	// r.screenWidth = 768
+	// r.screenHeight = 1024
 
 	log.Printf("OpenGL > Screen > %v x %v", r.screenWidth, r.screenHeight)
 	// Initialize Glow
@@ -61,12 +63,15 @@ func (r *OpenGL) Init() {
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.FRONT_AND_BACK)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.ClearColor(0.1, 0.2, 0.4, 1)
 }
 
 func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 	if !r.Window.ShouldClose() {
 
-		gl.ClearColor(0.4, 0.3, 0.3, 1)
+		// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.UseProgram(r.ShaderProgram)
@@ -86,9 +91,11 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 		view_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("view\x00"))
 
 		var proj mgl32.Mat4
-		// ratio := r.screenWidth / r.screenHeight
+		ratio := r.screenWidth / r.screenHeight
+		// ratio := r.screenHeight / r.screenWidth
 		// proj = mgl32.Ortho(-float32(r.screenWidth/r.screenHeight), float32(r.screenWidth/r.screenHeight), -float32(r.screenWidth/r.screenHeight), float32(r.screenWidth/r.screenHeight), 0.1, 1000)
-		proj = mgl32.Ortho(0, 1, 0.4, 0, -1.0, 10.0)
+		proj = mgl32.Ortho(0, r.screenWidth/ratio, r.screenHeight/ratio, 0, 0.0, 10.0)
+		// proj = mgl32.Ortho(0, r.screenWidth, r.screenHeight, 0, -1.0, 10.0)
 
 		proj_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("projection\x00"))
 		model_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("model\x00"))
@@ -110,10 +117,19 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 			model := mgl32.Ident4()
 			trans := v.GetComponent(&render.Transform{})
 
+			// defaults
+
 			pos := trans.GetProperty("Position")
 			switch pos := pos.(type) {
 			case render.Vector3:
 				model = model.Mul4(mgl32.Translate3D(pos.X, pos.Y, pos.Z))
+				// log.Printf("OpenGL > Draw > Position: %v", pos)
+			}
+
+			scale := trans.GetProperty("Scale")
+			switch scale := scale.(type) {
+			case render.Vector3:
+				model = model.Mul4(mgl32.Scale3D(100*scale.X, 100*scale.Y, 100*scale.Z))
 				// log.Printf("OpenGL > Draw > Position: %v", pos)
 			}
 
@@ -125,13 +141,29 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 			// 	model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
 			// }
 
-			texture := renderer.GetProperty("TEXTURE")
-			switch texture := texture.(type) {
-			case uint32:
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, texture)
-				gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
-				// log.Printf("OpenGL > Draw > Texture: %v", texture)
+			texture := renderer.GetProperty("Texture")
+			if texture != nil {
+				switch texture := texture.(type) {
+				case uint32:
+					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 1)
+
+					gl.ActiveTexture(gl.TEXTURE0)
+					gl.BindTexture(gl.TEXTURE_2D, texture)
+					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
+					// log.Printf("OpenGL > Draw > Texture: %v", texture)
+					color := renderer.GetProperty("Color")
+					switch color := color.(type) {
+					case *render.Color:
+						gl.Uniform4fv(gl.GetUniformLocation(r.ShaderProgram, gl.Str("color\x00")), 1, &color[0])
+					}
+				}
+			} else {
+				color := renderer.GetProperty("Color")
+				switch color := color.(type) {
+				case *render.Color:
+					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
+					gl.Uniform4fv(gl.GetUniformLocation(r.ShaderProgram, gl.Str("color\x00")), 1, &color[0])
+				}
 			}
 
 			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
@@ -189,30 +221,35 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
 	gl.EnableVertexAttribArray(2)
 
-	// Load texture
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		gl.RGBA,
-		int32(renderer.TextureRGBA().Rect.Size().X),
-		int32(renderer.TextureRGBA().Rect.Size().Y),
-		0,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
-		gl.Ptr(renderer.TextureRGBA().Pix))
-	log.Printf("LoadRenderer > Texture > ID: %v", texture)
-	log.Printf("LoadRenderer > Texture > Width: %v", int32(renderer.TextureRGBA().Rect.Size().X))
-	log.Printf("LoadRenderer > Texture > Height: %v", int32(renderer.TextureRGBA().Rect.Size().Y))
-	log.Printf("LoadRenderer > Texture > Pix Length: %v", len(renderer.TextureRGBA().Pix))
-	renderer.SetProperty("TEXTURE", texture)
+	if renderer.HasTexture() {
+		// Load texture
+		var texture uint32
+		gl.GenTextures(1, &texture)
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.TexImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGBA,
+			int32(renderer.GetTextureRGBA().Rect.Size().X),
+			int32(renderer.GetTextureRGBA().Rect.Size().Y),
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			gl.Ptr(renderer.GetTextureRGBA().Pix))
+		log.Printf("LoadRenderer > Texture > ID: %v", texture)
+		log.Printf("LoadRenderer > Texture > Width: %v", int32(renderer.GetTextureRGBA().Rect.Size().X))
+		log.Printf("LoadRenderer > Texture > Height: %v", int32(renderer.GetTextureRGBA().Rect.Size().Y))
+		log.Printf("LoadRenderer > Texture > Pix Length: %v", len(renderer.GetTextureRGBA().Pix))
+		renderer.SetProperty("Texture", texture)
+		renderer.SetProperty("Color", renderer.GetColor())
+	} else {
+		renderer.SetProperty("Color", renderer.GetColor())
+	}
 
 	renderer.SetProperty("VAO", vertexArrayID)
 

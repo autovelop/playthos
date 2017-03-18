@@ -54,7 +54,8 @@ func main() {
 	mouseInput.Init()
 
 	scene := &editor.Scene{}
-	scene.LoadScene(game)
+	scene.LoadEngine(game)
+	scene.LoadScene()
 
 	for true {
 		game.Update()

@@ -82,6 +82,11 @@ func (e *Engine) GetEntity(id string) *Entity {
 	return e.Entities[id]
 }
 
+func (e *Engine) DeleteEntity(id string) {
+	log.Printf("Engine > Entity > Delete: %v", id)
+	delete(e.Entities, id)
+}
+
 func (e *Engine) GetSystem(sys int) System {
 	log.Printf("Engine > System > Get: %v", sys)
 	return e.Systems[sys]

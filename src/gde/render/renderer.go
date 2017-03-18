@@ -26,5 +26,8 @@ type RendererRoutine interface {
 	// MeshByteVertices() []byte
 	// MeshByteIndicies() []byte
 
-	TextureRGBA() *image.RGBA
+	GetColor() *Color
+
+	HasTexture() bool
+	GetTextureRGBA() *image.RGBA
 }

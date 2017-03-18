@@ -32,12 +32,15 @@ const (
 
   // try use in/out later
   varying vec3 colOut;
+
+  // varying bool hasTexOut;
   varying vec2 texOut;
 
   void main( void ) {
 	gl_Position = projection * view * model * pos;
 	// gl_Position = vec4(1.0, 1.0, 0.0, 1.0);
 	colOut = col;
+	// hasTexOut = hasTex;
 	texOut = tex;
   }
   ` + "\x00"
@@ -47,16 +50,22 @@ const (
 	// 1. Allow mesh color or texture
 	// precision mediump float;
 	FSHADER_OPENGL_ES_2_0 = `#version 330
-	precision mediump float;
+  precision mediump float;
 
+  uniform int hasTexture;
   uniform sampler2D texture;
-
-  varying vec3 colOut;
   varying vec2 texOut;
 
+  uniform vec4 color;
+  varying vec3 colOut;
+
+
   void main() {
-	gl_FragColor = vec4(1.0, 1.0, 0.3, 1.0);
-	// gl_FragColor = texture2D(texture, texOut);
+	if (hasTexture == 1) {
+	  gl_FragColor = texture2D(texture, texOut) * color;
+	} else {
+	  gl_FragColor = vec4(colOut, 1.0) * color;
+	}
   }
   ` + "\x00"
 )

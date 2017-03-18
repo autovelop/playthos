@@ -13,11 +13,13 @@ type MeshRenderer struct {
 	RendererRoutine
 	Mesh    *Mesh
 	Texture *Texture
+	Color   *Color
 }
 
 func (r *MeshRenderer) Init() {
 	// log.Printf("MeshRenderer > Init")
 	r.Properties = make(map[string]interface{})
+	r.Color = &Color{0, 0, 0, 1}
 }
 
 func (r *MeshRenderer) GetProperty(key string) interface{} {
@@ -62,7 +64,21 @@ func (r *MeshRenderer) MeshIndicies() []uint8 {
 // 	return r.Mesh.Indicies
 // }
 
-func (r *MeshRenderer) TextureRGBA() *image.RGBA {
+func (r *MeshRenderer) SetColor(color *Color) {
+	log.Printf("MeshRenderer > SetColor: %T", color)
+	r.Color = color
+}
+func (r *MeshRenderer) GetColor() *Color {
+	log.Printf("MeshRenderer > GetColor: %T", r.Color)
+	return r.Color
+}
+
+func (r *MeshRenderer) HasTexture() bool {
+	log.Printf("MeshRenderer > HasTexture: %v", r.Texture != nil)
+	return r.Texture != nil
+}
+
+func (r *MeshRenderer) GetTextureRGBA() *image.RGBA {
 	log.Printf("MeshRenderer > Texture > RGBA: %T", r.Texture.GetRGBA())
 	return r.Texture.GetRGBA()
 }

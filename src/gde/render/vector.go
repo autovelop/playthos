@@ -21,6 +21,12 @@ type Vector3 struct {
 	Z float32
 }
 
+func (v1 *Vector3) Add(v2 *Vector3) {
+	v1.X += v2.X
+	v1.Y += v2.Y
+	v1.Z += v2.Z
+}
+
 type Vector2 struct {
 	X float32
 	Y float32

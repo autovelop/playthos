@@ -8,7 +8,7 @@ import (
 	"gde/render"
 
 	// "gde/render/animation"
-	// "fmt"
+	"fmt"
 	// "gde/render/ui"
 	// "github.com/gorilla/websocket"
 	"log"
@@ -18,7 +18,10 @@ import (
 )
 
 type Scene struct {
-	name string
+	name                string
+	Game                *engine.Engine
+	RenderSystem        render.RenderRoutine
+	KeyboardInputSystem input.InputListener
 }
 
 // var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
@@ -185,48 +188,269 @@ type EditorUpdate struct {
 // 	// network.Init()
 // }
 
-func (s *Scene) LoadScene(game *engine.Engine) {
-	sys_render, err := game.GetSystem(engine.SystemRender).(render.RenderRoutine)
+func (s *Scene) NewGameObject(id string, mesh *render.Mesh, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
+	// Create player entity
+	entity := &engine.Entity{Id: id}
+	entity.Init()
+	entity.Add(s.Game)
+
+	renderer := &render.MeshRenderer{}
+	renderer.Init()
+	renderer.LoadMesh(mesh)
+	renderer.SetColor(&color)
+
+	s.RenderSystem.LoadRenderer(renderer)
+
+	entity.AddComponent(renderer)
+
+	transform := &render.Transform{}
+	transform.Init()
+	transform.SetProperty("Position", position)
+	transform.SetProperty("Rotation", rotation)
+	transform.SetProperty("Scale", scale)
+	entity.AddComponent(transform)
+}
+
+func (s *Scene) NewTextureGameObject(id string, mesh *render.Mesh, texture *render.Texture, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
+	// Create player entity
+	entity := &engine.Entity{Id: id}
+	entity.Init()
+	entity.Add(s.Game)
+
+	renderer := &render.MeshRenderer{}
+	renderer.Init()
+	renderer.LoadMesh(mesh)
+	renderer.SetColor(&color)
+
+	renderer.LoadTexture(texture)
+
+	s.RenderSystem.LoadRenderer(renderer)
+
+	entity.AddComponent(renderer)
+
+	transform := &render.Transform{}
+	transform.Init()
+	transform.SetProperty("Position", position)
+	transform.SetProperty("Rotation", rotation)
+	transform.SetProperty("Scale", scale)
+	entity.AddComponent(transform)
+
+}
+
+func (s *Scene) MoveEntity(id string, direction *render.Vector3) {
+	ent := s.Game.GetEntity(id)
+	trans := ent.GetComponent(&render.Transform{})
+	pos := trans.GetProperty("Position")
+	switch pos := pos.(type) {
+	case render.Vector3:
+		pos.Add(direction)
+		trans.SetProperty("Position", pos)
+		log.Printf("Scene > Player > Position: %v", pos)
+	}
+}
+
+func (s *Scene) LoadEngine(game *engine.Engine) {
+	s.Game = game
+}
+
+func (s *Scene) LoadScene() {
+	sys_render, err := s.Game.GetSystem(engine.SystemRender).(render.RenderRoutine)
 	if !err {
 		log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
 		return
 	}
+	s.RenderSystem = sys_render
 
-	sys_render.GetCamera().SetProperty("LookAt", render.Vector3{0, 0, 1})
-	sys_render.GetCamera().SetProperty("LookFrom", render.Vector3{0, 0, 0})
-
-	// Create player entity
-	ent_player := &engine.Entity{Id: "Player"}
-	ent_player.Init()
-	ent_player.Add(game)
-
-	ent_player_comp_transform := &render.Transform{}
-	ent_player_comp_transform.Init()
-	ent_player_comp_transform.SetProperty("Position", render.Vector3{0.0, 0.0, 0.0})
-	ent_player_comp_transform.SetProperty("Rotation", render.Vector3{0, 0, 45})
-	ent_player.AddComponent(ent_player_comp_transform)
-
-	comp_renderer := &render.MeshRenderer{}
-	comp_renderer.Init()
-
-	comp_renderer.LoadMesh(&render.Mesh{
+	quad := &render.Mesh{
 		Vertices: []float32{
-			0.2, 0.2, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
-			0.2, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-			0.0, 0.2, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+			0.2, 0.2, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+			0.2, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0,
+			0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+			0.0, 0.2, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
 		},
 		Indicies: []uint8{
 			0, 1, 3,
 			1, 2, 3,
 		},
-	})
-	texture := &render.Texture{}
-	texture.NewTexture("assets", "weapon.png")
-	comp_renderer.LoadTexture(texture)
+	}
 
-	ent_player.AddComponent(comp_renderer)
-	sys_render.LoadRenderer(comp_renderer)
+	sys_render.GetCamera().SetProperty("LookAt", render.Vector3{0, 0, 1})
+	sys_render.GetCamera().SetProperty("LookFrom", render.Vector3{0, 0, 0})
+
+	sys_keyboard_input, err := s.Game.GetSystem(engine.SystemInputKeyboard).(input.InputListener)
+	if !err {
+		log.Println(err)
+		return
+	}
+	s.KeyboardInputSystem = sys_keyboard_input
+
+	const (
+		KEY_DOWN  = 264
+		KEY_UP    = 265
+		KEY_LEFT  = 263
+		KEY_RIGHT = 262
+		KEY_SPACE = 32
+	)
+
+	// Game starts here
+
+	s.NewGameObject("Player",
+		quad,
+		render.Color{1, 0, 0, 0.2},
+		render.Vector3{300, 300, 0.4},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	sys_keyboard_input.BindOn(
+		KEY_DOWN,
+		func() {
+			s.MoveEntity("Player", &render.Vector3{0, 60, 0})
+		},
+	)
+	sys_keyboard_input.BindOn(
+		KEY_UP,
+		func() {
+			s.MoveEntity("Player", &render.Vector3{0, -60, 0})
+		},
+	)
+	sys_keyboard_input.BindOn(
+		KEY_LEFT,
+		func() {
+			s.MoveEntity("Player", &render.Vector3{-60, 0, 0})
+		},
+	)
+	sys_keyboard_input.BindOn(
+		KEY_RIGHT,
+		func() {
+			s.MoveEntity("Player", &render.Vector3{60, 0, 0})
+		},
+	)
+
+	sys_keyboard_input.BindOn(
+		KEY_SPACE,
+		func() {
+			ent := s.Game.GetEntity("Player")
+			trans := ent.GetComponent(&render.Transform{})
+			pos := trans.GetProperty("Position")
+			switch pos := pos.(type) {
+			case render.Vector3:
+				ent_selector := s.Game.GetEntity("Selector")
+				if ent_selector == nil {
+					s.NewGameObject("Selector",
+						quad,
+						render.Color{0, 1, 0, 0.2},
+						pos,
+						render.Vector3{0, 0, 0},
+						render.Vector3{3, 3, 3},
+					)
+				} else {
+					s.Game.DeleteEntity("Selector")
+				}
+			}
+		},
+	)
+
+	for letter_idx, letter_val := range [8]string{"A", "B", "C", "D", "E", "F", "G", "H"} {
+		for number_idx, number_val := range [8]uint{1, 2, 3, 4, 5, 6, 7, 8} {
+			col := render.Color{0.15, 0.15, 0.15, 1}
+			if letter_idx%2 == 0 {
+				if number_idx%2 == 0 {
+					col = render.Color{0.85, 0.85, 0.85, 1}
+				}
+			} else {
+				col = render.Color{0.85, 0.85, 0.85, 1}
+				if number_idx%2 == 0 {
+					col = render.Color{0.15, 0.15, 0.15, 1}
+				}
+			}
+			// if number_idx%2 > 0 {
+			// 	col = render.Color{0.85, 0.85, 0.85, 1}
+			// }
+			s.NewGameObject(fmt.Sprintf("%v%v", letter_val, number_val),
+				quad,
+				col,
+				render.Vector3{float32(letter_idx * 60), float32(number_idx * 60), 0},
+				render.Vector3{0, 0, 0},
+				render.Vector3{3, 3, 3},
+			)
+		}
+	}
+
+	pawn_texture := &render.Texture{}
+	pawn_texture.NewTexture("assets", "pawn.png")
+
+	s.NewTextureGameObject("Pawn_W_A",
+		quad,
+		pawn_texture,
+		render.Color{0, 0, 0, 1.0},
+		render.Vector3{0, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_B",
+		quad,
+		pawn_texture,
+		render.Color{1, 1, 1, 1.0},
+		render.Vector3{60, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_C",
+		quad,
+		pawn_texture,
+		render.Color{0, 0, 0, 1.0},
+		render.Vector3{120, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_D",
+		quad,
+		pawn_texture,
+		render.Color{1, 1, 1, 1.0},
+		render.Vector3{180, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_E",
+		quad,
+		pawn_texture,
+		render.Color{0, 0, 0, 1.0},
+		render.Vector3{240, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_F",
+		quad,
+		pawn_texture,
+		render.Color{1, 1, 1, 1.0},
+		render.Vector3{300, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_G",
+		quad,
+		pawn_texture,
+		render.Color{0, 0, 0, 1.0},
+		render.Vector3{360, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_W_H",
+		quad,
+		pawn_texture,
+		render.Color{1, 1, 1, 1.0},
+		render.Vector3{420, 360, 0.2},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
 
 	// Create UI entity
 
@@ -286,74 +510,68 @@ func (s *Scene) LoadScene(game *engine.Engine) {
 	// ent_box_comp_animator.Init()
 	// ent_box.AddComponent(ent_box_comp_animator)
 
-	keyInput, err := game.GetSystem(engine.SystemInputKeyboard).(input.InputListener)
-	if !err {
-		log.Println(err)
-		return
-	}
+	// // Right arrow
+	// keyInput.BindOn(262, func() {
+	// 	pos := ent_player_comp_transform.GetProperty("Position")
+	// 	switch pos := pos.(type) {
+	// 	case render.Vector3:
+	// 		pos.X += 60.0
+	// 		ent_player_comp_transform.SetProperty("Position", pos)
+	// 		log.Printf("Scene > Player > Position: %v", pos)
+	// 	}
+	// })
 
-	// Right arrow
-	keyInput.BindOn(262, func() {
-		pos := ent_player_comp_transform.GetProperty("Position")
-		switch pos := pos.(type) {
-		case render.Vector3:
-			pos.X += 0.05
-			ent_player_comp_transform.SetProperty("Position", pos)
-			log.Printf("Scene > Player > Position: %v", pos)
-		}
-	})
+	// // Left arrow
+	// keyInput.BindOn(263, func() {
+	// 	pos := ent_player_comp_transform.GetProperty("Position")
+	// 	switch pos := pos.(type) {
+	// 	case render.Vector3:
+	// 		pos.X -= 60.0
+	// 		ent_player_comp_transform.SetProperty("Position", pos)
+	// 		log.Printf("Scene > Player > Position: %v", pos)
+	// 	}
+	// })
 
-	// Left arrow
-	keyInput.BindOn(263, func() {
-		pos := ent_player_comp_transform.GetProperty("Position")
-		switch pos := pos.(type) {
-		case render.Vector3:
-			pos.X -= 0.05
-			ent_player_comp_transform.SetProperty("Position", pos)
-			log.Printf("Scene > Player > Position: %v", pos)
-		}
-	})
+	// // Up arrow
+	// keyInput.BindOn(265, func() {
+	// 	pos := ent_player_comp_transform.GetProperty("Position")
+	// 	switch pos := pos.(type) {
+	// 	case render.Vector3:
+	// 		pos.Y -= 60.0
+	// 		ent_player_comp_transform.SetProperty("Position", pos)
+	// 		log.Printf("Scene > Player > Position: %v", pos)
+	// 	}
+	// })
 
-	// Up arrow
-	keyInput.BindOn(265, func() {
-		pos := ent_player_comp_transform.GetProperty("Position")
-		switch pos := pos.(type) {
-		case render.Vector3:
-			pos.Y -= 0.05
-			ent_player_comp_transform.SetProperty("Position", pos)
-			log.Printf("Scene > Player > Position: %v", pos)
-		}
-	})
+	// ctrl_down := false
+	// // Down arrow
+	// keyInput.BindOn(264, func() {
+	// 	if ctrl_down == false {
+	// 		pos := ent_player_comp_transform.GetProperty("Position")
+	// 		switch pos := pos.(type) {
+	// 		case render.Vector3:
+	// 			pos.Y += 60.0
+	// 			ent_player_comp_transform.SetProperty("Position", pos)
+	// 			log.Printf("Scene > Player > Position: %v", pos)
+	// 		}
+	// 	} else {
+	// 		lookat := sys_render.GetCamera().GetProperty("LookAt")
+	// 		switch lookat := lookat.(type) {
+	// 		case render.Vector3:
+	// 			lookat.Y += 0.05
+	// 			sys_render.GetCamera().SetProperty("LookAt", lookat)
+	// 			// ent_player_comp_transform.SetProperty("Position", pos)
+	// 			// log.Printf("Scene > Player > Position: %v", pos)
+	// 		}
+	// 	}
+	// })
 
-	ctrl_down := false
-	// Down arrow
-	keyInput.BindOn(264, func() {
-		if ctrl_down == false {
-			pos := ent_player_comp_transform.GetProperty("Position")
-			switch pos := pos.(type) {
-			case render.Vector3:
-				pos.Y += 0.05
-				ent_player_comp_transform.SetProperty("Position", pos)
-				log.Printf("Scene > Player > Position: %v", pos)
-			}
-		} else {
-			lookat := sys_render.GetCamera().GetProperty("LookAt")
-			switch lookat := lookat.(type) {
-			case render.Vector3:
-				lookat.Y += 0.05
-				sys_render.GetCamera().SetProperty("LookAt", lookat)
-				// ent_player_comp_transform.SetProperty("Position", pos)
-				// log.Printf("Scene > Player > Position: %v", pos)
-			}
-		}
-	})
-
-	// Ctrl down
-	keyInput.BindOnHold(341, func() {
-		ctrl_down = true
-	}, func() {
-		ctrl_down = false
-	})
+	// // Ctrl down
+	// keyInput.BindOnHold(341, func() {
+	// 	ctrl_down = true
+	// }, func() {
+	// 	ctrl_down = false
+	// })
 
 	// // Up arrow
 	// keyInput.BindOn(265, func() {
