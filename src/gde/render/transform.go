@@ -14,6 +14,10 @@ func (t *Transform) Init() {
 	t.Properties = make(map[string]interface{})
 }
 
+func (t *Transform) Id() string {
+	return "Transform"
+}
+
 func (t *Transform) GetProperty(key string) interface{} {
 	return t.Properties[key]
 }

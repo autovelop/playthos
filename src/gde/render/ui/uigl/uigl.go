@@ -44,7 +44,7 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 	text_scale_uni := gl.GetUniformLocation(u.ShaderProgram, gl.Str("text_scale\x00"))
 
 	for _, v := range *entities {
-		uiRenderer := v.GetComponent(&ui.UIRenderer{})
+		uiRenderer := v.GetComponent("UIRenderer")
 		if uiRenderer == nil {
 			continue
 		}
@@ -57,7 +57,7 @@ func (u *UIGL) Update(entities *map[string]*engine.Entity) {
 
 		// var model mgl32.Mat4
 		model := mgl32.Ident4()
-		trans := v.GetComponent(&render.Transform{})
+		trans := v.GetComponent("Transform")
 
 		pos := trans.GetProperty("Position")
 		switch pos := pos.(type) {
@@ -124,18 +124,18 @@ func (u *UIGL) Stop() {
 }
 
 func (r *UIGL) LoadRenderer(renderer render.RendererRoutine) {
-	renderer.LoadMesh(&render.Mesh{
-		Vertices: []float32{
-			1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
-			1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
-			0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
-			0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
-		},
-		Indicies: []uint8{
-			0, 1, 3,
-			1, 2, 3,
-		},
-	})
+	// renderer.LoadMesh(&render.Mesh{
+	// 	Vertices: []float32{
+	// 		1.0, 1.0, -0.1, 1.0, 0.0, 0.0,
+	// 		1.0, 0.0, -0.1, 0.0, 1.0, 0.0,
+	// 		0.0, 0.0, -0.1, 0.0, 0.0, 1.0,
+	// 		0.0, 1.0, -0.1, 0.0, 1.0, 1.0,
+	// 	},
+	// 	Indicies: []uint8{
+	// 		0, 1, 3,
+	// 		1, 2, 3,
+	// 	},
+	// })
 	// Bind vertex array object. This must wrap around the mesh creation because it is how we are going to access it later when we draw
 	var vertexArrayID uint32
 	gl.GenVertexArrays(1, &vertexArrayID)

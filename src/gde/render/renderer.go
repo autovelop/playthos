@@ -16,8 +16,8 @@ import (
 type RendererRoutine interface {
 	engine.ComponentRoutine
 
-	LoadMesh(mesh *Mesh)
-	LoadTexture(texture *Texture)
+	// LoadMesh(mesh *Mesh)
+	// LoadTexture(texture *Texture)
 
 	MeshVertices() []float32
 	MeshIndicies() []uint8

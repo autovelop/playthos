@@ -6,6 +6,7 @@ type Component struct {
 
 // Many better ways of doing properties but this should suffice for now
 type ComponentRoutine interface {
+	Id() string
 	Init()
 	GetProperty(string) interface{}
 	SetProperty(string, interface{})

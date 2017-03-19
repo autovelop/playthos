@@ -19,7 +19,10 @@ type MeshRenderer struct {
 func (r *MeshRenderer) Init() {
 	// log.Printf("MeshRenderer > Init")
 	r.Properties = make(map[string]interface{})
-	r.Color = &Color{0, 0, 0, 1}
+}
+
+func (r *MeshRenderer) Id() string {
+	return "MeshRenderer"
 }
 
 func (r *MeshRenderer) GetProperty(key string) interface{} {
@@ -32,15 +35,15 @@ func (r *MeshRenderer) SetProperty(key string, val interface{}) {
 	r.Properties[key] = val
 }
 
-func (r *MeshRenderer) LoadMesh(mesh *Mesh) {
-	log.Printf("MeshRenderer > Mesh > Load: %v", mesh)
-	r.Mesh = mesh
-}
+// func (r *MeshRenderer) LoadMesh(mesh *Mesh) {
+// 	log.Printf("MeshRenderer > Mesh > Load: %v", mesh)
+// 	r.Mesh = mesh
+// }
 
-func (r *MeshRenderer) LoadTexture(texture *Texture) {
-	// log.Printf("MeshRenderer > Texture > Load: %v", texture)
-	r.Texture = texture
-}
+// func (r *MeshRenderer) LoadTexture(texture *Texture) {
+// 	// log.Printf("MeshRenderer > Texture > Load: %v", texture)
+// 	r.Texture = texture
+// }
 
 // Make this happen on the Render System
 func (r *MeshRenderer) MeshVertices() []float32 {

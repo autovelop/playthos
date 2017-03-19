@@ -59,12 +59,19 @@ const (
   uniform vec4 color;
   varying vec3 colOut;
 
-
   void main() {
 	if (hasTexture == 1) {
-	  gl_FragColor = texture2D(texture, texOut) * color;
+	  vec4 frag_texture = texture2D(texture, texOut) * color;
+	  if(frag_texture.a < 0.9) {
+		discard;
+	  }
+	  gl_FragColor = frag_texture;
+	  // gl_FragColor = vec4(0.4, 0.8, 0.2, 1.0);
 	} else {
-	  gl_FragColor = vec4(colOut, 1.0) * color;
+	  // vec4 frag_color = vec4(1.0, 1.0, 1.0, 0.3);
+	  // vec4 frag_color = color;
+	  vec4 frag_color = vec4(colOut, 1.0) * color;
+	  gl_FragColor = frag_color;
 	}
   }
   ` + "\x00"

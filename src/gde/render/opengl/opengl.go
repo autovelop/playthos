@@ -62,16 +62,20 @@ func (r *OpenGL) Init() {
 	r.ShaderProgram = r.NewShader(render.VSHADER_OPENGL_ES_2_0, render.FSHADER_OPENGL_ES_2_0)
 
 	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LEQUAL)
 	gl.Enable(gl.FRONT_AND_BACK)
+
 	gl.Enable(gl.BLEND)
+	gl.BlendEquation(gl.FUNC_ADD)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	// gl.AlphaFunc(gl.GREATER, 0.005)
 	gl.ClearColor(0.1, 0.2, 0.4, 1)
 }
 
 func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 	if !r.Window.ShouldClose() {
 
-		// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.UseProgram(r.ShaderProgram)
@@ -94,14 +98,14 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 		ratio := r.screenWidth / r.screenHeight
 		// ratio := r.screenHeight / r.screenWidth
 		// proj = mgl32.Ortho(-float32(r.screenWidth/r.screenHeight), float32(r.screenWidth/r.screenHeight), -float32(r.screenWidth/r.screenHeight), float32(r.screenWidth/r.screenHeight), 0.1, 1000)
-		proj = mgl32.Ortho(0, r.screenWidth/ratio, r.screenHeight/ratio, 0, 0.0, 10.0)
+		proj = mgl32.Ortho(0, r.screenWidth/ratio, r.screenHeight/ratio, 0, -1.0, 1000.0)
 		// proj = mgl32.Ortho(0, r.screenWidth, r.screenHeight, 0, -1.0, 10.0)
 
 		proj_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("projection\x00"))
 		model_uni := gl.GetUniformLocation(r.ShaderProgram, gl.Str("model\x00"))
 
 		for _, v := range *entities {
-			renderer := v.GetComponent(&render.MeshRenderer{})
+			renderer := v.GetComponent("MeshRenderer")
 			if renderer == nil {
 				continue
 			}
@@ -115,7 +119,10 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 
 			// var model mgl32.Mat4
 			model := mgl32.Ident4()
-			trans := v.GetComponent(&render.Transform{})
+			trans := v.GetComponent("Transform")
+			if trans == nil {
+				continue
+			}
 
 			// defaults
 
@@ -129,39 +136,37 @@ func (r *OpenGL) Update(entities *map[string]*engine.Entity) {
 			scale := trans.GetProperty("Scale")
 			switch scale := scale.(type) {
 			case render.Vector3:
-				model = model.Mul4(mgl32.Scale3D(100*scale.X, 100*scale.Y, 100*scale.Z))
+				model = model.Mul4(mgl32.Scale3D(100*scale.X, 100*scale.Y, scale.Z))
 				// log.Printf("OpenGL > Draw > Position: %v", pos)
 			}
 
-			// rot := trans.GetProperty("Rotation")
-			// switch rot := rot.(type) {
-			// case render.Vector3:
-			// 	model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
-			// 	model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
-			// 	model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
-			// }
+			rot := trans.GetProperty("Rotation")
+			switch rot := rot.(type) {
+			case render.Vector3:
+				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rot.X)).Mat4())
+				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rot.Y)).Mat4())
+				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rot.Z)).Mat4())
+			}
 
 			texture := renderer.GetProperty("Texture")
 			if texture != nil {
+				gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 1)
+
 				switch texture := texture.(type) {
 				case uint32:
-					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 1)
-
 					gl.ActiveTexture(gl.TEXTURE0)
 					gl.BindTexture(gl.TEXTURE_2D, texture)
 					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
-					// log.Printf("OpenGL > Draw > Texture: %v", texture)
-					color := renderer.GetProperty("Color")
-					switch color := color.(type) {
-					case *render.Color:
-						gl.Uniform4fv(gl.GetUniformLocation(r.ShaderProgram, gl.Str("color\x00")), 1, &color[0])
-					}
 				}
 			} else {
-				color := renderer.GetProperty("Color")
+				gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
+			}
+			// gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
+
+			color := renderer.GetProperty("Color")
+			if color != nil {
 				switch color := color.(type) {
 				case *render.Color:
-					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
 					gl.Uniform4fv(gl.GetUniformLocation(r.ShaderProgram, gl.Str("color\x00")), 1, &color[0])
 				}
 			}
@@ -246,9 +251,16 @@ func (r *OpenGL) LoadRenderer(renderer render.RendererRoutine) { // USE ENGINE V
 		log.Printf("LoadRenderer > Texture > Height: %v", int32(renderer.GetTextureRGBA().Rect.Size().Y))
 		log.Printf("LoadRenderer > Texture > Pix Length: %v", len(renderer.GetTextureRGBA().Pix))
 		renderer.SetProperty("Texture", texture)
-		renderer.SetProperty("Color", renderer.GetColor())
+
+		color := renderer.GetColor()
+		if color != nil {
+			renderer.SetProperty("Color", color)
+		}
 	} else {
-		renderer.SetProperty("Color", renderer.GetColor())
+		color := renderer.GetColor()
+		if color != nil {
+			renderer.SetProperty("Color", color)
+		}
 	}
 
 	renderer.SetProperty("VAO", vertexArrayID)

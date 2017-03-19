@@ -18,56 +18,63 @@ const (
 )
 
 type Engine struct {
-	Entities      map[string]*Entity
-	Systems       map[int]System
-	debug         bool
-	frames        uint64
-	framesCounter time.Duration
-	frameTime     time.Duration
-	startTime     time.Time
-	lastTime      time.Time
-	unproccTime   time.Duration
-}
-
-func (e *Engine) Printf(format string, data ...interface{}) {
-	log.Printf("Engine > Init", data)
+	Entities    map[string]*Entity
+	Systems     map[int]System
+	debug       bool
+	newTime     time.Time
+	currentTime time.Time
+	accumulator int64
+	deltaTime   int64
+	frames      uint64
+	// framesCounter time.Duration
+	// frameTime     time.Duration
+	// startTime     time.Time
+	// lastTime      time.Time
+	// unproccTime   time.Duration
 }
 
 func (e *Engine) Init() {
-	if e.debug {
-		e.Printf("Engine > Init")
-	}
+	log.Printf("Engine > Init")
+
 	e.Entities = make(map[string]*Entity)
 	e.Systems = make(map[int]System)
 
-	e.frameTime = time.Duration(1000/60) * time.Millisecond
-	e.lastTime = time.Now()
-	e.startTime = time.Now()
-	// check out wolfengo
+	// e.frameTime = time.Duration(1000/60) * time.Millisecond
+	e.currentTime = time.Now()
+	// e.startTime = time.Now()
 }
 
 func (e *Engine) Update() {
-	e.startTime = time.Now()
-	passedTime := e.startTime.Sub(e.lastTime)
-	e.lastTime = e.startTime
+	// e.newTime = time.Now()
+	// frameTime := e.newTime.Sub(e.currentTime).Nanoseconds()
+	// e.currentTime = e.newTime
+	// e.accumulator += frameTime
 
-	e.unproccTime += passedTime
-	e.framesCounter += passedTime
-
-	for e.unproccTime > e.frameTime {
-		// log.Printf("Engine > Update")
-		e.unproccTime -= e.frameTime
-		e.frames++
-
-		if e.framesCounter >= time.Second {
-			log.Printf("%d FPS\n", e.frames)
-			e.frames = 0
-			e.framesCounter -= time.Second
-		}
-		for _, v := range e.Systems {
-			v.Update(&e.Entities)
-		}
+	// for e.accumulator >= e.deltaTime {
+	for _, v := range e.Systems {
+		v.Update(&e.Entities)
 	}
+	// }
+	// e.accumulator -= e.deltaTime
+
+	// t += e.deltaTime
+
+	// e.lastTime = e.startTime
+
+	// e.unproccTime += passedTime
+	// e.framesCounter += passedTime
+
+	// for e.unproccTime > e.frameTime {
+	// 	// log.Printf("Engine > Update")
+	// 	e.unproccTime -= e.frameTime
+	// 	e.frames++
+
+	// 	if e.framesCounter >= time.Second {
+	// 		log.Printf("%d FPS\n", e.frames)
+	// 		e.frames = 0
+	// 		e.framesCounter -= time.Second
+	// 	}
+	// }
 }
 
 func (e *Engine) Shutdown() {

@@ -188,16 +188,38 @@ type EditorUpdate struct {
 // 	// network.Init()
 // }
 
+
+
+INSANE TODO LIST
+
+1. Find some way to do "s.RenderSystem.LoadRenderer(renderer)" properly (adds itself) REMINDER: also has to work on any render system
+2. Make some engine factory that can create entities with a list of components with some simple one liner
+3. No more component, system, or property maps
+4. Build the engine into a binary package and allow for user extension
+4.5 - REVISIT DATA TYPE SCOPES OF ALL STRUCTS to prevent users from changing engine breaking variables
+5. Fix the game loop!
+6. Get some asset manager to reduce number of meshes loaded (currently duplicated per object)
+7. Finish chess
+8. Good luck with mobile
+9. Solve the stupid flickering bug!!!!
+
+
 func (s *Scene) NewGameObject(id string, mesh *render.Mesh, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
+
+	// entity := s.Game.NewEntity(
+	// 	id,
+	// 	[]engine.ComponentRoutine{
+	// 		&render.Transform{},
+	// 	},
+	// )
+
 	// Create player entity
 	entity := &engine.Entity{Id: id}
 	entity.Init()
 	entity.Add(s.Game)
 
-	renderer := &render.MeshRenderer{}
+	renderer := &render.MeshRenderer{Mesh: mesh, Color: &color}
 	renderer.Init()
-	renderer.LoadMesh(mesh)
-	renderer.SetColor(&color)
 
 	s.RenderSystem.LoadRenderer(renderer)
 
@@ -217,12 +239,10 @@ func (s *Scene) NewTextureGameObject(id string, mesh *render.Mesh, texture *rend
 	entity.Init()
 	entity.Add(s.Game)
 
-	renderer := &render.MeshRenderer{}
+	renderer := &render.MeshRenderer{Mesh: mesh, Texture: texture, Color: &color}
 	renderer.Init()
-	renderer.LoadMesh(mesh)
-	renderer.SetColor(&color)
-
-	renderer.LoadTexture(texture)
+	// renderer.SetColor(&color)
+	// renderer.Draw(&color)
 
 	s.RenderSystem.LoadRenderer(renderer)
 
@@ -239,7 +259,7 @@ func (s *Scene) NewTextureGameObject(id string, mesh *render.Mesh, texture *rend
 
 func (s *Scene) MoveEntity(id string, direction *render.Vector3) {
 	ent := s.Game.GetEntity(id)
-	trans := ent.GetComponent(&render.Transform{})
+	trans := ent.GetComponent("Transform")
 	pos := trans.GetProperty("Position")
 	switch pos := pos.(type) {
 	case render.Vector3:
@@ -290,17 +310,17 @@ func (s *Scene) LoadScene() {
 		KEY_LEFT  = 263
 		KEY_RIGHT = 262
 		KEY_SPACE = 32
+		KEY_D     = 68
+		KEY_A     = 65
+		KEY_W     = 87
+		KEY_S     = 83
+		KEY_J     = 74
+		KEY_L     = 76
+		KEY_I     = 73
+		KEY_K     = 75
 	)
 
 	// Game starts here
-
-	s.NewGameObject("Player",
-		quad,
-		render.Color{1, 0, 0, 0.2},
-		render.Vector3{300, 300, 0.4},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
 
 	sys_keyboard_input.BindOn(
 		KEY_DOWN,
@@ -331,15 +351,16 @@ func (s *Scene) LoadScene() {
 		KEY_SPACE,
 		func() {
 			ent := s.Game.GetEntity("Player")
-			trans := ent.GetComponent(&render.Transform{})
+			trans := ent.GetComponent("Transform")
 			pos := trans.GetProperty("Position")
 			switch pos := pos.(type) {
 			case render.Vector3:
+				pos.Z += 0.1
 				ent_selector := s.Game.GetEntity("Selector")
 				if ent_selector == nil {
 					s.NewGameObject("Selector",
 						quad,
-						render.Color{0, 1, 0, 0.2},
+						render.Color{0.5, 0.8, 0.5, 1.0},
 						pos,
 						render.Vector3{0, 0, 0},
 						render.Vector3{3, 3, 3},
@@ -351,22 +372,27 @@ func (s *Scene) LoadScene() {
 		},
 	)
 
+	s.NewGameObject("Player",
+		quad,
+		render.Color{0.8, 0.5, 0.5, 1.0},
+		render.Vector3{300, 300, 1.0},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
 	for letter_idx, letter_val := range [8]string{"A", "B", "C", "D", "E", "F", "G", "H"} {
 		for number_idx, number_val := range [8]uint{1, 2, 3, 4, 5, 6, 7, 8} {
-			col := render.Color{0.15, 0.15, 0.15, 1}
+			col := render.Color{0.25, 0.25, 0.25, 1}
 			if letter_idx%2 == 0 {
 				if number_idx%2 == 0 {
-					col = render.Color{0.85, 0.85, 0.85, 1}
+					col = render.Color{0.75, 0.75, 0.75, 1}
 				}
 			} else {
-				col = render.Color{0.85, 0.85, 0.85, 1}
+				col = render.Color{0.75, 0.75, 0.75, 1}
 				if number_idx%2 == 0 {
-					col = render.Color{0.15, 0.15, 0.15, 1}
+					col = render.Color{0.25, 0.25, 0.25, 1}
 				}
 			}
-			// if number_idx%2 > 0 {
-			// 	col = render.Color{0.85, 0.85, 0.85, 1}
-			// }
 			s.NewGameObject(fmt.Sprintf("%v%v", letter_val, number_val),
 				quad,
 				col,
@@ -380,11 +406,18 @@ func (s *Scene) LoadScene() {
 	pawn_texture := &render.Texture{}
 	pawn_texture.NewTexture("assets", "pawn.png")
 
+	queen_texture := &render.Texture{}
+	queen_texture.NewTexture("assets", "queen.png")
+
+	var token_pos_z float32 = 2.0
+	var token_color_black render.Color = render.Color{0.5, 0.5, 0.3, 1.0}
+	var token_color_white render.Color = render.Color{0.3, 0.5, 0.5, 1.0}
+
 	s.NewTextureGameObject("Pawn_W_A",
 		quad,
 		pawn_texture,
-		render.Color{0, 0, 0, 1.0},
-		render.Vector3{0, 360, 0.2},
+		token_color_white,
+		render.Vector3{0, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -392,8 +425,8 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_B",
 		quad,
 		pawn_texture,
-		render.Color{1, 1, 1, 1.0},
-		render.Vector3{60, 360, 0.2},
+		token_color_white,
+		render.Vector3{60, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -401,8 +434,8 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_C",
 		quad,
 		pawn_texture,
-		render.Color{0, 0, 0, 1.0},
-		render.Vector3{120, 360, 0.2},
+		token_color_white,
+		render.Vector3{120, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -410,8 +443,8 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_D",
 		quad,
 		pawn_texture,
-		render.Color{1, 1, 1, 1.0},
-		render.Vector3{180, 360, 0.2},
+		token_color_white,
+		render.Vector3{180, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -419,8 +452,8 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_E",
 		quad,
 		pawn_texture,
-		render.Color{0, 0, 0, 1.0},
-		render.Vector3{240, 360, 0.2},
+		token_color_white,
+		render.Vector3{240, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -428,8 +461,8 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_F",
 		quad,
 		pawn_texture,
-		render.Color{1, 1, 1, 1.0},
-		render.Vector3{300, 360, 0.2},
+		token_color_white,
+		render.Vector3{300, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -437,8 +470,8 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_G",
 		quad,
 		pawn_texture,
-		render.Color{0, 0, 0, 1.0},
-		render.Vector3{360, 360, 0.2},
+		token_color_white,
+		render.Vector3{360, 360, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
@@ -446,8 +479,99 @@ func (s *Scene) LoadScene() {
 	s.NewTextureGameObject("Pawn_W_H",
 		quad,
 		pawn_texture,
-		render.Color{1, 1, 1, 1.0},
-		render.Vector3{420, 360, 0.2},
+		token_color_white,
+		render.Vector3{420, 360, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Queen_W_D",
+		quad,
+		queen_texture,
+		token_color_white,
+		render.Vector3{240, 420, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	// BLACK
+	s.NewTextureGameObject("Pawn_B_A",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{0, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_B",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{60, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_C",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{120, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_D",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{180, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_E",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{240, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_F",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{300, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_G",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{360, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Pawn_B_H",
+		quad,
+		pawn_texture,
+		token_color_black,
+		render.Vector3{420, 60, token_pos_z},
+		render.Vector3{0, 0, 0},
+		render.Vector3{3, 3, 3},
+	)
+
+	s.NewTextureGameObject("Queen_B_D",
+		quad,
+		queen_texture,
+		token_color_black,
+		render.Vector3{180, 0, token_pos_z},
 		render.Vector3{0, 0, 0},
 		render.Vector3{3, 3, 3},
 	)
