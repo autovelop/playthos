@@ -1,4 +1,4 @@
-package main
+package engine
 
 type Component interface {
 	RegisterToSystem(System)
