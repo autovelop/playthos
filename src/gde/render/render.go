@@ -7,21 +7,33 @@ import (
 	"gde/engine"
 )
 
-type Render struct {
-	platform *engine.Platform
-}
-
-type RenderRoutine interface {
+type Render interface {
 	engine.System
-
-	LoadRenderer(RendererRoutine)
-	NewShader(string, string) uint32
-	AddUISystem(*engine.Engine)
-	GetCamera() *Camera
+	NewShader(vs string, fs string) uint32
+	RegisterTransform(*Transform)
+	RegisterMesh(*Mesh)
+	RegisterMaterial(*Material)
 }
+
+// func (r *Render) RegisterTransform(transform *Transform) {
+// 	r.transforms = append(r.transforms, transform)
+// }
+
+// type Render struct {
+// 	platform *engine.Platform
+// }
+
+// type RenderRoutine interface {
+// 	engine.System
+
+// 	// LoadRenderer(RendererRoutine)
+// 	NewShader(string, string) uint32
+// 	AddUISystem(*engine.Engine)
+// 	GetCamera() *Camera
+// }
 
 const (
-	VSHADER_OPENGL_ES_2_0 = `#version 330
+	VSHADER = `#version 330
   attribute vec4 pos;
   attribute vec3 col;
   attribute vec2 tex;
@@ -49,7 +61,7 @@ const (
 	// 0. Better understand shaders by doing research
 	// 1. Allow mesh color or texture
 	// precision mediump float;
-	FSHADER_OPENGL_ES_2_0 = `#version 330
+	FSHADER = `#version 330
   precision mediump float;
 
   uniform int hasTexture;
@@ -68,9 +80,10 @@ const (
 	  gl_FragColor = frag_texture;
 	  // gl_FragColor = vec4(0.4, 0.8, 0.2, 1.0);
 	} else {
-	  // vec4 frag_color = vec4(1.0, 1.0, 1.0, 0.3);
+	  // vec4 frag_color = vec4(1.0, 1.0, 1.0, 1.0);
 	  // vec4 frag_color = color;
 	  vec4 frag_color = vec4(colOut, 1.0) * color;
+	  // vec4 frag_color = vec4(colOut, 1.0);
 	  gl_FragColor = frag_color;
 	}
   }

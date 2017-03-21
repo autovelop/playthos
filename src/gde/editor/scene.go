@@ -4,11 +4,11 @@ import (
 	"gde/engine"
 	// "gde/network"
 	// "encoding/json"
-	input "gde/input"
+	// input "gde/input"
 	"gde/render"
 
 	// "gde/render/animation"
-	"fmt"
+	// "fmt"
 	// "gde/render/ui"
 	// "github.com/gorilla/websocket"
 	"log"
@@ -18,10 +18,10 @@ import (
 )
 
 type Scene struct {
-	name                string
-	Game                *engine.Engine
-	RenderSystem        render.RenderRoutine
-	KeyboardInputSystem input.InputListener
+	name string
+	// Game                *engine.Engine
+	// RenderSystem        render.RenderRoutine
+	// KeyboardInputSystem input.InputListener
 }
 
 // var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
@@ -188,393 +188,466 @@ type EditorUpdate struct {
 // 	// network.Init()
 // }
 
+// INSANE TODO LIST
 
+// 1. Find some way to do "s.RenderSystem.LoadRenderer(renderer)" properly (adds itself) REMINDER: also has to work on any render system
+// 2. Make some engine factory that can create entities with a list of components with some simple one liner
+// 3. No more component, system, or property maps
+// 4. Build the engine into a binary package and allow for user extension
+// 4.5 - REVISIT DATA TYPE SCOPES OF ALL STRUCTS to prevent users from changing engine breaking variables
+// 5. Fix the game loop!
+// 6. Get some asset manager to reduce number of meshes loaded (currently duplicated per object)
+// 7. Finish chess
+// 8. Good luck with mobile
+// 9. Solve the stupid flickering bug!!!!
 
-INSANE TODO LIST
+// func (s *Scene) NewGameObject(id string, mesh *render.Mesh, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
 
-1. Find some way to do "s.RenderSystem.LoadRenderer(renderer)" properly (adds itself) REMINDER: also has to work on any render system
-2. Make some engine factory that can create entities with a list of components with some simple one liner
-3. No more component, system, or property maps
-4. Build the engine into a binary package and allow for user extension
-4.5 - REVISIT DATA TYPE SCOPES OF ALL STRUCTS to prevent users from changing engine breaking variables
-5. Fix the game loop!
-6. Get some asset manager to reduce number of meshes loaded (currently duplicated per object)
-7. Finish chess
-8. Good luck with mobile
-9. Solve the stupid flickering bug!!!!
+// 	// entity := s.Game.NewEntity(
+// 	// 	id,
+// 	// 	[]engine.ComponentRoutine{
+// 	// 		&render.Transform{},
+// 	// 	},
+// 	// )
 
+// 	// Create player entity
+// 	entity := &engine.Entity{Id: id}
+// 	entity.Init()
+// 	entity.Add(s.Game)
 
-func (s *Scene) NewGameObject(id string, mesh *render.Mesh, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
+// 	renderer := &render.MeshRenderer{Mesh: mesh, Color: &color}
+// 	renderer.Init()
 
-	// entity := s.Game.NewEntity(
-	// 	id,
-	// 	[]engine.ComponentRoutine{
-	// 		&render.Transform{},
-	// 	},
-	// )
+// 	// renderer.LoadRenderer()
 
-	// Create player entity
-	entity := &engine.Entity{Id: id}
-	entity.Init()
-	entity.Add(s.Game)
+// 	// s.RenderSystem.LoadRenderer(renderer)
 
-	renderer := &render.MeshRenderer{Mesh: mesh, Color: &color}
-	renderer.Init()
+// 	entity.AddComponent(renderer)
 
-	s.RenderSystem.LoadRenderer(renderer)
+// 	transform := &render.Transform{}
+// 	transform.Init()
+// 	transform.SetProperty("Position", position)
+// 	transform.SetProperty("Rotation", rotation)
+// 	transform.SetProperty("Scale", scale)
+// 	entity.AddComponent(transform)
+// }
 
-	entity.AddComponent(renderer)
+// func (s *Scene) NewTextureGameObject(id string, mesh *render.Mesh, texture *render.Texture, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
+// 	// Create player entity
+// 	entity := &engine.Entity{Id: id}
+// 	entity.Init()
+// 	entity.Add(s.Game)
 
-	transform := &render.Transform{}
-	transform.Init()
-	transform.SetProperty("Position", position)
-	transform.SetProperty("Rotation", rotation)
-	transform.SetProperty("Scale", scale)
-	entity.AddComponent(transform)
-}
+// 	renderer := &render.MeshRenderer{Mesh: mesh, Texture: texture, Color: &color}
+// 	renderer.Init()
+// 	// renderer.SetColor(&color)
+// 	// renderer.Draw(&color)
 
-func (s *Scene) NewTextureGameObject(id string, mesh *render.Mesh, texture *render.Texture, color render.Color, position render.Vector3, rotation render.Vector3, scale render.Vector3) {
-	// Create player entity
-	entity := &engine.Entity{Id: id}
-	entity.Init()
-	entity.Add(s.Game)
+// 	// s.RenderSystem.LoadRenderer(renderer)
 
-	renderer := &render.MeshRenderer{Mesh: mesh, Texture: texture, Color: &color}
-	renderer.Init()
-	// renderer.SetColor(&color)
-	// renderer.Draw(&color)
+// 	entity.AddComponent(renderer)
 
-	s.RenderSystem.LoadRenderer(renderer)
+// 	transform := &render.Transform{}
+// 	transform.Init()
+// 	transform.SetProperty("Position", position)
+// 	transform.SetProperty("Rotation", rotation)
+// 	transform.SetProperty("Scale", scale)
+// 	entity.AddComponent(transform)
 
-	entity.AddComponent(renderer)
+// }
 
-	transform := &render.Transform{}
-	transform.Init()
-	transform.SetProperty("Position", position)
-	transform.SetProperty("Rotation", rotation)
-	transform.SetProperty("Scale", scale)
-	entity.AddComponent(transform)
+// func (s *Scene) MoveEntity(id string, direction *render.Vector3) {
+// 	ent := s.Game.GetEntity(id)
+// 	trans := ent.GetComponent("Transform")
+// 	pos := trans.GetProperty("Position")
+// 	switch pos := pos.(type) {
+// 	case render.Vector3:
+// 		pos.Add(direction)
+// 		trans.SetProperty("Position", pos)
+// 		log.Printf("Scene > Player > Position: %v", pos)
+// 	}
+// }
 
-}
+// func (s *Scene) LoadEngine(game *engine.Engine) {
+// 	s.Game = game
+// }
 
-func (s *Scene) MoveEntity(id string, direction *render.Vector3) {
-	ent := s.Game.GetEntity(id)
-	trans := ent.GetComponent("Transform")
-	pos := trans.GetProperty("Position")
-	switch pos := pos.(type) {
-	case render.Vector3:
-		pos.Add(direction)
-		trans.SetProperty("Position", pos)
-		log.Printf("Scene > Player > Position: %v", pos)
-	}
-}
+func (s *Scene) LoadScene(game *engine.Engine) {
+	log.Println("Loading Scene")
 
-func (s *Scene) LoadEngine(game *engine.Engine) {
-	s.Game = game
-}
-
-func (s *Scene) LoadScene() {
-	sys_render, err := s.Game.GetSystem(engine.SystemRender).(render.RenderRoutine)
-	if !err {
-		log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
-		return
-	}
-	s.RenderSystem = sys_render
-
-	quad := &render.Mesh{
-		Vertices: []float32{
-			0.2, 0.2, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-			0.2, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0,
-			0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0,
-			0.0, 0.2, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
-		},
-		Indicies: []uint8{
+	mesh_quad := &render.Mesh{}
+	mesh_quad.Set([]float32{
+		0.2, 0.2, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+		0.2, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+	},
+		[]uint8{
 			0, 1, 3,
 			1, 2, 3,
 		},
-	}
-
-	sys_render.GetCamera().SetProperty("LookAt", render.Vector3{0, 0, 1})
-	sys_render.GetCamera().SetProperty("LookFrom", render.Vector3{0, 0, 0})
-
-	sys_keyboard_input, err := s.Game.GetSystem(engine.SystemInputKeyboard).(input.InputListener)
-	if !err {
-		log.Println(err)
-		return
-	}
-	s.KeyboardInputSystem = sys_keyboard_input
-
-	const (
-		KEY_DOWN  = 264
-		KEY_UP    = 265
-		KEY_LEFT  = 263
-		KEY_RIGHT = 262
-		KEY_SPACE = 32
-		KEY_D     = 68
-		KEY_A     = 65
-		KEY_W     = 87
-		KEY_S     = 83
-		KEY_J     = 74
-		KEY_L     = 76
-		KEY_I     = 73
-		KEY_K     = 75
 	)
 
-	// Game starts here
+	player := &engine.Entity{}
 
-	sys_keyboard_input.BindOn(
-		KEY_DOWN,
-		func() {
-			s.MoveEntity("Player", &render.Vector3{0, 60, 0})
-		},
-	)
-	sys_keyboard_input.BindOn(
-		KEY_UP,
-		func() {
-			s.MoveEntity("Player", &render.Vector3{0, -60, 0})
-		},
-	)
-	sys_keyboard_input.BindOn(
-		KEY_LEFT,
-		func() {
-			s.MoveEntity("Player", &render.Vector3{-60, 0, 0})
-		},
-	)
-	sys_keyboard_input.BindOn(
-		KEY_RIGHT,
-		func() {
-			s.MoveEntity("Player", &render.Vector3{60, 0, 0})
-		},
-	)
-
-	sys_keyboard_input.BindOn(
-		KEY_SPACE,
-		func() {
-			ent := s.Game.GetEntity("Player")
-			trans := ent.GetComponent("Transform")
-			pos := trans.GetProperty("Position")
-			switch pos := pos.(type) {
-			case render.Vector3:
-				pos.Z += 0.1
-				ent_selector := s.Game.GetEntity("Selector")
-				if ent_selector == nil {
-					s.NewGameObject("Selector",
-						quad,
-						render.Color{0.5, 0.8, 0.5, 1.0},
-						pos,
-						render.Vector3{0, 0, 0},
-						render.Vector3{3, 3, 3},
-					)
-				} else {
-					s.Game.DeleteEntity("Selector")
-				}
-			}
-		},
-	)
-
-	s.NewGameObject("Player",
-		quad,
-		render.Color{0.8, 0.5, 0.5, 1.0},
+	transform := &render.Transform{}
+	transform.Set(
 		render.Vector3{300, 300, 1.0},
 		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+		render.Vector3{3, 3, 3})
+	player.NewComponent(transform)
 
-	for letter_idx, letter_val := range [8]string{"A", "B", "C", "D", "E", "F", "G", "H"} {
-		for number_idx, number_val := range [8]uint{1, 2, 3, 4, 5, 6, 7, 8} {
-			col := render.Color{0.25, 0.25, 0.25, 1}
+	material := &render.Material{}
+	material.Set(&render.Color{0.8, 0.5, 0.5, 1.0})
+	player.NewComponent(material)
+
+	player.NewComponent(mesh_quad)
+	game.NewEntity(player)
+	player.RegisterToSystems(game)
+
+	for letter_idx, _ := range [8]string{"A", "B", "C", "D", "E", "F", "G", "H"} {
+		for number_idx, _ := range [8]uint{1, 2, 3, 4, 5, 6, 7, 8} {
+			col := &render.Color{0.25, 0.25, 0.25, 1}
 			if letter_idx%2 == 0 {
 				if number_idx%2 == 0 {
-					col = render.Color{0.75, 0.75, 0.75, 1}
+					col = &render.Color{0.75, 0.75, 0.75, 1}
 				}
 			} else {
-				col = render.Color{0.75, 0.75, 0.75, 1}
+				col = &render.Color{0.75, 0.75, 0.75, 1}
 				if number_idx%2 == 0 {
-					col = render.Color{0.25, 0.25, 0.25, 1}
+					col = &render.Color{0.25, 0.25, 0.25, 1}
 				}
 			}
-			s.NewGameObject(fmt.Sprintf("%v%v", letter_val, number_val),
-				quad,
-				col,
+			// s.NewGameObject(fmt.Sprintf("%v%v", letter_val, number_val),
+			// 	quad,
+			// 	col,
+			// 	render.Vector3{float32(letter_idx * 60), float32(number_idx * 60), 0},
+			// 	render.Vector3{0, 0, 0},
+			// 	render.Vector3{3, 3, 3},
+			// )
+
+			token := &engine.Entity{}
+
+			transform := &render.Transform{}
+			transform.Set(
 				render.Vector3{float32(letter_idx * 60), float32(number_idx * 60), 0},
 				render.Vector3{0, 0, 0},
-				render.Vector3{3, 3, 3},
-			)
+				render.Vector3{3, 3, 3})
+			token.NewComponent(transform)
+
+			material := &render.Material{}
+			material.Set(col)
+			token.NewComponent(material)
+
+			token.NewComponent(mesh_quad)
+
+			game.NewEntity(token)
+
+			token.RegisterToSystems(game)
 		}
 	}
 
-	pawn_texture := &render.Texture{}
-	pawn_texture.NewTexture("assets", "pawn.png")
+	// sys_render, err := s.Game.GetSystem(engine.SystemRender).(render.RenderRoutine)
+	// if !err {
+	// 	log.Printf("\n\n ### ERROR ### \n%v\n\n", err)
+	// 	return
+	// }
+	// s.RenderSystem = sys_render
 
-	queen_texture := &render.Texture{}
-	queen_texture.NewTexture("assets", "queen.png")
+	// quad := &render.Mesh{
+	// 	Vertices: []float32{
+	// 		0.2, 0.2, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+	// 		0.2, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0,
+	// 		0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+	// 		0.0, 0.2, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+	// 	},
+	// 	Indicies: []uint8{
+	// 		0, 1, 3,
+	// 		1, 2, 3,
+	// 	},
+	// }
 
-	var token_pos_z float32 = 2.0
-	var token_color_black render.Color = render.Color{0.5, 0.5, 0.3, 1.0}
-	var token_color_white render.Color = render.Color{0.3, 0.5, 0.5, 1.0}
+	// sys_render.GetCamera().SetProperty("LookAt", render.Vector3{0, 0, 1})
+	// sys_render.GetCamera().SetProperty("LookFrom", render.Vector3{0, 0, 0})
 
-	s.NewTextureGameObject("Pawn_W_A",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{0, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// sys_keyboard_input, err := s.Game.GetSystem(engine.SystemInputKeyboard).(input.InputListener)
+	// if !err {
+	// 	log.Println(err)
+	// 	return
+	// }
+	// s.KeyboardInputSystem = sys_keyboard_input
 
-	s.NewTextureGameObject("Pawn_W_B",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{60, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// const (
+	// 	KEY_DOWN  = 264
+	// 	KEY_UP    = 265
+	// 	KEY_LEFT  = 263
+	// 	KEY_RIGHT = 262
+	// 	KEY_SPACE = 32
+	// 	KEY_D     = 68
+	// 	KEY_A     = 65
+	// 	KEY_W     = 87
+	// 	KEY_S     = 83
+	// 	KEY_J     = 74
+	// 	KEY_L     = 76
+	// 	KEY_I     = 73
+	// 	KEY_K     = 75
+	// )
 
-	s.NewTextureGameObject("Pawn_W_C",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{120, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// // Game starts here
 
-	s.NewTextureGameObject("Pawn_W_D",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{180, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// sys_keyboard_input.BindOn(
+	// 	KEY_DOWN,
+	// 	func() {
+	// 		s.MoveEntity("Player", &render.Vector3{0, 60, 0})
+	// 	},
+	// )
+	// sys_keyboard_input.BindOn(
+	// 	KEY_UP,
+	// 	func() {
+	// 		s.MoveEntity("Player", &render.Vector3{0, -60, 0})
+	// 	},
+	// )
+	// sys_keyboard_input.BindOn(
+	// 	KEY_LEFT,
+	// 	func() {
+	// 		s.MoveEntity("Player", &render.Vector3{-60, 0, 0})
+	// 	},
+	// )
+	// sys_keyboard_input.BindOn(
+	// 	KEY_RIGHT,
+	// 	func() {
+	// 		s.MoveEntity("Player", &render.Vector3{60, 0, 0})
+	// 	},
+	// )
 
-	s.NewTextureGameObject("Pawn_W_E",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{240, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// sys_keyboard_input.BindOn(
+	// 	KEY_SPACE,
+	// 	func() {
+	// 		ent := s.Game.GetEntity("Player")
+	// 		trans := ent.GetComponent("Transform")
+	// 		pos := trans.GetProperty("Position")
+	// 		switch pos := pos.(type) {
+	// 		case render.Vector3:
+	// 			pos.Z += 0.1
+	// 			ent_selector := s.Game.GetEntity("Selector")
+	// 			if ent_selector == nil {
+	// 				s.NewGameObject("Selector",
+	// 					quad,
+	// 					render.Color{0.5, 0.8, 0.5, 1.0},
+	// 					pos,
+	// 					render.Vector3{0, 0, 0},
+	// 					render.Vector3{3, 3, 3},
+	// 				)
+	// 			} else {
+	// 				s.Game.DeleteEntity("Selector")
+	// 			}
+	// 		}
+	// 	},
+	// )
 
-	s.NewTextureGameObject("Pawn_W_F",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{300, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewGameObject("Player",
+	// 	quad,
+	// 	render.Color{0.8, 0.5, 0.5, 1.0},
+	// 	render.Vector3{300, 300, 1.0},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_W_G",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{360, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// for letter_idx, letter_val := range [8]string{"A", "B", "C", "D", "E", "F", "G", "H"} {
+	// 	for number_idx, number_val := range [8]uint{1, 2, 3, 4, 5, 6, 7, 8} {
+	// 		col := render.Color{0.25, 0.25, 0.25, 1}
+	// 		if letter_idx%2 == 0 {
+	// 			if number_idx%2 == 0 {
+	// 				col = render.Color{0.75, 0.75, 0.75, 1}
+	// 			}
+	// 		} else {
+	// 			col = render.Color{0.75, 0.75, 0.75, 1}
+	// 			if number_idx%2 == 0 {
+	// 				col = render.Color{0.25, 0.25, 0.25, 1}
+	// 			}
+	// 		}
+	// 		s.NewGameObject(fmt.Sprintf("%v%v", letter_val, number_val),
+	// 			quad,
+	// 			col,
+	// 			render.Vector3{float32(letter_idx * 60), float32(number_idx * 60), 0},
+	// 			render.Vector3{0, 0, 0},
+	// 			render.Vector3{3, 3, 3},
+	// 		)
+	// 	}
+	// }
 
-	s.NewTextureGameObject("Pawn_W_H",
-		quad,
-		pawn_texture,
-		token_color_white,
-		render.Vector3{420, 360, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// pawn_texture := &render.Texture{}
+	// pawn_texture.NewTexture("assets", "pawn.png")
 
-	s.NewTextureGameObject("Queen_W_D",
-		quad,
-		queen_texture,
-		token_color_white,
-		render.Vector3{240, 420, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// queen_texture := &render.Texture{}
+	// queen_texture.NewTexture("assets", "queen.png")
 
-	// BLACK
-	s.NewTextureGameObject("Pawn_B_A",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{0, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// var token_pos_z float32 = 2.0
+	// var token_color_black render.Color = render.Color{0.5, 0.5, 0.3, 1.0}
+	// var token_color_white render.Color = render.Color{0.3, 0.5, 0.5, 1.0}
 
-	s.NewTextureGameObject("Pawn_B_B",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{60, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_A",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{0, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_B_C",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{120, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_B",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{60, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_B_D",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{180, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_C",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{120, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_B_E",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{240, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_D",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{180, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_B_F",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{300, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_E",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{240, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_B_G",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{360, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_F",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{300, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Pawn_B_H",
-		quad,
-		pawn_texture,
-		token_color_black,
-		render.Vector3{420, 60, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_G",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{360, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
-	s.NewTextureGameObject("Queen_B_D",
-		quad,
-		queen_texture,
-		token_color_black,
-		render.Vector3{180, 0, token_pos_z},
-		render.Vector3{0, 0, 0},
-		render.Vector3{3, 3, 3},
-	)
+	// s.NewTextureGameObject("Pawn_W_H",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_white,
+	// 	render.Vector3{420, 360, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Queen_W_D",
+	// 	quad,
+	// 	queen_texture,
+	// 	token_color_white,
+	// 	render.Vector3{240, 420, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// // BLACK
+	// s.NewTextureGameObject("Pawn_B_A",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{0, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_B",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{60, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_C",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{120, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_D",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{180, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_E",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{240, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_F",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{300, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_G",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{360, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Pawn_B_H",
+	// 	quad,
+	// 	pawn_texture,
+	// 	token_color_black,
+	// 	render.Vector3{420, 60, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
+
+	// s.NewTextureGameObject("Queen_B_D",
+	// 	quad,
+	// 	queen_texture,
+	// 	token_color_black,
+	// 	render.Vector3{180, 0, token_pos_z},
+	// 	render.Vector3{0, 0, 0},
+	// 	render.Vector3{3, 3, 3},
+	// )
 
 	// Create UI entity
 

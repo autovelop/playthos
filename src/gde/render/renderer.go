@@ -1,10 +1,10 @@
 package render
 
-import (
-	"gde/engine"
-	"image"
-	// "log"
-)
+// import (
+// 	"gde/engine"
+// 	"image"
+// "log"
+// )
 
 // type Renderer struct {
 // 	*engine.Component
@@ -13,21 +13,23 @@ import (
 // 	Texture *Texture
 // }
 
-type RendererRoutine interface {
-	engine.ComponentRoutine
+// type RendererRoutine interface {
+// 	engine.ComponentRoutine
 
-	// LoadMesh(mesh *Mesh)
-	// LoadTexture(texture *Texture)
+// 	// LoadMesh(mesh *Mesh)
+// 	// LoadTexture(texture *Texture)
 
-	MeshVertices() []float32
-	MeshIndicies() []uint8
+// 	LoadRenderer()
 
-	// Used for OpenGLES
-	// MeshByteVertices() []byte
-	// MeshByteIndicies() []byte
+// 	MeshVertices() []float32
+// 	MeshIndicies() []uint8
 
-	GetColor() *Color
+// 	// Used for OpenGLES
+// 	// MeshByteVertices() []byte
+// 	// MeshByteIndicies() []byte
 
-	HasTexture() bool
-	GetTextureRGBA() *image.RGBA
-}
+// 	GetColor() *Color
+
+// 	HasTexture() bool
+// 	GetTextureRGBA() *image.RGBA
+// }

@@ -1,7 +1,13 @@
 package engine
 
 type System interface {
-	Init()
-	Update(*map[string]*Entity)
-	Stop()
+	Update()
+	Prepare()
+	ComponentTypes() []Component
 }
+
+// type System interface {
+// 	Init()
+// 	Update(*map[string]*Entity)
+// 	Stop()
+// }
