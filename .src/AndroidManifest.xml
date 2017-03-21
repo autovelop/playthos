@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest android:versionCode="1" android:versionName="1.0" package="org.golang.todo.build_android" platformBuildVersionCode="15" platformBuildVersionName="4.0.4-1406430"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="Build_android" android:debuggable="true">
+        <activity android:label="Build_android" android:name="org.golang.app.GoNativeActivity" android:configChanges="keyboardHidden|orientation">
+            <meta-data android:name="android.app.lib_name" android:value="build_android" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>
