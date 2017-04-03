@@ -48,6 +48,10 @@ func (e *Engine) NewEntity(entity *Entity) {
 	e.entities = append(e.entities, entity)
 }
 
+func (e *Engine) GetBuildTags() string {
+	return "opengl"
+}
+
 // import (
 // 	"log"
 // 	"time"
