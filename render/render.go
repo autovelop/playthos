@@ -4,7 +4,7 @@ import (
 
 	// "github.com/go-gl/gl/v4.1-core/gl"
 
-	"gde/engine"
+	"./../engine"
 )
 
 const activeRenderSystem Render = nil

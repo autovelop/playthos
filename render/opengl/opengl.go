@@ -1,4 +1,4 @@
-// +build linux
+// +build opengl
 
 package opengl
 

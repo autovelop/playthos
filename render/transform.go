@@ -1,7 +1,7 @@
 package render
 
 import (
-	"gde/engine"
+	"./../engine"
 	"log"
 )
 
