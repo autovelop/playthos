@@ -1,7 +1,7 @@
 package render
 
 import (
-	"./../engine"
+	"github.com/autovelop/golang-gde"
 	"log"
 )
 

@@ -3,8 +3,8 @@
 package opengl
 
 import (
-	"./../engine"
-	"./../render"
+	"github.com/autovelop/golang-gde"
+	"github.com/autovelop/golang-gde/render"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
