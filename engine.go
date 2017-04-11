@@ -11,6 +11,9 @@ var tags []string
 func init() {
 	tags = make([]string, 0)
 }
+func RegisterPackage(newTags ...string) {
+	tags = append(tags, newTags...)
+}
 func GetTags() string {
 	return strings.Join(tags[:], ",")
 }
