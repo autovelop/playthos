@@ -1,3 +1,5 @@
+// !build builder
+
 package main
 
 import (
