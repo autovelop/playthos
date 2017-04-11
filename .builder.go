@@ -3,7 +3,7 @@
 package main
 
 import (
-	"./engine"
+	"github.com/autovelop/playthos/engine"
 	"log"
 	"os"
 	"os/exec"
