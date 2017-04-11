@@ -1,9 +1,7 @@
-// +build builder
-
 package main
 
 import (
-	"github.com/autovelop/playthos"
+	"./engine"
 	"log"
 	"os"
 	"os/exec"
