@@ -15,7 +15,7 @@ func RegisterPackage(newTags ...string) {
 	tags = append(tags, newTags...)
 }
 func GetTags() string {
-	return strings.Join(tags[:], ",")
+	return strings.Join(tags[:], " ")
 }
 
 // TODO do the below later so we can do validation for the tags in terms of platform/os etc.
@@ -48,6 +48,8 @@ func GetTags() string {
 // 	return fmt.Sprintf("%v,%v,%v", strings.Join(platformTags[:], ","), strings.Join(osTags[:], ","), strings.Join(packageTags[:], ","))
 // }
 
+var systems []System
+
 type Engine struct {
 	systems     []System
 	entities    []*Entity
@@ -66,33 +68,37 @@ func (e *Engine) Update() {
 	e.accumulator += frameTime
 
 	for e.accumulator >= e.deltaTime {
-		for _, system := range e.systems {
+		for _, system := range systems {
 			system.Update()
 		}
 	}
 	e.accumulator -= e.deltaTime
 }
 
+func init() {
+	systems = make([]System, 0)
+}
+
 func (e *Engine) Prepare() {
 	log.Println("Engine Prepare")
-	e.systems = make([]System, 0)
 	e.entities = make([]*Entity, 0)
 	// for _, system := range e.systems {
 	// 	system.Prepare()
 	// }
 }
 
-func (e *Engine) NewSystem(system System) {
+func NewSystem(system System) {
 	system.Prepare()
-	e.systems = append(e.systems, system)
+	systems = append(systems, system)
 }
+
+// func (e *Engine) NewSystem(system System) {
+// 	system.Prepare()
+// 	e.systems = append(e.systems, system)
+// }
 
 func (e *Engine) NewEntity(entity *Entity) {
 	e.entities = append(e.entities, entity)
-}
-
-func (e *Engine) GetBuildTags() string {
-	return "opengl"
 }
 
 // import (
