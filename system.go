@@ -4,10 +4,5 @@ type System interface {
 	Update()
 	Prepare()
 	ComponentTypes() []Component
+	NewComponentType(Component)
 }
-
-// type System interface {
-// 	Init()
-// 	Update(*map[string]*Entity)
-// 	Stop()
-// }
