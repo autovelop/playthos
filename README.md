@@ -34,7 +34,6 @@ https://github.com/autovelop/playthos-opengl-glfw
 ***
 
 #### OpenGL System
-
 Popular cross platform graphics library for desktop devices
 
 Platform: Windows, Linux, MacOS
@@ -45,20 +44,14 @@ https://github.com/autovelop/playthos-opengl
 
 ***
 
-#### Input Observer
-
-Blueprint for integrating input devices for desktop devices
+#### GLFW Keyboard System (Observer)
+Added ability to bind functions to keyboard events. For now uses GLFW until something else is better or needs support.
 
 Platform: Windows, Linux, MacOS
 
-TODO
+Requirements: GLFW Engine Component
 
-***
-
-#### GLFW Keyboard System
-Platform: Windows, Linux, MacOS
-
-TODO
+https://github.com/autovelop/playthos-keyboard
 
 ***
 
