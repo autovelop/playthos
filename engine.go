@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -19,12 +21,12 @@ func GetTags() string {
 }
 
 var systems []System
-var observers []Observer
+var subjects []Subject
 var components []Component
 
 type Engine struct {
 	systems     []System
-	observers   []Observer
+	subjects    []Subject
 	entities    []*Entity
 	components  []Component
 	newTime     time.Time
@@ -59,7 +61,7 @@ func (e *Engine) Update() {
 func init() {
 	log.Println("init engine")
 	systems = make([]System, 0)
-	observers = make([]Observer, 0)
+	subjects = make([]Subject, 0)
 	components = make([]Component, 0)
 }
 
@@ -91,7 +93,7 @@ func (e *Engine) Prepare() {
 	// swap the prelaunch slices into runtime slices
 	e.components = components
 	e.systems = systems
-	e.observers = observers
+	e.subjects = subjects
 
 	for _, component := range e.components {
 		component.Prepare()
@@ -99,24 +101,33 @@ func (e *Engine) Prepare() {
 	for _, system := range e.systems {
 		system.Prepare()
 	}
-	e.RegisterToSystems()
-	e.prepared = true
-}
 
-func (e *Engine) RegisterToSystems() {
 	for _, system := range e.systems {
 		for _, component := range e.components {
 			component.RegisterToSystem(system)
 		}
 	}
+
+	for _, subject := range e.subjects {
+		for _, component := range e.components {
+			component.RegisterToSubject(subject)
+		}
+	}
+
+	// for _, subject := range e.subjects {
+	// 	for _, component := range e.components {
+	// 		component.RegisterToSystem(subject)
+	// 	}
+	// }
+	e.prepared = true
 }
 
 // during game launch
 func NewSystem(system System) {
 	systems = append(systems, system)
 }
-func NewObserver(observer Observer) {
-	observers = append(observers, observer)
+func NewSubject(subject Subject) {
+	subjects = append(subjects, subject)
 }
 
 // during runtime
@@ -124,11 +135,20 @@ func (e *Engine) NewSystem(system System) {
 	system.Prepare()
 	e.systems = append(e.systems, system)
 }
-func (e *Engine) NewObserver(observer Observer) {
-	observer.Prepare()
-	e.observers = append(e.observers, observer)
+func (e *Engine) NewSubject(subject Subject) {
+	subject.Prepare()
+	e.subjects = append(e.subjects, subject)
 }
-
 func (e *Engine) NewEntity(entity *Entity) {
 	e.entities = append(e.entities, entity)
+}
+
+func (e *Engine) GetSubject(lookup Subject) (Subject, error) {
+	// e.entities = append(e.entities, entity)
+	for _, subject := range e.subjects {
+		if fmt.Sprintf("%T", subject) == fmt.Sprintf("%T", subject) {
+			return subject, nil
+		}
+	}
+	return nil, errors.New("Trying to get Subject that does not exist")
 }

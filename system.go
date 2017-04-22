@@ -4,5 +4,5 @@ type System interface {
 	Update()
 	Prepare()
 	ComponentTypes() []Component
-	NewComponentType(Component)
+	LoadComponent(Component)
 }

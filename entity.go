@@ -12,6 +12,11 @@ func (e *Entity) NewComponent(component Component) {
 	e.components = append(e.components, component)
 }
 
+func (e *Entity) GetComponent(component Component) {
+	here
+	e.components = append(e.components, component)
+}
+
 func (e *Entity) RegisterToSystems(engine *Engine) {
 	for _, system := range engine.systems {
 		for _, component_type := range system.ComponentTypes() {
