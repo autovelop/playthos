@@ -109,7 +109,6 @@ func NewEntity() *Entity {
 }
 
 func GetEntity(id uint) *Entity {
-	Game.entities = append(Game.entities, &Entity{ID: idnum})
 	for _, entity := range Game.entities {
 		if entity.ID == id {
 			return entity
