@@ -6,7 +6,7 @@ This engine is still under constant development and no stability is guaranteed
 ## Intro
 Playthos is a game engine being developed for the planned game editor PlaythosEdit.
 
-Currently the engine is actively being developed for Linux and Android until a alpha version is completed.
+Currently the engine is actively being tested on Linux and Android until after the alpha version.
 
 
 ## Official Playthos Engine Packages
@@ -34,7 +34,7 @@ https://github.com/autovelop/playthos-opengl-glfw
 ***
 
 #### OpenGL System
-Popular cross platform graphics library for desktop devices
+Implenetation of popular cross platform graphics library for desktop devices
 
 Platform: Windows, Linux, MacOS
 
@@ -63,10 +63,14 @@ TODO
 ***
 
 #### OpenGLES System
-Popular cross platform graphics library for mobile devices
+Implementation of popular cross platform graphics library for mobile devices
 
 Platform: Android, iOS
 
 Requirements: Render System, ... TODO
 
 TODO
+
+#### Physics
+
+https://github.com/autovelop/playthos-physics
