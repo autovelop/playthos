@@ -1,8 +1,15 @@
 package engine
 
+// type System struct {
+// 	SystemRoutine
+// }
+
+// func (s *System) RegisterComponent() {
+// }
+
 type System interface {
 	Update()
 	Prepare()
-	ComponentTypes() []Component
-	LoadComponent(Component)
+	ComponentTypes() []ComponentRoutine
+	LoadComponent(ComponentRoutine)
 }
