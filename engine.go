@@ -104,7 +104,6 @@ var idnum uint = 0
 func NewEntity() *Entity {
 	idnum++
 	Game.entities = append(Game.entities, &Entity{ID: idnum})
-	// log.Println(Game.entities)
 	return Game.entities[len(Game.entities)-1]
 }
 
@@ -120,17 +119,8 @@ func GetEntity(id uint) *Entity {
 func DeleteEntity(ent *Entity) {
 	for e, entity := range Game.entities {
 		if entity == ent {
-			// for _, component := range entity.Components() {
-			// 	log.Printf("-- %T\n", component)
-			// }
-
 			entity.UnRegisterAllFromSystems(Game)
 			entity.DeleteComponents()
-
-			// log.Printf("-- %v\n", "test")
-			// for _, component := range entity.Components() {
-			// 	log.Printf("-- %T\n", component)
-			// }
 
 			copy(Game.entities[e:], Game.entities[e+1:])
 			Game.entities[len(Game.entities)-1] = nil
@@ -148,5 +138,14 @@ func GetObserverable(lookup Observerable) Observerable {
 	}
 	log.Fatal("System requested but doens't exist. Make sure all packages are imported")
 	return nil
-	// return nil, errors.New("Trying to get Observerable that does not exist")
+}
+
+func GetSystem(lookup System) System {
+	for _, system := range Game.systems {
+		if fmt.Sprintf("%T", system) == fmt.Sprintf("%T", system) {
+			return system
+		}
+	}
+	log.Fatal("System requested but doens't exist. Make sure all packages are imported")
+	return nil
 }
