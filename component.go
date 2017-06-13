@@ -30,10 +30,5 @@ type ComponentRoutine interface {
 	IsActive() bool
 	SetActive(bool)
 
-	// To implement
 	Prepare()
-	RegisterToSystem(System)
-	UnRegisterFromSystem(System)
-	RegisterToObserverable(Observerable)
-	UnRegisterFromObserver(Observerable)
 }

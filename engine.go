@@ -87,14 +87,13 @@ func NewSystem(system System) {
 	system.Prepare()
 	for _, component := range Game.components {
 		system.LoadComponent(component)
-		// component.RegisterToSystem(system)
 	}
 	Game.systems = append(Game.systems, system)
 }
 
 func NewObserverable(observerable Observerable) {
 	for _, component := range Game.components {
-		component.RegisterToObserverable(observerable)
+		observerable.LoadComponent(component)
 	}
 	Game.observerables = append(Game.observerables, observerable)
 }

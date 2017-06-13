@@ -56,7 +56,7 @@ func (e *Entity) UnRegisterAllFromSystems(engine *Engine) {
 			for _, component_type := range system.ComponentTypes() {
 				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", component_type) {
 					// log.Printf("+ DEL %T\n", component_type)
-					component.UnRegisterFromSystem(system)
+					// component.UnRegisterFromSystem(system)
 					return
 				}
 			}
@@ -70,7 +70,8 @@ func (e *Entity) RegisterAllToSystems(engine *Engine) {
 		for _, component_type := range system.ComponentTypes() {
 			for _, component := range e.components {
 				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", component_type) {
-					component.RegisterToSystem(system)
+					// component.RegisterToSystem(system)
+					system.LoadComponent(component)
 					// return
 				}
 			}
@@ -83,7 +84,8 @@ func (e *Entity) RegisterToSystems(engine *Engine, components ...ComponentRoutin
 		for _, component_type := range system.ComponentTypes() {
 			for _, component := range components {
 				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", component_type) {
-					component.RegisterToSystem(system)
+					// component.RegisterToSystem(system)
+					system.LoadComponent(component)
 					// return
 				}
 			}
