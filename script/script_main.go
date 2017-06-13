@@ -10,8 +10,7 @@ import (
 var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&CustomScript{}}
 
 func init() {
-	script := &Script{}
-	engine.NewSystem(script)
+	engine.NewUnloadedSystem(&Script{})
 }
 
 type Script struct {
@@ -19,7 +18,7 @@ type Script struct {
 	scripts []*CustomScript
 }
 
-func (s *Script) Prepare() {
+func (s *Script) Prepare(settings *engine.Settings) {
 }
 
 func (s *Script) LoadComponent(component engine.ComponentRoutine) {

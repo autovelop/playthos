@@ -11,7 +11,7 @@ type Collider struct {
 	engine.Component
 	transform *std.Transform
 	relative  *std.Rect
-	onHit     func()
+	onHit     func(*engine.Entity)
 }
 
 func (c *Collider) Set(transform *std.Transform, relative *std.Rect) {
@@ -19,13 +19,13 @@ func (c *Collider) Set(transform *std.Transform, relative *std.Rect) {
 	c.relative = relative
 }
 
-func (c *Collider) OnHit(onHit func()) {
+func (c *Collider) OnHit(onHit func(*engine.Entity)) {
 	c.onHit = onHit
 }
 
-func (c *Collider) Hit() {
+func (c *Collider) Hit(other *engine.Entity) {
 	if c.onHit != nil {
-		c.onHit()
+		c.onHit(other)
 	}
 }
 

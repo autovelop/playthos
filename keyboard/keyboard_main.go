@@ -11,8 +11,7 @@ import (
 
 func init() {
 	keyboard := &Keyboard{}
-	keyboard.Prepare()
-	engine.NewObserverable(keyboard)
+	engine.NewUnloadedObserverable(keyboard)
 }
 
 const (
@@ -33,12 +32,14 @@ type Keyboard struct {
 	keyrelease []func()
 }
 
-func (k *Keyboard) Prepare() {
+func (k *Keyboard) Prepare(settings *engine.Settings) {
 	log.Println("Keyboard Prepare")
 	k.keypress = make([]func(), 118, 118)
 	k.keyrelease = make([]func(), 118, 118)
 }
 
+func (k *Keyboard) UnRegisterEntity(entity *engine.Entity) {
+}
 func (k *Keyboard) LoadComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *glfw.GLFW:

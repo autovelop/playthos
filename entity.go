@@ -49,19 +49,16 @@ func (e *Entity) GetComponent(component_type interface{}) ComponentRoutine {
 	return nil
 }
 
+func (e *Entity) UnRegisterAllFromObserverables(engine *Engine) {
+	// log.Printf("+ !! %v\n", len(e.components))
+	for _, observerable := range engine.observerables {
+		observerable.UnRegisterEntity(e)
+	}
+}
 func (e *Entity) UnRegisterAllFromSystems(engine *Engine) {
 	// log.Printf("+ !! %v\n", len(e.components))
 	for _, system := range engine.systems {
-		for _, component := range e.components {
-			for _, component_type := range system.ComponentTypes() {
-				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", component_type) {
-					// log.Printf("+ DEL %T\n", component_type)
-					// component.UnRegisterFromSystem(system)
-					return
-				}
-			}
-			// }
-		}
+		system.UnRegisterEntity(e)
 	}
 }
 

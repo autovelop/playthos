@@ -11,8 +11,7 @@ import (
 var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&Collider{}}
 
 func init() {
-	col := &Collision{}
-	engine.NewSystem(col)
+	engine.NewUnloadedSystem(&Collision{})
 }
 
 type Collision struct {
@@ -20,7 +19,7 @@ type Collision struct {
 	colliders []*Collider
 }
 
-func (c *Collision) Prepare() {
+func (c *Collision) Prepare(settings *engine.Settings) {
 }
 
 func (c *Collision) LoadComponent(component engine.ComponentRoutine) {
@@ -49,8 +48,8 @@ func (c *Collision) Update() {
 				// p2 := c2.GetComponent(&render.Transform{}).(*render.Transform)
 
 				if CheckCollisionAABB(collider, prev_collider) {
-					collider.Hit()
-					prev_collider.Hit()
+					// collider.Hit(c2)
+					prev_collider.Hit(c1)
 				}
 				// if Distance3(p1.GetPosition(), p2.GetPosition()) < 80 {
 				// 	collider.Hit()

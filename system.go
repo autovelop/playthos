@@ -2,7 +2,9 @@ package engine
 
 type System interface {
 	Update()
-	Prepare()
+	Prepare(*Settings)
 	ComponentTypes() []ComponentRoutine
 	LoadComponent(ComponentRoutine)
+	// UnloadComponent(ComponentRoutine)
+	UnRegisterEntity(*Entity)
 }

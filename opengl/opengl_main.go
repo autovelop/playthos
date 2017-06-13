@@ -21,9 +21,8 @@ import (
 var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 
 func init() {
-	ogl := &OpenGL{}
-	// log.Printf("%p", ogl)
-	engine.NewSystem(ogl)
+	engine.NewUnloadedSystem(&OpenGL{})
+	log.Println("added opengl to engine")
 }
 
 type OpenGL struct {
@@ -35,12 +34,13 @@ type OpenGL struct {
 	transforms    []*std.Transform
 	meshes        []*render.Mesh
 	materials     []*render.Material
+	settings      *engine.Settings
 }
 
-func (o *OpenGL) Prepare() {
+func (o *OpenGL) Prepare(settings *engine.Settings) {
 	log.Println("OpenGL Prepare")
-	o.screenWidth = 800
-	o.screenHeight = 600
+	o.screenWidth = settings.ResolutionX
+	o.screenHeight = settings.ResolutionY
 
 	o.cameras = make([]*render.Camera, 0)
 
@@ -49,7 +49,7 @@ func (o *OpenGL) Prepare() {
 		panic(err)
 	}
 
-	gl.Viewport(0, 0, int32(800), int32(600))
+	gl.Viewport(0, 0, int32(settings.ResolutionX), int32(settings.ResolutionY))
 
 	o.shaderProgram = o.NewShader(render.VSHADER, render.FSHADER)
 
@@ -62,8 +62,11 @@ func (o *OpenGL) Prepare() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	gl.ClearColor(0.3, 0.3, 0.3, 1)
+	o.settings = settings
 }
 
+func (o *OpenGL) UnloadComponent(component engine.ComponentRoutine) {
+}
 func (o *OpenGL) LoadComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *glfw.GLFW:
@@ -111,12 +114,12 @@ func (o *OpenGL) Update() {
 		// camX := float32(math.Sin(glfw32.GetTime()) * radius)
 		// camZ := float32(math.Cos(glfw32.GetTime()) * radius)
 
-		ratio := float32(800) / float32(600)
-		proj := mgl32.Ortho(0, float32(800)/ratio, 0, float32(600)/ratio, -1000.0, 1000.0)
+		ratio := float32(o.settings.ResolutionX) / float32(o.settings.ResolutionY)
+		proj := mgl32.Ortho(0, float32(o.settings.ResolutionX)/ratio, 0, float32(o.settings.ResolutionY)/ratio, -1000.0, 1000.0)
 		proj_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("projection\x00"))
 		// drop the V
 		// view := mgl32.LookAtV(mgl32.Vec3{camX, camera.Eye().Y, camZ}, mgl32.Vec3{camera.Center().X, camera.Center().Y, camera.Center().Z}, mgl32.Vec3{camera.Up().X, camera.Up().Y, camera.Up().Z})
-		view := mgl32.LookAtV(mgl32.Vec3{camera.Eye().X - (600 / 2), camera.Eye().Y - (800 / 4), camera.Eye().Z}, mgl32.Vec3{camera.Center().X - (600 / 2), camera.Center().Y - (800 / 4), camera.Center().Z}, mgl32.Vec3{camera.Up().X, camera.Up().Y, camera.Up().Z})
+		view := mgl32.LookAtV(mgl32.Vec3{camera.Eye().X - (o.settings.ResolutionY / 2), camera.Eye().Y - (o.settings.ResolutionX / 4), camera.Eye().Z}, mgl32.Vec3{camera.Center().X - (o.settings.ResolutionY / 2), camera.Center().Y - (o.settings.ResolutionX / 4), camera.Center().Z}, mgl32.Vec3{camera.Up().X, camera.Up().Y, camera.Up().Z})
 		view_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("view\x00"))
 
 		model_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("model\x00"))

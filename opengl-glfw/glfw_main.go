@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	engine.NewComponent(&GLFW{})
+	engine.NewUnloadedComponent(&GLFW{})
 	log.Println("added glfw comp to engine")
 }
 
@@ -18,7 +18,7 @@ type GLFW struct {
 	window *glfw.Window
 }
 
-func (g *GLFW) Prepare() {
+func (g *GLFW) Prepare(settings *engine.Settings) {
 	log.Println("GLFW Prepare")
 	// Intialize GLFW
 	if err := glfw.Init(); err != nil {
@@ -29,8 +29,11 @@ func (g *GLFW) Prepare() {
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 
 	var err error
-	g.window, err = glfw.CreateWindow(int(800), int(600), "Cube", nil, nil)
-	// g.window, err = glfw.CreateWindow(int(800), int(600), "Cube", glfw.GetPrimaryMonitor(), nil)
+	if settings.Fullscreen {
+		g.window, err = glfw.CreateWindow(int(settings.ResolutionX), int(settings.ResolutionY), "Cube", glfw.GetPrimaryMonitor(), nil)
+	} else {
+		g.window, err = glfw.CreateWindow(int(settings.ResolutionX), int(settings.ResolutionY), "Cube", nil, nil)
+	}
 	if err != nil {
 		panic(err)
 	}

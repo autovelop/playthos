@@ -11,8 +11,7 @@ import (
 var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&Acceleration{}, &Velocity{}}
 
 func init() {
-	phy := &Physics{}
-	engine.NewSystem(phy)
+	engine.NewUnloadedSystem(&Physics{})
 }
 
 type Physics struct {
@@ -21,7 +20,7 @@ type Physics struct {
 	velocities    []*Velocity
 }
 
-func (p *Physics) Prepare() {
+func (p *Physics) Prepare(settings *engine.Settings) {
 }
 
 func (p *Physics) LoadComponent(component engine.ComponentRoutine) {

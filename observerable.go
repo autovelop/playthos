@@ -1,6 +1,7 @@
 package engine
 
 type Observerable interface {
-	Prepare()
+	Prepare(*Settings)
 	LoadComponent(ComponentRoutine)
+	UnRegisterEntity(*Entity)
 }

@@ -30,5 +30,5 @@ type ComponentRoutine interface {
 	IsActive() bool
 	SetActive(bool)
 
-	Prepare()
+	Prepare(*Settings)
 }
