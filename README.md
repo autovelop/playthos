@@ -1,7 +1,5 @@
 #  Playthos Game Engine
-
-## Warning
-This engine is still under development and not ready for production yet.
+(This engine is still under development and not ready for production yet)
 
 ## Intro
 The main goal of the Playthos game engine is to make contribution as effective as possible. The code foundation that has been layed out took into consideration three important aspects of the game engine:
