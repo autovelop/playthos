@@ -11,11 +11,10 @@ For now the main focus is on the game engine, which is only half of what will tr
 
 ## Feature List v0.5
 - [x] Linux Support
-- [ ] Standards Library
+- [x] Standards Library
   - [x] Base Structs
   - [x] Transform Component
-  - [ ] Quad Mesh
-  - [ ] Circle Mesh
+  - [x] Quad Mesh
 - [x] 2D Rendering
 - [x] 2D Sprites
 - [x] Keyboard Input
@@ -23,19 +22,14 @@ For now the main focus is on the game engine, which is only half of what will tr
   - [ ] Single Sounds
   - [ ] Music Loop
 - [x] Physics
-- [ ] Collision Detection
+- [x] Collision Detection
   - [x] AABB
-  - [ ] Circle
 - [x] User Scripting
 - [ ] Sprite Animation
 - [ ] MacOS Support
 - [ ] Windows Support
 - [ ] Documentation
-
-## Feature List v0.6
-- [ ] Collision Detection
-  - [ ] SAT
-
+  
 ## Feature List v0.7
 - [ ] Support Tables
 - [ ] Build Testing
@@ -47,6 +41,12 @@ For now the main focus is on the game engine, which is only half of what will tr
 - [ ] Render State System
 - [ ] UI System
 - [ ] Fonts
+
+## Feature List v0.6
+- [ ] Circle Mesh
+- [ ] Collision Detection
+  - [ ] SAT
+  - [ ] Circle
 
 ## Feature List v0.9
 - [ ] Physics Animation
