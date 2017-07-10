@@ -1,72 +1,73 @@
-#  Playthos (warning. under development)
-
-## Warning
-This engine is still under constant development and no stability is guaranteed
+#  Playthos Game Engine
+(This engine is still under development and not ready for production yet)
 
 ## Intro
-Playthos is a game engine being developed for the planned game editor PlaythosEdit.
+The main goal of the Playthos game engine is to make contribution as effective as possible. The code foundation that has been layed out took into consideration three important aspects of the game engine:
+- Keep it simple for the user and idiomatic for the developer
+- Make it scalable for new platforms and technologies
+- Automate things with as little human interferance as possible
 
-Currently the engine is actively being developed for Linux and Android until a alpha version is completed.
+For now the main focus is on the game engine, which is only half of what will truely pioneer the community.
 
+## Feature List v0.5
+- [x] Linux Support
+- [x] Standards Library
+  - [x] Base Structs
+  - [x] Transform Component
+  - [x] Quad Mesh
+- [x] 2D Rendering
+- [x] 2D Sprites
+- [x] Keyboard Input
+- [ ] Audio
+  - [ ] Single Sounds
+  - [ ] Music Loop
+- [x] Physics
+- [x] Collision Detection
+  - [x] AABB
+- [x] User Scripting
+- [ ] Sprite Animation
+- [ ] MacOS Support
+- [ ] Windows Support
+- [ ] Documentation
+  
+## Feature List v0.7
+- [ ] Support Tables
+- [ ] Build Testing
+- [ ] Entity Serialization
+- [ ] Mouse Input
+- [ ] Raycasts
 
-## Official Playthos Engine Packages
-#### Render System
+## Feature List v0.8
+- [ ] Render State System
+- [ ] UI System
+- [ ] Fonts
 
-Blueprint for integrating 2D, 3D, or UI rendering systems
+## Feature List v0.6
+- [ ] Circle Mesh
+- [ ] Collision Detection
+  - [ ] SAT
+  - [ ] Circle
 
-Platform: Any
+## Feature List v0.9
+- [ ] Physics Animation
+- [ ] Mesh Animation
 
-Requirements: None
+## Feature List v1
+- [ ] Shader System
+- [ ] Lighting System
 
-https://github.com/autovelop/playthos-render
+## Feature List v1.1
+- [ ] Network System
+- [ ] Game Editor
 
-***
+## Feature List v1.2
+- [ ] Android System
+- [ ] WebGL System
+- [ ] iOS System
 
-#### GLFW Engine Component
-Window manager for desktop devices
-
-Platform: Windows, Linux, MacOS
-
-Requirements: None
-
-https://github.com/autovelop/playthos-opengl-glfw
-
-***
-
-#### OpenGL System
-Popular cross platform graphics library for desktop devices
-
-Platform: Windows, Linux, MacOS
-
-Requirements: Render System, GLFW Engine Component
-
-https://github.com/autovelop/playthos-opengl
-
-***
-
-#### GLFW Keyboard System (Observer)
-Added ability to bind functions to keyboard events. For now uses GLFW until something else is better or needs support.
-
-Platform: Windows, Linux, MacOS
-
-Requirements: GLFW Engine Component
-
-https://github.com/autovelop/playthos-keyboard
-
-***
-
-#### GLFW Mouse System
-Platform: Windows, Linux, MacOS
-
-TODO
-
-***
-
-#### OpenGLES System
-Popular cross platform graphics library for mobile devices
-
-Platform: Android, iOS
-
-Requirements: Render System, ... TODO
-
-TODO
+## Feature List v2
+- [ ] 3D Meshes
+- [ ] 3D Textures
+- [ ] 3D Camera
+- [ ] 3D Physics
+- [ ] 3D Collision
