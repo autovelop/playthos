@@ -29,6 +29,12 @@ For now the main focus is on the game engine, following that will come an editor
 - [ ] MacOS Support
 - [ ] Windows Support
 - [ ] Documentation
+
+## Feature List v0.6
+- [ ] Circle Mesh
+- [ ] Collision Detection
+  - [ ] SAT
+  - [ ] Circle
   
 ## Feature List v0.7
 - [ ] Support Tables
@@ -41,12 +47,6 @@ For now the main focus is on the game engine, following that will come an editor
 - [ ] Render State System
 - [ ] UI System
 - [ ] Fonts
-
-## Feature List v0.6
-- [ ] Circle Mesh
-- [ ] Collision Detection
-  - [ ] SAT
-  - [ ] Circle
 
 ## Feature List v0.9
 - [ ] Physics Animation
