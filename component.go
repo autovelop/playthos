@@ -1,34 +1,28 @@
 package engine
 
+// NOTE
+// https://play.golang.org/p/JUpq7Tsf8P
+
 type Component struct {
-	active bool
+	unit
+	id     string
 	entity *Entity
-	ComponentRoutine
 }
 
-func (c *Component) SetActive(active bool) {
-	c.active = active
-}
-
-func (c *Component) IsActive() bool {
-	return c.active
-}
-
-func (c *Component) GetEntity() *Entity {
+func (c *Component) Entity() *Entity {
 	return c.entity
 }
 
-func (c *Component) SetEntity(entity *Entity) {
-	c.active = true
-	c.entity = entity
+func (c *Component) initComponent(ent *Entity) {
+	c.entity = ent
+}
+
+func (c *Component) ID() string {
+	return c.id
 }
 
 type ComponentRoutine interface {
-	// Base
-	GetEntity() *Entity
-	SetEntity(*Entity)
-	IsActive() bool
+	initUnit(*Engine)
+	initComponent(*Entity)
 	SetActive(bool)
-
-	Prepare(*Settings)
 }

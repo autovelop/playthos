@@ -9,20 +9,20 @@ import (
 // TODO: run tests through these functions
 
 func CheckCollisionAABB(one *Collider, two *Collider) bool {
-	// collisionX := one.Get().GetPosition().X+one.Get().GetScale().X >= two.Get().GetPosition().X &&
-	// 	two.Get().GetPosition().X+two.Get().GetScale().X >= one.Get().GetPosition().X
-	// collisionY := one.Get().GetPosition().Y+one.Get().GetScale().Y >= two.Get().GetPosition().Y &&
-	// 	two.Get().GetPosition().Y+two.Get().GetScale().Y >= one.Get().GetPosition().Y
+	// collisionX := one.Get().Position().X+one.Get().GetScale().X >= two.Get().Position().X &&
+	// 	two.Get().Position().X+two.Get().GetScale().X >= one.Get().Position().X
+	// collisionY := one.Get().Position().Y+one.Get().GetScale().Y >= two.Get().Position().Y &&
+	// 	two.Get().Position().Y+two.Get().GetScale().Y >= one.Get().Position().Y
 	one_transform, one_relative := one.Get()
 	two_transform, two_relative := two.Get()
-	collisionX := one_transform.GetPosition().X+one_relative.X+one_relative.W >= two_transform.GetPosition().X+two_relative.X &&
-		two_transform.GetPosition().X+two_relative.X+two_relative.W >= one_transform.GetPosition().X+one_relative.X
+	collisionX := one_transform.Position().X+one_relative.X+one_relative.W >= two_transform.Position().X+two_relative.X &&
+		two_transform.Position().X+two_relative.X+two_relative.W >= one_transform.Position().X+one_relative.X
 
-	collisionY := one_transform.GetPosition().Y+one_relative.Y+one_relative.H >= two_transform.GetPosition().Y+two_relative.Y &&
-		two_transform.GetPosition().Y+two_relative.Y+two_relative.H >= one_transform.GetPosition().Y+one_relative.Y
+	collisionY := one_transform.Position().Y+one_relative.Y+one_relative.H >= two_transform.Position().Y+two_relative.Y &&
+		two_transform.Position().Y+two_relative.Y+two_relative.H >= one_transform.Position().Y+one_relative.Y
 
-	// log.Println(one.Get().GetPosition().Y)
-	// log.Println(two.Get().GetPosition().Y)
+	// log.Println(one.Get().Position().Y)
+	// log.Println(two.Get().Position().Y)
 	return collisionX && collisionY
 }
 

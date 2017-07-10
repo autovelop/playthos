@@ -7,9 +7,20 @@ import (
 	"github.com/autovelop/playthos/std"
 )
 
-type Render interface {
+type Render struct {
+	engine.System
+	// RenderRoutine
+}
+
+func NewRenderSystem(render RenderRoutine) {
+	engine.NewSystem(render)
+}
+
+type RenderRoutine interface {
+	// engine.SystemRoutine
+	engine.Updater
 	NewShader(vs string, fs string) uint32
-	UnRegisterEntity(*engine.Entity)
+	// UnRegisterEntity(*engine.Entity)
 	RegisterTransform(*std.Transform)
 	RegisterMesh(*Mesh)
 	RegisterMaterial(*Material)

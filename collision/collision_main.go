@@ -4,14 +4,10 @@ package collision
 
 import (
 	"github.com/autovelop/playthos"
-	// render "github.com/autovelop/playthos-render"
-	"log"
 )
 
-var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&Collider{}}
-
 func init() {
-	engine.NewUnloadedSystem(&Collision{})
+	engine.NewSystem(&Collision{})
 }
 
 type Collision struct {
@@ -19,20 +15,20 @@ type Collision struct {
 	colliders []*Collider
 }
 
-func (c *Collision) Prepare(settings *engine.Settings) {
-}
+func (c *Collision) InitSystem() {}
 
-func (c *Collision) LoadComponent(component engine.ComponentRoutine) {
+func (c *Collision) NewIntegrant(integrant engine.IntegrantRoutine) {}
+
+func (c *Collision) NewComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *Collider:
-		c.RegisterCollider(component)
-		log.Println("LoadComponent(*Collider)")
+		c.colliders = append(c.colliders, component)
 		break
 	}
 }
 
 func (c *Collision) ComponentTypes() []engine.ComponentRoutine {
-	return componentTypes
+	return []engine.ComponentRoutine{&Collider{}}
 }
 
 func (c *Collision) Update() {
@@ -41,8 +37,8 @@ func (c *Collision) Update() {
 		if prev_collider == nil {
 			prev_collider = collider
 		} else {
-			c1 := collider.GetEntity()
-			c2 := prev_collider.GetEntity()
+			c1 := collider.Entity()
+			c2 := prev_collider.Entity()
 			if c1 != nil && c2 != nil {
 				// p1 := c1.GetComponent(&render.Transform{}).(*render.Transform)
 				// p2 := c2.GetComponent(&render.Transform{}).(*render.Transform)
@@ -56,21 +52,6 @@ func (c *Collision) Update() {
 				// 	prev_collider.Hit()
 				// }
 			}
-		}
-	}
-}
-
-func (c *Collision) RegisterCollider(collider *Collider) {
-	c.colliders = append(c.colliders, collider)
-}
-
-func (c *Collision) UnRegisterEntity(entity *engine.Entity) {
-	for i := 0; i < len(c.colliders); i++ {
-		collider := c.colliders[i]
-		if collider.GetEntity().ID == entity.ID {
-			copy(c.colliders[i:], c.colliders[i+1:])
-			c.colliders[len(c.colliders)-1] = nil
-			c.colliders = c.colliders[:len(c.colliders)-1]
 		}
 	}
 }

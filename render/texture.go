@@ -1,8 +1,5 @@
 // +build render
 
-// TODO:
-// - cleanup
-
 package render
 
 import (
@@ -25,15 +22,19 @@ type Texture struct {
 	AspectRatio float32
 }
 
+func NewTexture() *Texture {
+	return &Texture{}
+}
+
 func (t *Texture) SetID(id uint32) {
 	t.id = id
 }
 
-func (t *Texture) GetID() uint32 {
+func (t *Texture) ID() uint32 {
 	return t.id
 }
 
-func (t *Texture) Get() []byte {
+func (t *Texture) RGBA() []byte {
 	return t.rgba
 }
 

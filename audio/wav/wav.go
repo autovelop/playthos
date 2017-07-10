@@ -62,39 +62,31 @@ func (w *WAVAudioFile) Load(assetFolder string, filename string) {
 	// 35-36 | 16 | Bits per sample
 	// 37-40 | "data" | "data" chunk header. Marks the beginning of the data section.
 	// 41-44 | File size | (data)
-	log.Printf("buf[0:4]: %v\n", buf[0:4])
-	log.Printf("buf[4:8]: %v\n", buf[4:8])
-	log.Printf("buf[8:12]: %v\n", buf[8:12])
-	log.Printf("buf[12:16]: %v\n", buf[12:16])
-	log.Printf("buf[16:20]: %v\n", buf[16:20])
-	log.Printf("buf[20:22]: %v\n", buf[20:22])
-	log.Printf("buf[22:24]: %v\n", buf[22:24])
-	log.Printf("buf[24:28]: %v\n", buf[24:28])
-	log.Printf("buf[28:32]: %v\n", buf[28:32])
-	log.Printf("buf[32:34]: %v\n", buf[32:34])
-	log.Printf("buf[34:36]: %v\n", buf[34:36])
-	log.Printf("buf[36:40]: %v\n", buf[36:40])
-	log.Printf("buf[40:44]: %v\n", buf[40:44])
-	log.Println("-")
+	// log.Printf("buf[0:4]: %v\n", buf[0:4])
+	// log.Printf("buf[4:8]: %v\n", buf[4:8])
+	// log.Printf("buf[8:12]: %v\n", buf[8:12])
+	// log.Printf("buf[12:16]: %v\n", buf[12:16])
+	// log.Printf("buf[16:20]: %v\n", buf[16:20])
+	// log.Printf("buf[20:22]: %v\n", buf[20:22])
+	// log.Printf("buf[22:24]: %v\n", buf[22:24])
+	// log.Printf("buf[24:28]: %v\n", buf[24:28])
+	// log.Printf("buf[28:32]: %v\n", buf[28:32])
+	// log.Printf("buf[32:34]: %v\n", buf[32:34])
+	// log.Printf("buf[34:36]: %v\n", buf[34:36])
+	// log.Printf("buf[36:40]: %v\n", buf[36:40])
+	// log.Printf("buf[40:44]: %v\n", buf[40:44])
+	// log.Println("-")
 
-	w.FileType = string(buf[0:4])
-	// log.Println("%v", buf[21])
-	w.FileSize = binary.LittleEndian.Uint32(buf[4:8])
-	w.AudioFileType = string(buf[8:12])
 	if buf[21] == 1 {
 		w.IsPCM = true
 	}
-	w.Channels = buf[22]
-	w.SampleRate = uint32(buf[24]) | uint32(buf[25])<<8 | uint32(buf[26])<<16 | uint32(buf[27])<<24
-	w.BitDepth = uint32(buf[34])
+	w.Set(string(buf[0:4]), binary.LittleEndian.Uint32(buf[4:8]), string(buf[8:12]), buf[22], uint32(buf[24])|uint32(buf[25])<<8|uint32(buf[26])<<16|uint32(buf[27])<<24, uint32(buf[34]))
 
 	audioBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// bytes.NewReader(audioBytes)
-	log.Printf("%+v", w)
-	w.Reader = bytes.NewReader(audioBytes)
+	w.SetReader(bytes.NewReader(audioBytes))
 }
 
 func (w *WAVAudioFile) GetReader() io.Reader {

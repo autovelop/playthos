@@ -1,4 +1,4 @@
-package script
+package scripting
 
 import (
 	"log"
@@ -7,6 +7,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("script")
+	engine.RegisterPackage("scripting")
 	log.Println("added script to engine")
 }

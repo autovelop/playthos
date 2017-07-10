@@ -8,16 +8,26 @@ import (
 
 type Sound struct {
 	engine.Component
-	audioFile AudioFileRoutine
-	loop      bool
+	audioFile   AudioFileRoutine
+	loop        bool
+	audioSystem *Audio
+	idx         int
+	ready       bool
+	playing     bool
+	playOnReady bool
 }
 
-func (s *Sound) Set(audioFile AudioFileRoutine, loop bool) {
+func (s *Sound) Set(audioFile AudioFileRoutine, loop bool, playOnReady bool) {
 	s.audioFile = audioFile
 	s.loop = loop
+	s.playOnReady = playOnReady
 }
 
-func (s *Sound) IsLoop() bool {
+func (s *Sound) Play() {
+	s.audioSystem.PlaySound(s)
+}
+
+func (s *Sound) Loops() bool {
 	return s.loop
 }
 

@@ -6,19 +6,23 @@ import (
 	"github.com/autovelop/playthos"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"log"
+	"runtime"
 )
 
 func init() {
-	engine.NewUnloadedComponent(&GLFW{})
-	log.Println("added glfw comp to engine")
+	runtime.LockOSThread()
+	engine.NewIntegrant(&GLFW{})
+	log.Println("added glfw integrant to engine")
 }
 
 type GLFW struct {
-	engine.ComponentRoutine
+	engine.Integrant
 	window *glfw.Window
 }
 
-func (g *GLFW) Prepare(settings *engine.Settings) {
+func (g *GLFW) InitIntegrant() {
+	settings := g.Engine().Settings()
+
 	log.Println("GLFW Prepare")
 	// Intialize GLFW
 	if err := glfw.Init(); err != nil {
@@ -40,16 +44,6 @@ func (g *GLFW) Prepare(settings *engine.Settings) {
 	g.window.MakeContextCurrent()
 }
 
-func (g *GLFW) GetWindow() *glfw.Window {
+func (g *GLFW) Window() *glfw.Window {
 	return g.window
-}
-
-func (g *GLFW) RegisterToSystem(system engine.System) {
-	// log.Println("Registering GLFW to system")
-	system.LoadComponent(g)
-}
-
-func (g *GLFW) RegisterToObserverable(observer engine.Observerable) {
-	// log.Println("Registering GLFW to observer")
-	observer.LoadComponent(g)
 }

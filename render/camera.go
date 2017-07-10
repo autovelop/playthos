@@ -13,16 +13,32 @@ type Camera struct {
 	up     *std.Vector3
 }
 
-func (c *Camera) SetEye(eye *std.Vector3) {
-	c.eye = eye
+func NewCamera() *Camera {
+	return &Camera{}
 }
 
-func (c *Camera) SetCenter(center *std.Vector3) {
+func (c *Camera) Set(eye *std.Vector3, center *std.Vector3, up *std.Vector3) {
+	c.eye = eye
+	c.up = up
 	c.center = center
 }
 
-func (c *Camera) SetUp(up *std.Vector3) {
-	c.up = up
+func (c *Camera) SetEye(x float32, y float32, z float32) {
+	c.eye.X = x
+	c.eye.Y = y
+	c.eye.Z = z
+}
+
+func (c *Camera) SetCenter(x float32, y float32, z float32) {
+	c.center.X = x
+	c.center.Y = y
+	c.center.Z = z
+}
+
+func (c *Camera) SetUp(x float32, y float32, z float32) {
+	c.up.X = x
+	c.up.Y = y
+	c.up.Z = z
 }
 
 func (c *Camera) Eye() *std.Vector3 {

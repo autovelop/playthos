@@ -8,7 +8,7 @@ import (
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v4.5-core/gl"
 	glfw32 "github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 
@@ -18,14 +18,13 @@ import (
 	"strings"
 )
 
-var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
-
 func init() {
-	engine.NewUnloadedSystem(&OpenGL{})
-	log.Println("added opengl to engine")
+	render.NewRenderSystem(&OpenGL{})
+	log.Println("added opengl to engine2")
 }
 
 type OpenGL struct {
+	render.Render
 	window        *glfw32.Window
 	screenWidth   float32
 	screenHeight  float32
@@ -37,19 +36,21 @@ type OpenGL struct {
 	settings      *engine.Settings
 }
 
-func (o *OpenGL) Prepare(settings *engine.Settings) {
-	log.Println("OpenGL Prepare")
-	o.screenWidth = settings.ResolutionX
-	o.screenHeight = settings.ResolutionY
+func (o *OpenGL) InitSystem() {
+	o.settings = o.Engine().Settings()
 
-	o.cameras = make([]*render.Camera, 0)
+	log.Println("OpenGL Prepare")
+	o.screenWidth = o.settings.ResolutionX
+	o.screenHeight = o.settings.ResolutionY
 
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
 
-	gl.Viewport(0, 0, int32(settings.ResolutionX), int32(settings.ResolutionY))
+	var vertexArrayID uint32
+	gl.GenVertexArrays(1, &vertexArrayID)
+	gl.Viewport(0, 0, int32(o.settings.ResolutionX), int32(o.settings.ResolutionY))
 
 	o.shaderProgram = o.NewShader(render.VSHADER, render.FSHADER)
 
@@ -62,63 +63,62 @@ func (o *OpenGL) Prepare(settings *engine.Settings) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	gl.ClearColor(0.3, 0.3, 0.3, 1)
-	o.settings = settings
 }
 
-func (o *OpenGL) UnloadComponent(component engine.ComponentRoutine) {
-}
-func (o *OpenGL) LoadComponent(component engine.ComponentRoutine) {
-	switch component := component.(type) {
+func (o *OpenGL) NewIntegrant(integrant engine.IntegrantRoutine) {
+	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
-		o.window = component.GetWindow()
-		log.Println("LoadComponent(*glfw.GLFW)")
+		o.window = integrant.Window()
+		log.Println("NewIntegrant(*glfw.GLFW)")
 		break
+	}
+}
+
+func (o *OpenGL) NewComponent(component engine.ComponentRoutine) {
+	switch component := component.(type) {
 	case *std.Transform:
+		log.Println("NewComponent(*std.Transform)")
 		o.RegisterTransform(component)
-		log.Println("LoadComponent(*std.Transform)")
 		break
 	case *render.Mesh:
+		log.Println("NewComponent(*render.Mesh)")
 		o.RegisterMesh(component)
-		log.Println("LoadComponent(*render.Mesh)")
 		break
 	case *render.Material:
+		log.Println("NewComponent(*render.Material)")
 		o.RegisterMaterial(component)
-		log.Println("LoadComponent(*render.Material)")
 		break
 	case *render.Camera:
+		log.Println("NewComponent(*render.Camera)")
 		o.RegisterCamera(component)
-		log.Println("LoadComponent(*render.Camera)")
 		break
-		// any other engine components this system could use
 	}
 }
 
 func (o *OpenGL) ComponentTypes() []engine.ComponentRoutine {
-	return componentTypes
+	return []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 }
 
 func (o *OpenGL) Update() {
 	// log.Println(len(o.transforms), len(o.meshes), len(o.materials))
+
 	if !o.window.ShouldClose() {
 
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.UseProgram(o.shaderProgram)
+		// log.Fatal(o.window)
 
 		if len(o.cameras) <= 0 {
 			log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow no camera (for simulations)")
 		}
 		camera := o.cameras[0]
 
-		// radius := 10.0
-		// camX := float32(math.Sin(glfw32.GetTime()) * radius)
-		// camZ := float32(math.Cos(glfw32.GetTime()) * radius)
-
 		ratio := float32(o.settings.ResolutionX) / float32(o.settings.ResolutionY)
+
 		proj := mgl32.Ortho(0, float32(o.settings.ResolutionX)/ratio, 0, float32(o.settings.ResolutionY)/ratio, -1000.0, 1000.0)
 		proj_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("projection\x00"))
-		// drop the V
-		// view := mgl32.LookAtV(mgl32.Vec3{camX, camera.Eye().Y, camZ}, mgl32.Vec3{camera.Center().X, camera.Center().Y, camera.Center().Z}, mgl32.Vec3{camera.Up().X, camera.Up().Y, camera.Up().Z})
+
 		view := mgl32.LookAtV(mgl32.Vec3{camera.Eye().X - (o.settings.ResolutionY / 2), camera.Eye().Y - (o.settings.ResolutionX / 4), camera.Eye().Z}, mgl32.Vec3{camera.Center().X - (o.settings.ResolutionY / 2), camera.Center().Y - (o.settings.ResolutionX / 4), camera.Center().Z}, mgl32.Vec3{camera.Up().X, camera.Up().Y, camera.Up().Z})
 		view_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("view\x00"))
 
@@ -134,20 +134,21 @@ func (o *OpenGL) Update() {
 			// if mesh == nil {
 			// 	continue
 			// }
-			gl.BindVertexArray(mesh.GetVAO())
+			gl.BindVertexArray(mesh.VAO())
 
 			transform := o.transforms[idx]
 			// log.Println(transform.GetPosition())
 			// this is a shortcut. should rather remove component from system registry
 			if transform == nil {
 				continue
-			} else if !transform.IsActive() {
+			} else if !transform.Active() {
+				// log.Fatal("here")
 				continue
 			}
 
-			position := transform.GetPosition()
-			rotation := transform.GetRotation()
-			scale := transform.GetScale()
+			position := transform.Position()
+			rotation := transform.Rotation()
+			scale := transform.Scale()
 
 			model := mgl32.Ident4()
 			model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
@@ -171,16 +172,15 @@ func (o *OpenGL) Update() {
 			// 					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
 			// 				}
 			material := o.materials[idx]
-			color := material.GetColor()
+			color := material.Color()
 			if color != nil {
 				gl.Uniform4fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("color\x00")), 1, &color.R)
 			}
 
-			texture := material.GetTexture()
+			texture := material.Texture()
 			if texture != nil {
-				// log.Fatal("here")
 				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, texture.GetID())
+				gl.BindTexture(gl.TEXTURE_2D, texture.ID())
 				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
 				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
 			} else {
@@ -207,11 +207,8 @@ func (o *OpenGL) Update() {
 			gl.BindVertexArray(0)
 		}
 
-		// 		// let the UI system swap the buffers and do poll events only if it exists
-		// 		// if r.uiSystem == nil {
 		o.window.SwapBuffers()
 		glfw32.PollEvents()
-		// }
 
 	} else {
 		glfw32.Terminate()
@@ -294,10 +291,6 @@ func (o *OpenGL) NewShader(vs string, fs string) uint32 {
 	return shaderProgram
 }
 
-/*
-TODO: Combine RegisterTransform, RegisterMaterial, and RegisterMesh to prevent the system from having skew component slices
-*/
-
 func (o *OpenGL) RegisterTransform(transform *std.Transform) {
 	o.transforms = append(o.transforms, transform)
 }
@@ -306,10 +299,10 @@ func (o *OpenGL) RegisterCamera(camera *render.Camera) {
 	o.cameras = append(o.cameras, camera)
 }
 
-func (o *OpenGL) UnRegisterEntity(entity *engine.Entity) {
+func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(o.transforms); i++ {
 		transform := o.transforms[i]
-		if transform.GetEntity().ID == entity.ID {
+		if transform.Entity().ID() == entity.ID() {
 			copy(o.materials[i:], o.materials[i+1:])
 			o.materials[len(o.materials)-1] = nil
 			o.materials = o.materials[:len(o.materials)-1]
@@ -326,7 +319,7 @@ func (o *OpenGL) UnRegisterEntity(entity *engine.Entity) {
 }
 
 func (o *OpenGL) RegisterMaterial(material *render.Material) {
-	texture := material.GetTexture()
+	texture := material.Texture()
 	if texture != nil {
 		// Load texture
 		var tid uint32
@@ -348,7 +341,7 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 			0,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
-			gl.Ptr(texture.Get()))
+			gl.Ptr(texture.RGBA()))
 		texture.SetID(tid)
 	}
 
@@ -356,8 +349,8 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 }
 
 func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
-	var verticies []float32 = mesh.GetVertices()
-	var indicies []uint8 = mesh.GetIndicies()
+	var verticies []float32 = mesh.Vertices()
+	var indicies []uint8 = mesh.Indicies()
 
 	var vertexArrayID uint32
 	gl.GenVertexArrays(1, &vertexArrayID)

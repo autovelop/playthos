@@ -8,72 +8,51 @@ import (
 	"log"
 )
 
-var componentTypes []engine.ComponentRoutine = []engine.ComponentRoutine{&Acceleration{}, &Velocity{}}
-
 func init() {
-	engine.NewUnloadedSystem(&Physics{})
+	engine.NewSystem(&Physics{})
 }
 
 type Physics struct {
+	// Need to be able to uncomment the below at some point
+	// engine.Updater
 	engine.System
 	accelerations []*Acceleration
 	velocities    []*Velocity
 }
 
-func (p *Physics) Prepare(settings *engine.Settings) {
-}
+func (p *Physics) InitSystem() {}
 
-func (p *Physics) LoadComponent(component engine.ComponentRoutine) {
+func (p *Physics) NewIntegrant(integrant engine.IntegrantRoutine) {}
+
+func (p *Physics) NewComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *Velocity:
-		p.RegisterVelocity(component)
-		log.Println("LoadComponent(*Velocity)")
+		p.velocities = append(p.velocities, component)
 		break
 	case *Acceleration:
-		p.RegisterAcceleration(component)
-		log.Println("LoadComponent(*Acceleration)")
+		p.accelerations = append(p.accelerations, component)
 		break
 	}
 }
 
 func (p *Physics) ComponentTypes() []engine.ComponentRoutine {
-	return componentTypes
+	return []engine.ComponentRoutine{&Acceleration{}, &Velocity{}}
 }
 
 func (p *Physics) Update() {
+	if len(p.velocities) != len(p.accelerations) {
+		log.Println("Skew components")
+		log.Fatalf("velocities: %v | accelerations: %v", len(p.velocities), len(p.accelerations))
+	}
 	for idx, velocity := range p.velocities {
-		entity := velocity.GetEntity()
+		entity := velocity.Entity()
 		if entity != nil {
 			acceleration := p.accelerations[idx]
 			new_velocity := std.Vector3{acceleration.X + velocity.X, acceleration.Y + velocity.Y, acceleration.Z + velocity.Z}
 			velocity.Set(new_velocity.X, new_velocity.Y, new_velocity.Z)
-			transform := entity.GetComponent(&std.Transform{}).(*std.Transform)
-			position := transform.GetPosition()
-			transform.SetPosition(std.Vector3{position.X + new_velocity.X, position.Y + new_velocity.Y, position.Z + new_velocity.Z})
-			// log.Println(transform)
-		}
-	}
-}
-
-func (p *Physics) RegisterAcceleration(acceleration *Acceleration) {
-	p.accelerations = append(p.accelerations, acceleration)
-}
-
-func (p *Physics) RegisterVelocity(velocity *Velocity) {
-	p.velocities = append(p.velocities, velocity)
-}
-
-func (p *Physics) UnRegisterEntity(entity *engine.Entity) {
-	for i := 0; i < len(p.accelerations); i++ {
-		acceleration := p.accelerations[i]
-		if acceleration.GetEntity().ID == entity.ID {
-			copy(p.accelerations[i:], p.accelerations[i+1:])
-			p.accelerations[len(p.accelerations)-1] = nil
-			p.accelerations = p.accelerations[:len(p.accelerations)-1]
-
-			copy(p.velocities[i:], p.velocities[i+1:])
-			p.velocities[len(p.velocities)-1] = nil
-			p.velocities = p.velocities[:len(p.velocities)-1]
+			transform := entity.Component(&std.Transform{}).(*std.Transform)
+			position := transform.Position()
+			transform.SetPosition(&std.Vector3{position.X + new_velocity.X, position.Y + new_velocity.Y, position.Z + new_velocity.Z})
 		}
 	}
 }

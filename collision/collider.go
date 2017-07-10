@@ -14,6 +14,9 @@ type Collider struct {
 	onHit     func(*engine.Entity)
 }
 
+func NewCollider() *Collider {
+	return &Collider{}
+}
 func (c *Collider) Set(transform *std.Transform, relative *std.Rect) {
 	c.transform = transform
 	c.relative = relative

@@ -10,40 +10,55 @@ import (
 )
 
 func init() {
-	keyboard := &Keyboard{}
-	engine.NewUnloadedObserverable(keyboard)
+	engine.NewSystem(&Keyboard{})
 }
 
+type Action uint
+
 const (
-	KeyCode_ESCAPE = 9
-	KeyCode_SPACE  = 65
-	KeyCode_ENTER  = 36
-	KeyCode_LEFT   = 113
-	KeyCode_UP     = 111
-	KeyCode_DOWN   = 116
-	KeyCode_RIGHT  = 114
+	// https://github.com/go-gl/glfw/blob/228fbf8cdbdda24bd57b5405bab240da3900b9a7/v3.2/glfw/glfw/include/GLFW/glfw3.h
+	ActionRelease = 0
+	ActionPress   = 1
+	ActionRepeat  = 2
+
+	KeyEscape = 9
+	KeySpace  = 65
+	KeyEnter  = 36
+	KeyLeft   = 113
+	KeyUp     = 111
+	KeyDown   = 116
+	KeyRight  = 114
 )
 
 var keyboard *Keyboard
 
 type Keyboard struct {
+	engine.System
 	window     *glfw32.Window
-	keypress   []func()
+	keypress   []func(...uint)
 	keyrelease []func()
 }
 
-func (k *Keyboard) Prepare(settings *engine.Settings) {
+func (k *Keyboard) InitSystem() {
 	log.Println("Keyboard Prepare")
-	k.keypress = make([]func(), 118, 118)
+	k.keypress = make([]func(...uint), 118, 118)
 	k.keyrelease = make([]func(), 118, 118)
 }
 
-func (k *Keyboard) UnRegisterEntity(entity *engine.Entity) {
+func (k *Keyboard) On(key uint, fn func(...uint)) {
+	k.keypress[key] = fn
 }
-func (k *Keyboard) LoadComponent(component engine.ComponentRoutine) {
-	switch component := component.(type) {
+
+func (k *Keyboard) NewComponent(component engine.ComponentRoutine) {}
+
+func (k *Keyboard) ComponentTypes() []engine.ComponentRoutine {
+	return []engine.ComponentRoutine{}
+}
+
+func (k *Keyboard) NewIntegrant(integrant engine.IntegrantRoutine) {
+	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
-		k.window = component.GetWindow()
+		k.window = integrant.Window()
 		break
 	}
 
@@ -56,9 +71,6 @@ func (k *Keyboard) LoadComponent(component engine.ComponentRoutine) {
 }
 
 func (k *Keyboard) SendKeyPress(keycode int) {
-	if k.keypress[keycode] != nil {
-		k.keypress[keycode]()
-	}
 }
 
 func (k *Keyboard) SendKeyRelease(keycode int) {
@@ -67,24 +79,9 @@ func (k *Keyboard) SendKeyRelease(keycode int) {
 	}
 }
 
-func (k *Keyboard) OnKey(keycode int, fnpress func(), fnrelease func()) {
-	k.keypress[keycode] = fnpress
-	k.keyrelease[keycode] = fnrelease
-}
-
-func (k *Keyboard) OnKeyPress(keycode int, fn func()) {
-	k.keypress[keycode] = fn
-}
-
-func (k *Keyboard) OnKeyRelease(keycode int, fn func()) {
-	k.keyrelease[keycode] = fn
-}
-
 func onKey(w *glfw32.Window, key glfw32.Key, scancode int, action glfw32.Action, mods glfw32.ModifierKey) {
 	log.Printf("Key Action: %v\n", scancode)
-	if action == glfw32.Press {
-		keyboard.SendKeyPress(scancode)
-	} else if action == glfw32.Release {
-		keyboard.SendKeyRelease(scancode)
+	if keyboard.keypress[scancode] != nil {
+		keyboard.keypress[scancode](uint(action))
 	}
 }

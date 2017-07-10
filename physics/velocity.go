@@ -12,6 +12,10 @@ type Velocity struct {
 	std.Vector3
 }
 
+func NewVelocity() *Velocity {
+	return &Velocity{}
+}
+
 func (v *Velocity) Set(x float32, y float32, z float32) {
 	v.X = x
 	v.Y = y

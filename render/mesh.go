@@ -4,6 +4,7 @@ package render
 
 import (
 	"github.com/autovelop/playthos"
+	"github.com/autovelop/playthos/std"
 )
 
 type Mesh struct {
@@ -13,23 +14,27 @@ type Mesh struct {
 	indicies []uint8
 }
 
+func NewMesh() *Mesh {
+	return &Mesh{}
+}
+
 func (m *Mesh) SetVAO(vao uint32) {
 	m.vao = vao
 }
 
-func (m *Mesh) GetVAO() uint32 {
+func (m *Mesh) VAO() uint32 {
 	return m.vao
 }
 
-func (m *Mesh) Set(verts []float32, inds []uint8) {
-	m.vertices = verts
-	m.indicies = inds
+func (m *Mesh) Set(veb *std.VEB) {
+	m.vertices = veb.VB
+	m.indicies = veb.EB
 }
 
-func (m *Mesh) GetVertices() []float32 {
+func (m *Mesh) Vertices() []float32 {
 	return m.vertices
 }
 
-func (m *Mesh) GetIndicies() []uint8 {
+func (m *Mesh) Indicies() []uint8 {
 	return m.indicies
 }

@@ -7,71 +7,94 @@ import (
 	"golang.org/x/mobile/exp/audio/al"
 	"io"
 	"log"
+	"time"
 )
 
 func init() {
-	audio := &Audio{}
-	engine.NewUnloadedObserverable(audio)
+	engine.NewSystem(&Audio{})
 }
 
 type Audio struct {
-	// source al.Source
-	buffer al.Buffer
+	engine.System
+	buffers []al.Buffer
+	sources []al.Source
 }
 
-func (a *Audio) Prepare(settings *engine.Settings) {
-	log.Println("Prep")
+func (a *Audio) InitSystem() {
 	al.OpenDevice()
 	al.SetListenerPosition([3]float32{0, 0, 0})
 }
 
+func NewSound() *Sound {
+	s := &Sound{}
+	s.SetActive(true)
+	return s
+}
+
 func (a *Audio) PlaySound(sound *Sound) {
-	source := al.GenSources(1)[0]
-	if code := al.Error(); code != 0 {
-		log.Fatalf("audio: cannot generate an audio source [err=%x]", code)
-	}
+	if sound.Active() && sound.ready && !sound.playing {
+		sound.playing = true
 
-	buffer := al.GenBuffers(1)[0]
-	audioFile := sound.Get()
-	buf := make([]byte, audioFile.GetFileSize())
-	size := int64(0)
-	for {
-		n, err := audioFile.GetReader().Read(buf)
-		if n > 0 {
-			size += int64(n)
-			buffer.BufferData(al.FormatStereo16, buf[:n], int32(audioFile.GetSampleRate()))
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+		source := a.sources[sound.idx]
 
-	source.QueueBuffers(buffer)
-	al.PlaySources(source)
+		al.PlaySources(source)
 
-	// its fine if its already playing
-	if sound.IsLoop() {
-		source.Seti(paramLooping, 1)
-	} else {
-		// wait till end of sound then delete buffer
-		// al.DeleteSources(source)
-		// al.DeleteBuffers(1, buffer)
+		if sound.Loops() {
+			source.Seti(paramLooping, 1)
+		} else {
+			go func(sound *Sound) {
+				time.Sleep(sound.audioFile.Duration())
+				sound.playing = false
+			}(sound)
+		}
 	}
 }
 
-func (a *Audio) UnRegisterEntity(entity *engine.Entity) {
+func (a *Audio) NewComponent(sound engine.ComponentRoutine) {
+	switch sound := sound.(type) {
+	case *Sound:
+		source := al.GenSources(1)[0]
+		a.sources = append(a.sources, source)
+		if code := al.Error(); code != 0 {
+			log.Fatalf("audio: cannot generate an audio source [err=%x]", code)
+		}
+
+		buffer := al.GenBuffers(1)[0]
+		a.buffers = append(a.buffers, buffer)
+		audioFile := sound.Get()
+		buf := make([]byte, audioFile.FileSize())
+		size := int64(0)
+		for {
+			n, err := audioFile.GetReader().Read(buf)
+			if n > 0 {
+				size += int64(n)
+				buffer.BufferData(al.FormatStereo16, buf[:n], int32(audioFile.SampleRate()))
+			}
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		source.QueueBuffers(buffer)
+
+		sound.audioSystem = a
+		sound.idx = len(a.sources) - 1
+		sound.ready = true
+		if sound.playOnReady {
+			a.PlaySound(sound)
+		}
+		break
+	}
 }
 
-func (a *Audio) LoadComponent(component engine.ComponentRoutine) {
-	// switch component := component.(type) {
-	// case *glfw.GLFW:
-	// 	a.window = component.GetWindow()
-	// 	break
-	// }
+func (a *Audio) ComponentTypes() []engine.ComponentRoutine {
+	return []engine.ComponentRoutine{&Sound{}}
 }
+
+func (a *Audio) NewIntegrant(integrant engine.IntegrantRoutine) {}
 
 /*
 The golang experimental openal bindings for have looping as a const yet. So I just guessed it based on the below C code.
