@@ -18,9 +18,9 @@ For now the main focus is on the game engine, which is only half of what will tr
 - [x] 2D Rendering
 - [x] 2D Sprites
 - [x] Keyboard Input
-- [ ] Audio
-  - [ ] Single Sounds
-  - [ ] Music Loop
+- [x] Audio
+  - [x] Single Sounds
+  - [x] Music Loop
 - [x] Physics
 - [x] Collision Detection
   - [x] AABB
