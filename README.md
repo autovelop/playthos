@@ -3,11 +3,11 @@
 
 ## Intro
 The main goal of the Playthos game engine is to make contribution as effective as possible. The code foundation that has been layed out took into consideration three important aspects of the game engine:
-- Keep it simple for the user and idiomatic for the developer
+- Keep it simple as simple as possible for the developer
 - Make it scalable for new platforms and technologies
 - Automate things with as little human interferance as possible
 
-For now the main focus is on the game engine, which is only half of what will truely pioneer the community.
+For now the main focus is on the game engine, following that will come an editor.
 
 ## Feature List v0.5
 - [x] Linux Support
