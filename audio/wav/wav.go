@@ -16,8 +16,10 @@ type WAVAudioFile struct {
 	IsPCM bool
 }
 
-func (w *WAVAudioFile) Prepare() {
-	w.HeaderSize = 44
+func NewWAVFile() *WAVAudioFile {
+	wavFile := &WAVAudioFile{}
+	wavFile.HeaderSize = 44
+	return wavFile
 }
 
 func (w *WAVAudioFile) Load(assetFolder string, filename string) {

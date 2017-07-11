@@ -15,6 +15,17 @@ type Collision struct {
 	colliders []*Collider
 }
 
+func (c *Collision) DeleteEntity(entity *engine.Entity) {
+	for i := 0; i < len(c.colliders); i++ {
+		collider := c.colliders[i]
+		if collider.Entity().ID() == entity.ID() {
+			copy(c.colliders[i:], c.colliders[i+1:])
+			c.colliders[len(c.colliders)-1] = nil
+			c.colliders = c.colliders[:len(c.colliders)-1]
+		}
+	}
+}
+
 func (c *Collision) InitSystem() {}
 
 func (c *Collision) NewIntegrant(integrant engine.IntegrantRoutine) {}

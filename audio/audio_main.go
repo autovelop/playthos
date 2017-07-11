@@ -1,4 +1,4 @@
-// +build desktop,audio
+// +build audio
 
 package audio
 
@@ -18,6 +18,7 @@ type Audio struct {
 	engine.System
 	buffers []al.Buffer
 	sources []al.Source
+	sounds  []*Sound
 }
 
 func (a *Audio) InitSystem() {
@@ -29,6 +30,31 @@ func NewSound() *Sound {
 	s := &Sound{}
 	s.SetActive(true)
 	return s
+}
+func (a *Audio) DeleteEntity(entity *engine.Entity) {
+	for i := 0; i < len(a.sounds); i++ {
+		sound := a.sounds[i]
+		if sound.Entity().ID() == entity.ID() {
+			a.StopSound(sound)
+			a.DeleteSound(sound)
+			copy(a.sounds[i:], a.sounds[i+1:])
+			a.sounds[len(a.sounds)-1] = nil
+			a.sounds = a.sounds[:len(a.sounds)-1]
+		}
+	}
+}
+
+func (a *Audio) StopSound(sound *Sound) {
+	sound.playing = false
+	source := a.sources[sound.idx]
+	al.StopSources(source)
+}
+
+func (a *Audio) DeleteSound(sound *Sound) {
+	source := a.sources[sound.idx]
+	buffer := a.buffers[sound.idx]
+	al.DeleteSources(source)
+	al.DeleteBuffers(buffer)
 }
 
 func (a *Audio) PlaySound(sound *Sound) {
@@ -78,6 +104,7 @@ func (a *Audio) NewComponent(sound engine.ComponentRoutine) {
 			}
 		}
 
+		a.sounds = append(a.sounds, sound)
 		source.QueueBuffers(buffer)
 
 		sound.audioSystem = a

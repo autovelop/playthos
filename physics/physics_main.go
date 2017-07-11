@@ -34,6 +34,20 @@ func (p *Physics) NewComponent(component engine.ComponentRoutine) {
 		break
 	}
 }
+func (p *Physics) DeleteEntity(entity *engine.Entity) {
+	for i := 0; i < len(p.velocities); i++ {
+		velocity := p.velocities[i]
+		if velocity.Entity().ID() == entity.ID() {
+			copy(p.accelerations[i:], p.accelerations[i+1:])
+			p.accelerations[len(p.accelerations)-1] = nil
+			p.accelerations = p.accelerations[:len(p.accelerations)-1]
+
+			copy(p.velocities[i:], p.velocities[i+1:])
+			p.velocities[len(p.velocities)-1] = nil
+			p.velocities = p.velocities[:len(p.velocities)-1]
+		}
+	}
+}
 
 func (p *Physics) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&Acceleration{}, &Velocity{}}

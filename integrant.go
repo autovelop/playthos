@@ -7,9 +7,4 @@ type Integrant struct {
 type IntegrantRoutine interface {
 	initUnit(*Engine)
 	InitIntegrant()
-	// 	Engine() *Engine
-	// 	Init(*Engine)
-	// 	Active() bool
-	// 	SetActive(bool)
-	// 	Load()
 }

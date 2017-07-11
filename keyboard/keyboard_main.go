@@ -1,4 +1,4 @@
-// +build desktop,keyboard
+// +build keyboard
 
 package keyboard
 
@@ -44,6 +44,8 @@ func (k *Keyboard) InitSystem() {
 	k.keypress = make([]func(...uint), 118, 118)
 	k.keyrelease = make([]func(), 118, 118)
 }
+
+func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
 func (k *Keyboard) On(key uint, fn func(...uint)) {
 	k.keypress[key] = fn

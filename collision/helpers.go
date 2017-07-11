@@ -1,3 +1,5 @@
+// +build collision
+
 package collision
 
 import (

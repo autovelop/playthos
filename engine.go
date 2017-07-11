@@ -2,9 +2,20 @@ package engine
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
+)
+
+const (
+	PlatformLinux   = "linux"
+	PlatformWindows = "windows"
+	PlatformMacOS   = "macos"
+	PlatformAndroid = "android"
+	PlatformIOS     = "ios"
 )
 
 var packages []string
@@ -12,6 +23,8 @@ var systems []SystemRoutine
 var updaters []Updater
 var listeners []Listener
 var integrants []IntegrantRoutine
+
+var play bool = false
 
 func init() {
 	log.Println("init engine")
@@ -22,16 +35,16 @@ func RegisterPackage(tags ...string) {
 }
 
 func GetTags() string {
+	packages = removeDuplicates(packages)
 	return strings.Join(packages[:], " ")
 }
 
 type Engine struct {
-	// systems []System
-	// observerables []Observerable
-	entities []*Entity
-	updaters []Updater
-	settings *Settings
-	running  bool
+	entities       []*Entity
+	updaters       []Updater
+	settings       *Settings
+	running        bool
+	runtimePackage string
 
 	newTime     time.Time
 	currentTime time.Time
@@ -40,21 +53,19 @@ type Engine struct {
 	frames      uint64
 }
 
-// New - creates and loads engine with empty settings
-func New(s *Settings) *Engine {
+func New(p string, s *Settings) *Engine {
 	game := &Engine{}
 	game.SetSettings(s)
 	game.Init()
+	game.runtimePackage = p
 	return game
 }
 
-// Start - starts engine
 func (e *Engine) Start() {
 	e.running = true
 	e.update()
 }
 
-// Stop - stops systems and then engine
 func (e *Engine) Stop() {
 	e.running = false
 }
@@ -73,7 +84,6 @@ func (e *Engine) Init() {
 	}
 }
 
-// NewEntity - creates new entity
 var eid uint = 0
 
 func (e *Engine) NewEntity() *Entity {
@@ -90,7 +100,6 @@ func (e *Engine) NewEntity() *Entity {
 	return entity
 }
 
-// Entity - get entity by id
 func (e *Engine) Entity(id uint) *Entity {
 	// for _, entity := range e.entities {
 	// 	if entity.ID() == id {
@@ -100,29 +109,20 @@ func (e *Engine) Entity(id uint) *Entity {
 	return nil
 }
 
-// DeleteEntity - deletes entity by object/id
 func (e *Engine) DeleteEntity(entity *Entity) {
-	// for _, system := range systems {
-	// 	system.DeleteEntity(entity)
-	// }
-	// REFACTOR NOTES
-	// Systems need to have a copy of the entity components so if the
-	// entity is delete, the system must also delete the delete entity's
-	// components.
-
-	// PRE REFACTOR
-	// entity.UnRegisterAllFromSystems(e)
-
-	// SEE IF THIS IS STILL NECESARRY
-	// entity.DeleteComponents()
-
-	// THIS BELOW MIGHT STILL BE NECESARY
-	// copy(e.entities[idx:], e.entities[idx+1:])
-	// e.entities[len(e.entities)-1] = nil
-	// e.entities = e.entities[:len(e.entities)-1]
+	for _, system := range systems {
+		system.DeleteEntity(entity)
+	}
+	for i := 0; i < len(e.entities); i++ {
+		ent := e.entities[i]
+		if ent.ID() == entity.ID() {
+			copy(e.entities[i:], e.entities[i+1:])
+			e.entities[len(e.entities)-1] = nil
+			e.entities = e.entities[:len(e.entities)-1]
+		}
+	}
 }
 
-// NewSystem - creates new system
 func NewSystem(s SystemRoutine) {
 	systems = append(systems, s)
 	if updater, ok := s.(Updater); ok {
@@ -133,42 +133,86 @@ func NewSystem(s SystemRoutine) {
 	}
 }
 
-// DeleteSystem - deletes system by object
-// Systems - returns all systems
-// func (e *Engine) Systems() []SystemRoutine {
-// 	return systems
-// }
-
-// NewIntegrant - creates new engine component
 func NewIntegrant(integrant IntegrantRoutine) {
-	// component.Init()
 	integrants = append(integrants, integrant)
 }
 
-// Integrant - gets component by object
-// func (e *Engine) DeleteIntegrant(lookup IntegrantRoutine) IntegrantRoutine {
-// 	for _, component := range components {
-// 		if fmt.Sprintf("%T", lookup) == fmt.Sprintf("%T", component) {
-// 			return component
-// 		}
-// 	}
-// 	log.Fatal("Integrant requested but doens't exist. Make sure all packages are imported")
-// 	return nil
-// }
-
-// DeleteComponent - deletes component by object
-
-// SetSettings - set settings
 func (e *Engine) SetSettings(settings *Settings) {
 	e.settings = settings
 }
 
-// Settings - get settings
 func (e *Engine) Settings() *Settings {
 	return e.settings
 }
 
-// update - updates each of the updaters systems
+func Play() bool {
+	return play
+}
+
+func (e *Engine) Deploy(platforms ...string) {
+
+	for _, platform := range platforms {
+		cmdArgs := []string{
+			"install",
+			"-tags",
+			fmt.Sprintf("play %v", GetTags()),
+			"github.com/autovelop/jumper",
+		}
+		cmd := exec.Command("go", cmdArgs...)
+		cmd.Env = os.Environ()
+		switch platform {
+		case PlatformLinux:
+			cmd.Env = append(cmd.Env, "GOOS=linux")
+			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			break
+		case PlatformMacOS:
+			cmd.Env = append(cmd.Env, "GOOS=darwin")
+			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+		case PlatformWindows:
+			cmd.Env = append(cmd.Env, "GOOS=windows")
+			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			break
+		default:
+			continue
+			break
+		}
+
+		cmdOut, _ := cmd.StdoutPipe()
+		cmdErr, _ := cmd.StderrPipe()
+
+		startErr := cmd.Start()
+		if startErr != nil {
+			log.Println("here")
+			log.Println(startErr)
+			// cmd.Wait()
+			return
+		}
+
+		// read stdout and stderr
+		stdOutput, _ := ioutil.ReadAll(cmdOut)
+		errOutput, _ := ioutil.ReadAll(cmdErr)
+
+		fmt.Printf("STDOUT: %s\n", stdOutput)
+		fmt.Printf("ERROUT: %s\n", errOutput)
+
+		// cmd.Wait()
+		// log.Fatal(err)
+	}
+}
+
+func removeDuplicates(elements []string) []string {
+	encountered := map[string]bool{}
+	result := []string{}
+	for v := range elements {
+		if encountered[elements[v]] == true {
+		} else {
+			encountered[elements[v]] = true
+			result = append(result, elements[v])
+		}
+	}
+	return result
+}
+
 func (e *Engine) update() {
 	log.Println("Engine Update")
 	e.newTime = time.Now()

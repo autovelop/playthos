@@ -1,4 +1,4 @@
-// +build desktop,linux,opengl,render,glfw
+// +build glfw
 
 package glfw
 

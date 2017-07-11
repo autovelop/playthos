@@ -27,6 +27,10 @@ func (s *Sound) Play() {
 	s.audioSystem.PlaySound(s)
 }
 
+func (s *Sound) Stop() {
+	s.audioSystem.StopSound(s)
+}
+
 func (s *Sound) Loops() bool {
 	return s.loop
 }
