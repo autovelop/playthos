@@ -1,14 +1,12 @@
 // +build keyboard
-// +build glfw
-// +build linux windows darwin
+// +build !darwin
+// +build !linux
+// +build !windows
 
 package keyboard
 
 import (
 	"github.com/autovelop/playthos"
-	glfw "github.com/autovelop/playthos/opengl-glfw"
-	glfw32 "github.com/go-gl/glfw/v3.2/glfw"
-	"log"
 )
 
 func init() {
@@ -32,11 +30,8 @@ const (
 	KeyRight  = 114
 )
 
-var keyboard *Keyboard
-
 type Keyboard struct {
 	engine.System
-	window   *glfw32.Window
 	keypress []func(...uint)
 }
 
@@ -46,11 +41,7 @@ func (k *Keyboard) InitSystem() {
 
 func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
-func (k *Keyboard) On(key uint, fn func(...uint)) {
-	if k.Active() {
-		k.keypress[key] = fn
-	}
-}
+func (k *Keyboard) On(key uint, fn func(...uint)) {}
 
 func (k *Keyboard) NewComponent(component engine.ComponentRoutine) {}
 
@@ -58,27 +49,7 @@ func (k *Keyboard) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{}
 }
 
-func (k *Keyboard) NewIntegrant(integrant engine.IntegrantRoutine) {
-	switch integrant := integrant.(type) {
-	case *glfw.GLFW:
-		k.window = integrant.Window()
-		break
-	}
-
-	// CANT GET THIS TO WORK
-	// k.window.SetUserPointer(unsafe.Pointer(k))
-	// DOING GLOBAL SADNESS INSTEAD
-	keyboard = k
-
-	k.window.SetKeyCallback(onKey)
-}
+func (k *Keyboard) NewIntegrant(integrant engine.IntegrantRoutine) {}
 
 func (k *Keyboard) SendKeyPress(keycode int) {
-}
-
-func onKey(w *glfw32.Window, key glfw32.Key, scancode int, action glfw32.Action, mods glfw32.ModifierKey) {
-	log.Printf("Key Action: %v\n", scancode)
-	if keyboard.keypress[scancode] != nil {
-		keyboard.keypress[scancode](uint(action))
-	}
 }

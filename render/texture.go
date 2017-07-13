@@ -3,13 +3,15 @@
 package render
 
 import (
+	"github.com/autovelop/playthos"
 	"go/build"
 	"image"
 	"image/draw"
 	// "image/color"
+	"bytes"
 	_ "image/png"
 	"log"
-	"os"
+	// "os"
 )
 
 type Texture struct {
@@ -41,24 +43,12 @@ func (t *Texture) RGBA() []byte {
 func (t *Texture) NewTexture(dir string, path string) bool {
 	t.filePath = path
 
-	dir, err := importPathToDir(dir)
+	buf, err := engine.LoadAsset(dir, path)
 	if err != nil {
-		log.Println("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
-		return false
-	}
-	err = os.Chdir(dir)
-	if err != nil {
-		log.Println("os.Chdir:", err)
-		return false
+		log.Fatal(err)
 	}
 
-	imgFile, err := os.Open(t.filePath)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-
-	img, _, err := image.Decode(imgFile)
+	img, _, err := image.Decode(bytes.NewReader(buf))
 	if err != nil {
 		log.Println(err)
 		return false

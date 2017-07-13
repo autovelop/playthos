@@ -1,4 +1,8 @@
-// +build desktop,opengl
+// +build opengl
+// +build glfw
+// +build linux
+// +build !windows
+// +build !darwin
 
 package opengl
 
@@ -102,12 +106,10 @@ func (o *OpenGL) ComponentTypes() []engine.ComponentRoutine {
 func (o *OpenGL) Update() {
 	// log.Println(len(o.transforms), len(o.meshes), len(o.materials))
 
-	if !o.window.ShouldClose() {
-
+	if o.Active() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.UseProgram(o.shaderProgram)
-		// log.Fatal(o.window)
 
 		if len(o.cameras) <= 0 {
 			log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow no camera (for simulations)")
@@ -137,7 +139,6 @@ func (o *OpenGL) Update() {
 			gl.BindVertexArray(mesh.VAO())
 
 			transform := o.transforms[idx]
-			// log.Println(transform.GetPosition())
 			// this is a shortcut. should rather remove component from system registry
 			if transform == nil {
 				continue
@@ -150,12 +151,16 @@ func (o *OpenGL) Update() {
 			rotation := transform.Rotation()
 			scale := transform.Scale()
 
+			// model = model.Mul4(mgl32.Scale3D(1, 1, 1))
 			model := mgl32.Ident4()
 			model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
-			model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
+			model = model.Mul4(mgl32.Translate3D(scale.X/2, scale.Y/2, scale.Z/2))
 			model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X)).Mat4())
 			model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y)).Mat4())
 			model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z)).Mat4())
+			model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
+			model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
+			// model = model.Mul4(mgl32.Translate3D(-(position.X / 2), -(position.Y / 2), (position.Z / 2)))
 			// 				}
 
 			// 				texture := renderer.GetProperty("Texture")
@@ -209,9 +214,10 @@ func (o *OpenGL) Update() {
 
 		o.window.SwapBuffers()
 		glfw32.PollEvents()
-
 	} else {
-		glfw32.Terminate()
+		if o.window.ShouldClose() {
+			glfw32.Terminate()
+		}
 	}
 }
 

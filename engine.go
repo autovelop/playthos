@@ -2,10 +2,12 @@ package engine
 
 import (
 	"fmt"
+	"github.com/jteeuwen/go-bindata"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -40,11 +42,13 @@ func GetTags() string {
 }
 
 type Engine struct {
-	entities       []*Entity
-	updaters       []Updater
-	settings       *Settings
-	running        bool
-	runtimePackage string
+	gameName    string
+	gamePackage string
+
+	entities []*Entity
+	updaters []Updater
+	settings *Settings
+	running  bool
 
 	newTime     time.Time
 	currentTime time.Time
@@ -53,11 +57,12 @@ type Engine struct {
 	frames      uint64
 }
 
-func New(p string, s *Settings) *Engine {
+func New(n string, p string, s *Settings) *Engine {
 	game := &Engine{}
 	game.SetSettings(s)
 	game.Init()
-	game.runtimePackage = p
+	game.gameName = n
+	game.gamePackage = p
 	return game
 }
 
@@ -67,20 +72,29 @@ func (e *Engine) Start() {
 }
 
 func (e *Engine) Stop() {
+	for _, system := range systems {
+		system.SetActive(false)
+	}
+	for _, integrant := range integrants {
+		integrant.DeleteIntegrant()
+	}
 	e.running = false
 }
 
 func (e *Engine) Init() {
-	for _, integrant := range integrants {
-		integrant.initUnit(e)
-		integrant.InitIntegrant()
-	}
-	for _, system := range systems {
+	if play {
 		for _, integrant := range integrants {
-			system.NewIntegrant(integrant)
+			integrant.initUnit(e)
+			integrant.InitIntegrant()
 		}
-		system.initUnit(e)
-		system.InitSystem()
+		for _, system := range systems {
+			for _, integrant := range integrants {
+				system.NewIntegrant(integrant)
+			}
+			system.initUnit(e)
+			system.InitSystem()
+			system.SetActive(true)
+		}
 	}
 }
 
@@ -150,34 +164,73 @@ func Play() bool {
 }
 
 func (e *Engine) Deploy(platforms ...string) {
+	fmt.Printf("Deploying...\n")
+
+	c := bindata.NewConfig()
+	c.Input = []bindata.InputConfig{bindata.InputConfig{
+		Path:      filepath.Clean("assets"),
+		Recursive: true,
+	}}
+	c.Package = "engine"
+	c.Tags = "deploy play"
+	c.Output = fmt.Sprintf("%v/assets.go", "github.com/autovelop/playthos")
+	// c.Output = fmt.Sprintf("%v/assets.go", e.gamePackage)
+	bindata.Translate(c)
 
 	for _, platform := range platforms {
-		cmdArgs := []string{
-			"install",
-			"-tags",
-			fmt.Sprintf("play %v", GetTags()),
-			"github.com/autovelop/jumper",
-		}
-		cmd := exec.Command("go", cmdArgs...)
-		cmd.Env = os.Environ()
+		simpleName := "linux"
+		cgo := false
+		var cc string
+		arch386 := false
 		switch platform {
 		case PlatformLinux:
-			cmd.Env = append(cmd.Env, "GOOS=linux")
-			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			fmt.Printf("- Linux\n- Requirements: libgl1-mesa-dev, xorg-dev\n\n")
 			break
 		case PlatformMacOS:
-			cmd.Env = append(cmd.Env, "GOOS=darwin")
-			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			fmt.Printf("- MacOS\n- Requirements: xcode 7.3, cmake, libxml2, fuse, osxcross\n- Full details: https://github.com/tpoechtrager/osxcross#packaging-the-sdk\n\n")
+			simpleName = "darwin"
+			cgo = true
+			// cc = "CC=i386-apple-darwin15-g++"
+			cc = "CC=o32-gcc"
 		case PlatformWindows:
-			cmd.Env = append(cmd.Env, "GOOS=windows")
-			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			fmt.Printf("- Windows (32-bit only)\n- Requirements: mingw-w64-gcc\n\n")
+			simpleName = "windows"
+			cgo = true
+			arch386 = true
+			cc = "CC=i686-w64-mingw32-gcc -fno-stack-protector -D_FORTIFY_SOURCE=0 -lssp"
 			break
 		default:
 			continue
 			break
 		}
+		// log.Fatalf("%v/bin/%v_%v", e.gamePackage, strings.ToLower(e.gameName), simpleName)
+		cmdArgs := []string{
+			"build",
+			"-v",
+			"-o",
+			fmt.Sprintf("%v/bin/%v_%v", e.gamePackage, strings.ToLower(e.gameName), simpleName),
+			"-tags",
+			fmt.Sprintf("deploy play %v %v", simpleName, GetTags()),
+			e.gamePackage,
+		}
+		cmd := exec.Command("go", cmdArgs...)
+		cmd.Env = os.Environ()
 
-		cmdOut, _ := cmd.StdoutPipe()
+		if cgo {
+			cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
+		}
+
+		if arch386 {
+			cmd.Env = append(cmd.Env, "GOARCH=386")
+		} else {
+			cmd.Env = append(cmd.Env, "GOARCH=amd64")
+		}
+		if len(cc) > 0 {
+			cmd.Env = append(cmd.Env, cc)
+		}
+		cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
+
+		// cmdOut, _ := cmd.StdoutPipe()
 		cmdErr, _ := cmd.StderrPipe()
 
 		startErr := cmd.Start()
@@ -189,11 +242,11 @@ func (e *Engine) Deploy(platforms ...string) {
 		}
 
 		// read stdout and stderr
-		stdOutput, _ := ioutil.ReadAll(cmdOut)
+		// stdOutput, _ := ioutil.ReadAll(cmdOut)
 		errOutput, _ := ioutil.ReadAll(cmdErr)
 
-		fmt.Printf("STDOUT: %s\n", stdOutput)
-		fmt.Printf("ERROUT: %s\n", errOutput)
+		// fmt.Printf("STDOUT: %s\n", stdOutput)
+		fmt.Printf("%s", errOutput)
 
 		// cmd.Wait()
 		// log.Fatal(err)
@@ -222,9 +275,10 @@ func (e *Engine) update() {
 
 	for e.accumulator >= e.deltaTime {
 		for _, updater := range updaters {
-			if e.running {
-				updater.Update()
-			}
+			updater.Update()
+		}
+		if !e.running {
+			os.Exit(0)
 		}
 	}
 	e.accumulator -= e.deltaTime

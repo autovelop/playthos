@@ -21,8 +21,10 @@ func (t *Transform) Set(pos *Vector3, rot *Vector3, scl *Vector3) {
 	t.scale = scl
 }
 
-func (t *Transform) SetPosition(position *Vector3) {
-	t.position = position
+func (t *Transform) SetPosition(x float32, y float32, z float32) {
+	t.position.X = x
+	t.position.Y = y
+	t.position.Z = z
 }
 
 func (t *Transform) SetRotation(rotation *Vector3) {

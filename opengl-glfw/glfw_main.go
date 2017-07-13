@@ -1,4 +1,5 @@
 // +build glfw
+// +build linux windows darwin
 
 package glfw
 
@@ -17,7 +18,8 @@ func init() {
 
 type GLFW struct {
 	engine.Integrant
-	window *glfw.Window
+	window  *glfw.Window
+	monitor *glfw.Monitor
 }
 
 func (g *GLFW) InitIntegrant() {
@@ -31,17 +33,33 @@ func (g *GLFW) InitIntegrant() {
 	}
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, 1)
 
 	var err error
 	if settings.Fullscreen {
-		g.window, err = glfw.CreateWindow(int(settings.ResolutionX), int(settings.ResolutionY), "Cube", glfw.GetPrimaryMonitor(), nil)
+		g.monitor = glfw.GetPrimaryMonitor()
+		if int(settings.ResolutionX) <= 0 {
+			vidMode := g.monitor.GetVideoMode()
+			settings.ResolutionX = float32(vidMode.Width)
+			settings.ResolutionY = float32(vidMode.Height)
+		}
 	} else {
-		g.window, err = glfw.CreateWindow(int(settings.ResolutionX), int(settings.ResolutionY), "Cube", nil, nil)
+		if int(settings.ResolutionX) <= 0 {
+			settings.ResolutionX = float32(800)
+			settings.ResolutionY = float32(600)
+		}
 	}
+	g.window, err = glfw.CreateWindow(int(settings.ResolutionX), int(settings.ResolutionY), "Cube", nil, nil)
 	if err != nil {
 		panic(err)
 	}
 	g.window.MakeContextCurrent()
+}
+
+func (g *GLFW) DeleteIntegrant() {
+	settings := g.Engine().Settings()
+	g.window.SetMonitor(nil, 0, 0, int(settings.ResolutionX), int(settings.ResolutionY), 0)
+	g.window.SetShouldClose(true)
 }
 
 func (g *GLFW) Window() *glfw.Window {

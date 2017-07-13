@@ -1,4 +1,7 @@
 // +build audio
+// +build linux
+// +build !windows
+// +build !darwin
 
 package audio
 
@@ -67,6 +70,7 @@ func (a *Audio) PlaySound(sound *Sound) {
 
 		if sound.Loops() {
 			source.Seti(paramLooping, 1)
+			// log.Fatal(sound.audioFile.Duration())
 		} else {
 			go func(sound *Sound) {
 				time.Sleep(sound.audioFile.Duration())

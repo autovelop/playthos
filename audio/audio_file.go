@@ -11,7 +11,7 @@ type AudioFile struct {
 	channels      byte
 	bitDepth      uint32
 	sampleRate    uint32
-	HeaderSize    int
+	headerSize    int
 	fileSize      uint32
 	fileType      string
 	audioFileType string
@@ -29,6 +29,14 @@ func (a *AudioFile) Set(fileType string, fileSize uint32, audioFileType string, 
 	a.bitDepth = bitDepth
 
 	a.duration, _ = time.ParseDuration(fmt.Sprintf("%vs", float32(a.fileSize)/float32(uint32(sampleRate)*uint32(channels)*a.bitDepth/8)))
+}
+
+func (a *AudioFile) SetHeaderSize(size int) {
+	a.headerSize = size
+}
+
+func (a *AudioFile) HeaderSize() int {
+	return a.headerSize
 }
 
 func (a *AudioFile) SampleRate() uint32 {

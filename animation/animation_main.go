@@ -4,6 +4,8 @@ package animation
 
 import (
 	"github.com/autovelop/playthos"
+	"github.com/autovelop/playthos/std"
+	// "log"
 )
 
 func init() {
@@ -29,19 +31,44 @@ func (a *Animation) DeleteEntity(entity *engine.Entity) {
 }
 
 func (a *Animation) Update() {
+	for _, clip := range a.clips {
+		if clip.progress < float64(clip.speed) {
+			clip.progress += 0.01
+			if clip.reversing {
+				clip.From.X -= clip.step.X
+				clip.From.Y -= clip.step.Y
+				clip.From.Z -= clip.step.Z
+			} else {
+				clip.From.X += clip.step.X
+				clip.From.Y += clip.step.Y
+				clip.From.Z += clip.step.Z
+			}
+		} else if clip.loop {
+			if clip.reverse {
+				clip.reversing = !clip.reversing
+			} else {
+				*clip.From = clip.Start
+			}
+			clip.progress = 0.0
+		}
+	}
 }
 
-func NewClip(frames uint, speed uint) *AnimationClip {
+func NewClip(frames uint, speed float64) *AnimationClip {
 	a := &AnimationClip{}
 	a.SetActive(true)
 	a.SetSpeed(speed)
-	a.CreateFrames(frames)
+	// a.CreateFrames(frames)
 	return a
 }
 
 func (a *Animation) NewComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *AnimationClip:
+		// component.Value = &component.From
+
+		var diff std.Vector3 = component.From.Diff(component.To)
+		component.step = diff.Div(float32(component.speed))
 		a.clips = append(a.clips, component)
 		break
 	}

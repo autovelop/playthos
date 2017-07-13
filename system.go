@@ -11,6 +11,8 @@ type SystemRoutine interface {
 	DeleteEntity(*Entity)
 	NewIntegrant(IntegrantRoutine)
 	ComponentTypes() []ComponentRoutine
+	SetActive(bool)
+	// Stop()
 }
 
 type Updater interface {

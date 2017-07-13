@@ -7,4 +7,5 @@ type Integrant struct {
 type IntegrantRoutine interface {
 	initUnit(*Engine)
 	InitIntegrant()
+	DeleteIntegrant()
 }

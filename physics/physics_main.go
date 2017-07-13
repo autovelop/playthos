@@ -59,14 +59,24 @@ func (p *Physics) Update() {
 		log.Fatalf("velocities: %v | accelerations: %v", len(p.velocities), len(p.accelerations))
 	}
 	for idx, velocity := range p.velocities {
-		entity := velocity.Entity()
-		if entity != nil {
-			acceleration := p.accelerations[idx]
-			new_velocity := std.Vector3{acceleration.X + velocity.X, acceleration.Y + velocity.Y, acceleration.Z + velocity.Z}
-			velocity.Set(new_velocity.X, new_velocity.Y, new_velocity.Z)
-			transform := entity.Component(&std.Transform{}).(*std.Transform)
-			position := transform.Position()
-			transform.SetPosition(&std.Vector3{position.X + new_velocity.X, position.Y + new_velocity.Y, position.Z + new_velocity.Z})
+		if velocity.Active() {
+			entity := velocity.Entity()
+			if entity != nil {
+				acceleration := p.accelerations[idx]
+				if acceleration.Active() {
+					new_velocity := std.Vector3{acceleration.X + velocity.X, acceleration.Y + velocity.Y, acceleration.Z + velocity.Z}
+					velocity.Set(new_velocity.X, new_velocity.Y, new_velocity.Z)
+					transform := entity.Component(&std.Transform{}).(*std.Transform)
+					position := transform.Position()
+					transform.SetPosition(position.X+new_velocity.X, position.Y+new_velocity.Y, position.Z+new_velocity.Z)
+				} else {
+					// new_velocity := std.Vector3{acceleration.X + velocity.X, acceleration.Y + velocity.Y, acceleration.Z + velocity.Z}
+					// velocity.Set(new_velocity.X, new_velocity.Y, new_velocity.Z)
+					transform := entity.Component(&std.Transform{}).(*std.Transform)
+					position := transform.Position()
+					transform.SetPosition(position.X+velocity.X, position.Y+velocity.Y, position.Z+velocity.Z)
+				}
+			}
 		}
 	}
 }
