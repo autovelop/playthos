@@ -1,8 +1,6 @@
 // +build opengl
 // +build glfw
-// +build linux
-// +build !windows
-// +build !darwin
+// +build linux windows darwin
 
 package opengl
 
@@ -12,7 +10,10 @@ import (
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	// gl33 "github.com/go-gl/gl/v3.3-core/gl"
+	// gl41 "github.com/go-gl/gl/v4.1-core/gl"
+	// "github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/gl/all-core/gl"
 	glfw32 "github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 
@@ -38,6 +39,8 @@ type OpenGL struct {
 	meshes        []*render.Mesh
 	materials     []*render.Material
 	settings      *engine.Settings
+	majorVersion  int
+	minorVersion  int
 }
 
 func (o *OpenGL) InitSystem() {
@@ -56,7 +59,25 @@ func (o *OpenGL) InitSystem() {
 	gl.GenVertexArrays(1, &vertexArrayID)
 	gl.Viewport(0, 0, int32(o.settings.ResolutionX), int32(o.settings.ResolutionY))
 
-	o.shaderProgram = o.NewShader(render.VSHADER, render.FSHADER)
+	switch o.majorVersion {
+	case 4:
+		switch o.minorVersion {
+		case 5:
+			o.shaderProgram = o.NewShader(render.VSHADER, render.FSHADER)
+			break
+		case 1:
+			o.shaderProgram = o.NewShader(render.VSHADER41, render.FSHADER41)
+			break
+		}
+		break
+	case 3:
+		o.shaderProgram = o.NewShader(render.VSHADER33, render.FSHADER33)
+		break
+	default:
+		log.Fatalf("Playthos doesn't support OpenGL version older than v3.3")
+		break
+
+	}
 
 	gl.Enable(gl.DEPTH_TEST)
 	// gl.DepthFunc(gl.LEQUAL)
@@ -73,6 +94,7 @@ func (o *OpenGL) NewIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
 		o.window = integrant.Window()
+		o.majorVersion, o.minorVersion = integrant.OpenGLVersion()
 		log.Println("NewIntegrant(*glfw.GLFW)")
 		break
 	}

@@ -1,7 +1,6 @@
 // +build audio
-// +build linux
+// +build linux darwin
 // +build !windows
-// +build !darwin
 
 package audio
 

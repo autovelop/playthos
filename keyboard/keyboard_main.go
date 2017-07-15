@@ -47,7 +47,9 @@ func (k *Keyboard) InitSystem() {
 func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
 func (k *Keyboard) On(key uint, fn func(...uint)) {
+	// if k.Active() && k.keypress[key] != nil {
 	if k.Active() {
+		// log.Fatal("here")
 		k.keypress[key] = fn
 	}
 }
@@ -71,9 +73,6 @@ func (k *Keyboard) NewIntegrant(integrant engine.IntegrantRoutine) {
 	keyboard = k
 
 	k.window.SetKeyCallback(onKey)
-}
-
-func (k *Keyboard) SendKeyPress(keycode int) {
 }
 
 func onKey(w *glfw32.Window, key glfw32.Key, scancode int, action glfw32.Action, mods glfw32.ModifierKey) {

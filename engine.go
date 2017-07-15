@@ -179,6 +179,7 @@ func (e *Engine) Deploy(platforms ...string) {
 
 	for _, platform := range platforms {
 		simpleName := "linux"
+		fileExtension := ""
 		cgo := false
 		var cc string
 		arch386 := false
@@ -191,12 +192,13 @@ func (e *Engine) Deploy(platforms ...string) {
 			simpleName = "darwin"
 			cgo = true
 			// cc = "CC=i386-apple-darwin15-g++"
-			cc = "CC=o32-gcc"
+			cc = "CC=o32-clang"
 		case PlatformWindows:
 			fmt.Printf("- Windows (32-bit only)\n- Requirements: mingw-w64-gcc\n\n")
 			simpleName = "windows"
 			cgo = true
 			arch386 = true
+			fileExtension = ".exe"
 			cc = "CC=i686-w64-mingw32-gcc -fno-stack-protector -D_FORTIFY_SOURCE=0 -lssp"
 			break
 		default:
@@ -208,7 +210,7 @@ func (e *Engine) Deploy(platforms ...string) {
 			"build",
 			"-v",
 			"-o",
-			fmt.Sprintf("%v/bin/%v_%v", e.gamePackage, strings.ToLower(e.gameName), simpleName),
+			fmt.Sprintf("%v/bin/%v_%v%v", e.gamePackage, strings.ToLower(e.gameName), simpleName, fileExtension),
 			"-tags",
 			fmt.Sprintf("deploy play %v %v", simpleName, GetTags()),
 			e.gamePackage,
