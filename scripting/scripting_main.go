@@ -18,9 +18,9 @@ type Scripting struct {
 
 func (s *Scripting) InitSystem() {}
 
-func (s *Scripting) NewIntegrant(integrant engine.IntegrantRoutine) {}
+func (s *Scripting) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
-func (s *Scripting) NewComponent(component engine.ComponentRoutine) {
+func (s *Scripting) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *Script:
 		s.scripts = append(s.scripts, component)

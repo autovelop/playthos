@@ -89,7 +89,7 @@ func (e *Engine) Init() {
 		}
 		for _, system := range systems {
 			for _, integrant := range integrants {
-				system.NewIntegrant(integrant)
+				system.AddIntegrant(integrant)
 			}
 			system.initUnit(e)
 			system.InitSystem()

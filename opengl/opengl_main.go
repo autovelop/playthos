@@ -87,35 +87,34 @@ func (o *OpenGL) InitSystem() {
 	gl.BlendEquation(gl.FUNC_ADD)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	gl.ClearColor(0.3, 0.3, 0.3, 1)
 }
 
-func (o *OpenGL) NewIntegrant(integrant engine.IntegrantRoutine) {
+func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
 		o.window = integrant.Window()
 		o.majorVersion, o.minorVersion = integrant.OpenGLVersion()
-		log.Println("NewIntegrant(*glfw.GLFW)")
+		log.Println("AddIntegrant(*glfw.GLFW)")
 		break
 	}
 }
 
-func (o *OpenGL) NewComponent(component engine.ComponentRoutine) {
+func (o *OpenGL) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *std.Transform:
-		log.Println("NewComponent(*std.Transform)")
+		log.Println("AddComponent(*std.Transform)")
 		o.RegisterTransform(component)
 		break
 	case *render.Mesh:
-		log.Println("NewComponent(*render.Mesh)")
+		log.Println("Addomponent(*render.Mesh)")
 		o.RegisterMesh(component)
 		break
 	case *render.Material:
-		log.Println("NewComponent(*render.Material)")
+		log.Println("AddComponent(*render.Material)")
 		o.RegisterMaterial(component)
 		break
 	case *render.Camera:
-		log.Println("NewComponent(*render.Camera)")
+		log.Println("AddComponent(*render.Camera)")
 		o.RegisterCamera(component)
 		break
 	}
@@ -134,30 +133,51 @@ func (o *OpenGL) Update() {
 		gl.UseProgram(o.shaderProgram)
 
 		if len(o.cameras) <= 0 {
-			log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow no camera (for simulations)")
+			log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow zero (for simulations) or more than one camera.")
 		}
 		camera := o.cameras[0]
 
-		ratio := float32(o.settings.ResolutionX) / float32(o.settings.ResolutionY)
-
-		proj := mgl32.Ortho(0, float32(o.settings.ResolutionX)/ratio, 0, float32(o.settings.ResolutionY)/ratio, -1000.0, 1000.0)
+		proj := mgl32.Ortho(0, float32(o.settings.ResolutionX)/(*camera.Scale()), 0, float32(o.settings.ResolutionY)/(*camera.Scale()), -1000.0, 1000.0)
 		proj_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("projection\x00"))
 
-		view := mgl32.LookAtV(mgl32.Vec3{camera.Eye().X - (o.settings.ResolutionY / 2), camera.Eye().Y - (o.settings.ResolutionX / 4), camera.Eye().Z}, mgl32.Vec3{camera.Center().X - (o.settings.ResolutionY / 2), camera.Center().Y - (o.settings.ResolutionX / 4), camera.Center().Z}, mgl32.Vec3{camera.Up().X, camera.Up().Y, camera.Up().Z})
+		view := mgl32.LookAtV(
+			mgl32.Vec3{
+				camera.Eye().X - ((o.settings.ResolutionX / 2) / (*camera.Scale())),
+				camera.Eye().Y - ((o.settings.ResolutionY / 2) / (*camera.Scale())),
+				camera.Eye().Z,
+			},
+			mgl32.Vec3{
+				camera.Center().X - ((o.settings.ResolutionX / 2) / (*camera.Scale())),
+				camera.Center().Y - ((o.settings.ResolutionY / 2) / (*camera.Scale())),
+				camera.Center().Z,
+			},
+			mgl32.Vec3{
+				camera.Up().X,
+				camera.Up().Y,
+				camera.Up().Z,
+			})
+		// float32(math.Cos(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
+		// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().Y)))),
+		// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
+
+		// front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		// front.y = sin(glm::radians(pitch));
+		// front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
 		view_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("view\x00"))
 
 		model_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("model\x00"))
 
-		if len(o.meshes) != len(o.transforms) || len(o.meshes) != len(o.materials) {
-			log.Println("Skew components")
-			log.Fatalf("meshes: %v | transforms: %v | materials: %v", len(o.meshes), len(o.transforms), len(o.materials))
-		}
+		// if len(o.meshes) != len(o.transforms) || len(o.meshes) != len(o.materials) {
+		// 	log.Println("Skew components")
+		// 	log.Fatalf("meshes: %v | transforms: %v | materials: %v", len(o.meshes), len(o.transforms), len(o.materials))
+		// }
 
 		for idx, mesh := range o.meshes {
 			// mesh := o.meshes[idx]
-			// if mesh == nil {
-			// 	continue
-			// }
+			if mesh == nil {
+				continue
+			}
 			gl.BindVertexArray(mesh.VAO())
 
 			transform := o.transforms[idx]
@@ -172,14 +192,15 @@ func (o *OpenGL) Update() {
 			position := transform.Position()
 			rotation := transform.Rotation()
 			scale := transform.Scale()
+			// log.Println(rotation)
 
 			// model = model.Mul4(mgl32.Scale3D(1, 1, 1))
 			model := mgl32.Ident4()
 			model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
 			model = model.Mul4(mgl32.Translate3D(scale.X/2, scale.Y/2, scale.Z/2))
-			model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X)).Mat4())
-			model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y)).Mat4())
-			model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z)).Mat4())
+			model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
+			model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
+			model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
 			model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
 			model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
 			// model = model.Mul4(mgl32.Translate3D(-(position.X / 2), -(position.Y / 2), (position.Z / 2)))
@@ -205,9 +226,26 @@ func (o *OpenGL) Update() {
 			}
 
 			texture := material.Texture()
+			sprite := material.Sprite()
 			if texture != nil {
+				offset := std.Vector2{}
+				gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
 				gl.ActiveTexture(gl.TEXTURE0)
 				gl.BindTexture(gl.TEXTURE_2D, texture.ID())
+				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
+				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
+			} else if sprite != nil {
+				// log.Println(float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))))
+				offset := std.Vector2{
+					sprite.Offset().X / float32(sprite.Width()),
+					sprite.Offset().Y / float32(sprite.Height()),
+					// float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))),
+					// float32(math.Floor(float64(sprite.Offset().Y / float32(sprite.Height())))),
+				}
+				// log.Printf("%v / %v = %v", sprite.Offset(), spirte.Width(), offset.X)
+				gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
+				gl.ActiveTexture(gl.TEXTURE0)
+				gl.BindTexture(gl.TEXTURE_2D, sprite.ID())
 				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
 				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
 			} else {
@@ -324,7 +362,11 @@ func (o *OpenGL) RegisterTransform(transform *std.Transform) {
 }
 
 func (o *OpenGL) RegisterCamera(camera *render.Camera) {
+	clearColor := camera.ClearColor()
+	gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
 	o.cameras = append(o.cameras, camera)
+	o.materials = append(o.materials, nil)
+	o.meshes = append(o.meshes, nil)
 }
 
 func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
@@ -348,6 +390,7 @@ func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
 
 func (o *OpenGL) RegisterMaterial(material *render.Material) {
 	texture := material.Texture()
+	sprite := material.Sprite()
 	if texture != nil {
 		// Load texture
 		var tid uint32
@@ -364,13 +407,36 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 			gl.TEXTURE_2D,
 			0,
 			gl.RGBA,
-			texture.Width,
-			texture.Height,
+			texture.Width(),
+			texture.Height(),
 			0,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
 			gl.Ptr(texture.RGBA()))
 		texture.SetID(tid)
+	} else if sprite != nil {
+		var tid uint32
+		gl.GenTextures(1, &tid)
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, tid)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.TexImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGBA,
+			sprite.Width(),
+			sprite.Height(),
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			gl.Ptr(sprite.RGBA()))
+		sprite.SetID(tid)
+		// log.Fatal("here")
 	}
 
 	o.materials = append(o.materials, material)

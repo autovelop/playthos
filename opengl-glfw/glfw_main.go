@@ -16,10 +16,14 @@ func init() {
 	log.Println("added glfw integrant to engine")
 }
 
+// Don't like this at all
+var thisglfw *GLFW
+
 type GLFW struct {
 	engine.Integrant
 	window       *glfw.Window
 	monitor      *glfw.Monitor
+	settings     *engine.Settings
 	majorVersion int
 	minorVersion int
 }
@@ -36,7 +40,7 @@ func (g *GLFW) InitIntegrant() {
 		g.majorVersion = 4
 		g.minorVersion = 5
 	}
-	settings := g.Engine().Settings()
+	g.settings = g.Engine().Settings()
 
 	log.Printf("GLFW Prepare (%v.%v)\n", g.majorVersion, g.minorVersion)
 	// Intialize GLFW
@@ -59,23 +63,23 @@ func (g *GLFW) InitIntegrant() {
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 
 	var err error
-	if settings.Fullscreen {
+	if g.settings.Fullscreen {
 		glfw.WindowHint(glfw.Maximized, glfw.True)
 		glfw.WindowHint(glfw.Floating, glfw.True)
 		glfw.WindowHint(glfw.AutoIconify, glfw.True)
 		g.monitor = glfw.GetPrimaryMonitor()
-		if int(settings.ResolutionX) <= 0 {
+		if int(g.settings.ResolutionX) <= 0 {
 			vidMode := g.monitor.GetVideoMode()
-			settings.ResolutionX = float32(vidMode.Width)
-			settings.ResolutionY = float32(vidMode.Height)
+			g.settings.ResolutionX = float32(vidMode.Width)
+			g.settings.ResolutionY = float32(vidMode.Height)
 		}
 	} else {
-		if int(settings.ResolutionX) <= 0 {
-			settings.ResolutionX = float32(800)
-			settings.ResolutionY = float32(600)
+		if int(g.settings.ResolutionX) <= 0 {
+			g.settings.ResolutionX = float32(800)
+			g.settings.ResolutionY = float32(600)
 		}
 	}
-	g.window, err = glfw.CreateWindow(int(settings.ResolutionX), int(settings.ResolutionY), "Cube", nil, nil)
+	g.window, err = glfw.CreateWindow(int(g.settings.ResolutionX), int(g.settings.ResolutionY), "Cube", g.monitor, nil)
 	if err != nil {
 		switch g.majorVersion {
 		case 4:
@@ -94,17 +98,23 @@ func (g *GLFW) InitIntegrant() {
 			// panic(err)
 			break
 		}
-		// g.window.SetInputMode(glfw.CursorMode, glfw.CursorHidden)
 		g.InitIntegrant()
 	}
+
+	if g.settings.Cursor {
+		g.window.SetCursorPosCallback(onCursorMove)
+	} else {
+		g.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+	}
+
 	g.window.MakeContextCurrent()
+
+	thisglfw = g
 }
 
 func (g *GLFW) DeleteIntegrant() {
-
-	settings := g.Engine().Settings()
-	if settings.Fullscreen {
-		g.window.SetMonitor(nil, 0, 0, int(settings.ResolutionX), int(settings.ResolutionY), 0)
+	if g.settings.Fullscreen {
+		g.window.SetMonitor(nil, 0, 0, int(g.settings.ResolutionX), int(g.settings.ResolutionY), 0)
 	}
 	g.window.SetShouldClose(true)
 	// glfw.Terminate()
@@ -112,4 +122,11 @@ func (g *GLFW) DeleteIntegrant() {
 
 func (g *GLFW) Window() *glfw.Window {
 	return g.window
+}
+
+func onCursorMove(w *glfw.Window, x float64, y float64) {
+	// need to revisit this at some point. need to prevent OSX from showing the menu drawer
+	if y <= 4 {
+		w.SetCursorPos(x, 5)
+	}
 }

@@ -79,7 +79,7 @@ func (a *Audio) PlaySound(sound *Sound) {
 	}
 }
 
-func (a *Audio) NewComponent(sound engine.ComponentRoutine) {
+func (a *Audio) AddComponent(sound engine.ComponentRoutine) {
 	switch sound := sound.(type) {
 	case *Sound:
 		source := al.GenSources(1)[0]
@@ -124,7 +124,7 @@ func (a *Audio) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&Sound{}}
 }
 
-func (a *Audio) NewIntegrant(integrant engine.IntegrantRoutine) {}
+func (a *Audio) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
 /*
 The golang experimental openal bindings for have looping as a const yet. So I just guessed it based on the below C code.

@@ -7,9 +7,9 @@ type System struct {
 type SystemRoutine interface {
 	initUnit(*Engine)
 	InitSystem()
-	NewComponent(ComponentRoutine)
+	AddComponent(ComponentRoutine)
 	DeleteEntity(*Entity)
-	NewIntegrant(IntegrantRoutine)
+	AddIntegrant(IntegrantRoutine)
 	ComponentTypes() []ComponentRoutine
 	SetActive(bool)
 	// Stop()

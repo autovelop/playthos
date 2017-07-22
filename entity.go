@@ -14,7 +14,7 @@ func (e *Entity) ID() uint {
 	return e.id
 }
 
-func (e *Entity) NewComponent(component ComponentRoutine) {
+func (e *Entity) AddComponent(component ComponentRoutine) {
 	if play {
 		component.initUnit(e.engine)
 		component.initComponent(e)
@@ -23,7 +23,7 @@ func (e *Entity) NewComponent(component ComponentRoutine) {
 		for _, system := range systems {
 			for _, component_type := range system.ComponentTypes() {
 				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", component_type) {
-					system.NewComponent(component)
+					system.AddComponent(component)
 				}
 			}
 		}

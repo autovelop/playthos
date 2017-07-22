@@ -11,6 +11,7 @@ type Material struct {
 	engine.Component
 	color   *std.Color
 	texture *Texture
+	sprite  *Sprite
 }
 
 func NewMaterial() *Material {
@@ -36,4 +37,12 @@ func (m *Material) SetTexture(texture *Texture) {
 
 func (m *Material) Texture() *Texture {
 	return m.texture
+}
+
+func (m *Material) SetSprite(s *Sprite) {
+	m.sprite = s
+}
+
+func (m *Material) Sprite() *Sprite {
+	return m.sprite
 }

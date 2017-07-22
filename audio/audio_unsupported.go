@@ -31,10 +31,10 @@ func (a *Audio) DeleteSound(sound *Sound) {}
 
 func (a *Audio) PlaySound(sound *Sound) {}
 
-func (a *Audio) NewComponent(sound engine.ComponentRoutine) {}
+func (a *Audio) AddComponent(sound engine.ComponentRoutine) {}
 
 func (a *Audio) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{}
 }
 
-func (a *Audio) NewIntegrant(integrant engine.IntegrantRoutine) {}
+func (a *Audio) AddIntegrant(integrant engine.IntegrantRoutine) {}

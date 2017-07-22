@@ -22,9 +22,9 @@ type Physics struct {
 
 func (p *Physics) InitSystem() {}
 
-func (p *Physics) NewIntegrant(integrant engine.IntegrantRoutine) {}
+func (p *Physics) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
-func (p *Physics) NewComponent(component engine.ComponentRoutine) {
+func (p *Physics) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *Velocity:
 		p.velocities = append(p.velocities, component)

@@ -43,13 +43,13 @@ func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
 func (k *Keyboard) On(key uint, fn func(...uint)) {}
 
-func (k *Keyboard) NewComponent(component engine.ComponentRoutine) {}
+func (k *Keyboard) AddComponent(component engine.ComponentRoutine) {}
 
 func (k *Keyboard) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{}
 }
 
-func (k *Keyboard) NewIntegrant(integrant engine.IntegrantRoutine) {}
+func (k *Keyboard) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
 func (k *Keyboard) SendKeyPress(keycode int) {
 }

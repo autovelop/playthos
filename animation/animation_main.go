@@ -4,8 +4,9 @@ package animation
 
 import (
 	"github.com/autovelop/playthos"
-	"github.com/autovelop/playthos/std"
-	// "log"
+	// "github.com/autovelop/playthos/std"
+	"log"
+	// "math"
 )
 
 func init() {
@@ -32,44 +33,103 @@ func (a *Animation) DeleteEntity(entity *engine.Entity) {
 
 func (a *Animation) Update() {
 	for _, clip := range a.clips {
-		if clip.progress < float64(clip.speed) {
-			clip.progress += 0.01
-			if clip.reversing {
-				clip.From.X -= clip.step.X
-				clip.From.Y -= clip.step.Y
-				clip.From.Z -= clip.step.Z
-			} else {
-				clip.From.X += clip.step.X
-				clip.From.Y += clip.step.Y
-				clip.From.Z += clip.step.Z
+		// if clip.autoplay && !clip.playing {
+		// 	clip.Play()
+		// }
+		if clip.playing {
+
+			clip.ticks += (1 / clip.duration)
+			clip.percCompleted = (clip.ticks / clip.duration)
+
+			if clip.percCompleted >= 1 {
+				clip.ticks = 0
+				clip.percCompleted = 0
+				clip.Reset()
 			}
-		} else if clip.loop {
-			if clip.reverse {
-				clip.reversing = !clip.reversing
-			} else {
-				*clip.From = clip.Start
-			}
-			clip.progress = 0.0
+
+			clip.Update()
+			// log.Println(clip.percCompleted)
+			log.Println()
+			// log.Println(clip.value)
+			// clip.Value.Sub(clip.Step)
+			// log.Println(int(clip.progress * (clip.Frames)))
+			// if clip.progress < float64(clip.speed) {
+			// activeFrameIndex := int(math.Floor(clip.progress * float64(len(clip.frames))))
+			// activeFrame := clip.frames[activeFrameIndex]
+			// log.Println(activeFrame)
+			// if activeFrame != nil {
+			// 	if activeFrame.step != nil {
+			// clip.currentStep = activeFrame.step
+			// clip.value.Add(activeFrame.step)
+			// }
+			// clip.value = activeFrame.value
+			// }
+			// clip.progress += 0.01
+
+			// get frame
+			// if clip.progress >= 1 {
+			// 	clip.progress = 0
+			// }
+
+			// 	if clip.reversing {
+			// 		clip.Value.Sub(clip.Step)
+			// 		// 	clip.From.X -= clip.step.X
+			// 		// 	clip.From.Y -= clip.step.Y
+			// 		// 	clip.From.Z -= clip.step.Z
+			// 	} else {
+			// 		// log.Println(clip.From)
+			// 		clip.Value.Add(clip.Step)
+			// 		// 	clip.From.X += clip.step.X
+			// 		// 	clip.From.Y += clip.step.Y
+			// 		// 	clip.From.Z += clip.step.Z
+			// 	}
+			// } else {
+			// 	if clip.loop {
+			// 		if clip.reverse {
+			// 			clip.reversing = !clip.reversing
+			// 		} else {
+			// 			// n := new(std.Animatable)
+			// 			// var b *std.Animatable
+			// 			// b = &clip.Start
+			// 			// log.Fatalf("%v", clip.Diff)
+			// 			clip.Value.Sub(clip.Diff)
+			// 			// log.Fatalf("%v - %v", clip.From, clip.To)
+			// 			// clip.From = clip.Start
+			// 		}
+			// 		clip.progress = 0.0
+			// 	} else {
+			// 		clip.Stop()
+			// 	}
+			// }
 		}
 	}
 }
 
-func NewClip(frames uint, speed float64) *AnimationClip {
+func NewClip(s float64, au bool) *AnimationClip {
 	a := &AnimationClip{}
-	a.SetActive(true)
-	a.SetSpeed(speed)
-	// a.CreateFrames(frames)
+	// not active until it has a property
+	// a.SetActive(true)
+	a.Set(s, au)
 	return a
 }
 
-func (a *Animation) NewComponent(component engine.ComponentRoutine) {
-	switch component := component.(type) {
+func (a *Animation) AddComponent(component engine.ComponentRoutine) {
+	switch clip := component.(type) {
 	case *AnimationClip:
-		// component.Value = &component.From
+		// clip.Value = &component.From
+		// switch v := clip.From.(type) {
+		// case *std.Vector3:
+		// 	var diff std.Vector3 = v.Diff(clip.To.(*std.Vector3))
+		// 	clip.step = diff.Div(float32(clip.speed))
+		// }
+		// diff := clip.From.Diff(clip.To)
+		// clip.step = diff.Div(float32(clip.speed))
+		// log.Println(clip.step)
+		// log.Print(&clip.To)
+		// log.Print(&clip.step)
+		// log.Fatal(clip.From)
 
-		var diff std.Vector3 = component.From.Diff(component.To)
-		component.step = diff.Div(float32(component.speed))
-		a.clips = append(a.clips, component)
+		a.clips = append(a.clips, clip)
 		break
 	}
 }
@@ -78,4 +138,4 @@ func (a *Animation) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&AnimationClip{}}
 }
 
-func (a *Animation) NewIntegrant(integrant engine.IntegrantRoutine) {}
+func (a *Animation) AddIntegrant(integrant engine.IntegrantRoutine) {}
