@@ -25,9 +25,9 @@ For now the main focus is on the game engine, following that will come an editor
 - [x] Collision Detection
   - [x] AABB
 - [x] User Scripting
-- [ ] Sprite Animation
-- [ ] MacOS Support
-- [ ] Windows Support
+- [x] Sprite Animation
+- [x] MacOS Support
+- [x] Windows Support
 - [ ] Documentation
 
 ## Feature List v0.6
@@ -37,11 +37,11 @@ For now the main focus is on the game engine, following that will come an editor
   - [ ] Circle
   
 ## Feature List v0.7
-- [ ] Support Tables
+- [x] Support Tables
 - [ ] Build Testing
 - [ ] Entity Serialization
-- [ ] Mouse Input
-- [ ] Raycasts
+- [x] Mouse Input
+- [x] Raycasts
 
 ## Feature List v0.8
 - [ ] Render State System
