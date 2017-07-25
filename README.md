@@ -1,3 +1,5 @@
+![Playthos Game Engine Logo](http://www.autovelop.com/playthos-git.png)
+
 #  Playthos Game Engine
 (This engine is still under development and not ready for production yet)
 
