@@ -4,7 +4,6 @@ package scripting
 
 import (
 	"github.com/autovelop/playthos"
-	// "log"
 )
 
 func init() {
@@ -17,6 +16,8 @@ type Scripting struct {
 }
 
 func (s *Scripting) InitSystem() {}
+
+func (s *Scripting) Destroy() {}
 
 func (s *Scripting) AddIntegrant(integrant engine.IntegrantRoutine) {}
 

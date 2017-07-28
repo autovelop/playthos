@@ -18,6 +18,8 @@ type Animation struct {
 
 func (a *Animation) InitSystem() {}
 
+func (a *Animation) Destroy() {}
+
 func (a *Animation) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(a.clips); i++ {
 		clip := a.clips[i]

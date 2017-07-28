@@ -155,6 +155,9 @@ func (k *Keyboard) InitSystem() {
 	k.keypress = make([]func(...uint), 512, 512) // this is probably too much but safe for now
 }
 
+func (k *Keyboard) Destroy() {
+}
+
 func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
 func (k *Keyboard) On(key uint, fn func(...uint)) {

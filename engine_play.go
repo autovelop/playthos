@@ -3,5 +3,5 @@
 package engine
 
 func init() {
-	play = true
+	// play = true
 }

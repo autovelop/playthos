@@ -5,14 +5,12 @@ package engine
 import (
 	"go/build"
 	"io/ioutil"
+	// "log"
 	"os"
 )
 
 func LoadAsset(d string, f string) ([]byte, error) {
-	dir, err := build.Import(d, "", build.FindOnly)
-	if err != nil {
-		return nil, err
-	}
+	dir, err := build.ImportDir(d, build.FindOnly)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@
 package glfw
 
 import (
+	"fmt"
 	"github.com/autovelop/playthos"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"log"
@@ -13,7 +14,7 @@ import (
 func init() {
 	runtime.LockOSThread()
 	engine.NewIntegrant(&GLFW{})
-	log.Println("added glfw integrant to engine")
+	fmt.Println("> GLFW: Ready")
 }
 
 // Don't like this at all
@@ -42,7 +43,8 @@ func (g *GLFW) InitIntegrant() {
 	}
 	g.settings = g.Engine().Settings()
 
-	log.Printf("GLFW Prepare (%v.%v)\n", g.majorVersion, g.minorVersion)
+	// log.Printf("GLFW Prepare (%v.%v)\n")
+	fmt.Printf("> GLFW: Version %v.%v\n", g.majorVersion, g.minorVersion)
 	// Intialize GLFW
 	if err := glfw.Init(); err != nil {
 		panic("failed to initialize glfw")
@@ -64,6 +66,7 @@ func (g *GLFW) InitIntegrant() {
 
 	var err error
 	if g.settings.Fullscreen {
+		fmt.Printf("> GLFW: Fullscreen = Yes\n")
 		glfw.WindowHint(glfw.Maximized, glfw.True)
 		glfw.WindowHint(glfw.Floating, glfw.True)
 		glfw.WindowHint(glfw.AutoIconify, glfw.True)
@@ -74,11 +77,13 @@ func (g *GLFW) InitIntegrant() {
 			g.settings.ResolutionY = float32(vidMode.Height)
 		}
 	} else {
+		fmt.Printf("> GLFW: Fullscreen = No\n")
 		if int(g.settings.ResolutionX) <= 0 {
 			g.settings.ResolutionX = float32(800)
 			g.settings.ResolutionY = float32(600)
 		}
 	}
+	fmt.Printf("> GLFW: Resolution = %vx%v\n", g.settings.ResolutionX, g.settings.ResolutionY)
 	g.window, err = glfw.CreateWindow(int(g.settings.ResolutionX), int(g.settings.ResolutionY), "Cube", g.monitor, nil)
 	if err != nil {
 		switch g.majorVersion {
@@ -102,7 +107,7 @@ func (g *GLFW) InitIntegrant() {
 	}
 
 	if g.settings.Cursor {
-		g.window.SetCursorPosCallback(onCursorMove)
+		// g.window.SetCursorPosCallback(onCursorMove)
 	} else {
 		g.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 	}
@@ -112,21 +117,25 @@ func (g *GLFW) InitIntegrant() {
 	thisglfw = g
 }
 
-func (g *GLFW) DeleteIntegrant() {
+func (g *GLFW) Destroy() {
+	// defer glfw.Terminate()
+	// log.Fatal("here")
+	g.SetActive(false)
 	if g.settings.Fullscreen {
 		g.window.SetMonitor(nil, 0, 0, int(g.settings.ResolutionX), int(g.settings.ResolutionY), 0)
 	}
 	g.window.SetShouldClose(true)
-	// glfw.Terminate()
+	// g.window.Destroy()
+	// g.window = nil
 }
 
 func (g *GLFW) Window() *glfw.Window {
 	return g.window
 }
 
-func onCursorMove(w *glfw.Window, x float64, y float64) {
-	// need to revisit this at some point. need to prevent OSX from showing the menu drawer
-	if y <= 4 {
-		w.SetCursorPos(x, 5)
-	}
-}
+// func onCursorMove(w *glfw.Window, x float64, y float64) {
+// need to revisit this at some point. need to prevent OSX from showing the menu drawer
+// if y <= 4 {
+// 	w.SetCursorPos(x, 5)
+// }
+// }

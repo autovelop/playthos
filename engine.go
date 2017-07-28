@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"github.com/jteeuwen/go-bindata"
+	"go/build"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,13 +24,15 @@ const (
 var packages []string
 var systems []SystemRoutine
 var updaters []Updater
+var drawer Drawer
 var listeners []Listener
 var integrants []IntegrantRoutine
 
-var play bool = false
+var play bool = true
+var deploy bool = false
 
 func init() {
-	log.Println("init engine")
+	fmt.Println("> Engine: Initializing")
 }
 
 func RegisterPackage(tags ...string) {
@@ -49,24 +52,35 @@ type Engine struct {
 	updaters []Updater
 	settings *Settings
 	running  bool
-
-	newTime     time.Time
-	currentTime time.Time
-	accumulator int64
-	deltaTime   int64
-	frames      uint64
 }
 
-func New(n string, p string, s *Settings) *Engine {
+func New(n string, p string, s ...*Settings) *Engine {
 	game := &Engine{}
-	game.SetSettings(s)
+	if len(s) > 0 {
+		game.SetSettings(s[0])
+	} else {
+		game.SetSettings(&Settings{false, 800, 600, true})
+	}
 	game.Init()
 	game.gameName = n
+
+	if play || !deploy {
+		dir, err := build.Import(p, "", build.FindOnly)
+		if err != nil {
+			return nil
+		}
+		err = os.Chdir(dir.Dir)
+		if err != nil {
+			return nil
+		}
+	}
 	game.gamePackage = p
+
 	return game
 }
 
 func (e *Engine) Start() {
+	fmt.Println("> Engine: Enjoy!")
 	e.running = true
 	e.update()
 }
@@ -74,9 +88,10 @@ func (e *Engine) Start() {
 func (e *Engine) Stop() {
 	for _, system := range systems {
 		system.SetActive(false)
+		system.Destroy()
 	}
 	for _, integrant := range integrants {
-		integrant.DeleteIntegrant()
+		integrant.Destroy()
 	}
 	e.running = false
 }
@@ -86,6 +101,7 @@ func (e *Engine) Init() {
 		for _, integrant := range integrants {
 			integrant.initUnit(e)
 			integrant.InitIntegrant()
+			integrant.SetActive(true)
 		}
 		for _, system := range systems {
 			for _, integrant := range integrants {
@@ -139,11 +155,15 @@ func (e *Engine) DeleteEntity(entity *Entity) {
 
 func NewSystem(s SystemRoutine) {
 	systems = append(systems, s)
-	if updater, ok := s.(Updater); ok {
-		updaters = append(updaters, updater)
+
+	if d, ok := s.(Drawer); ok {
+		drawer = d
 	}
-	if listener, ok := s.(Listener); ok {
-		listeners = append(listeners, listener)
+	if u, ok := s.(Updater); ok {
+		updaters = append(updaters, u)
+	}
+	if l, ok := s.(Listener); ok {
+		listeners = append(listeners, l)
 	}
 }
 
@@ -173,7 +193,7 @@ func (e *Engine) Deploy(platforms ...string) {
 	}}
 	c.Package = "engine"
 	c.Tags = "deploy play"
-	c.Output = fmt.Sprintf("%v/assets.go", "github.com/autovelop/playthos")
+	c.Output = fmt.Sprintf("%v/assets.go", "../playthos")
 	// c.Output = fmt.Sprintf("%v/assets.go", e.gamePackage)
 	bindata.Translate(c)
 
@@ -206,13 +226,14 @@ func (e *Engine) Deploy(platforms ...string) {
 			break
 		}
 		// log.Fatalf("%v/bin/%v_%v", e.gamePackage, strings.ToLower(e.gameName), simpleName)
+		// fmt.Sprintf("bin/%v_%v%v", strings.ToLower(e.gameName), simpleName, fileExtension),
 		cmdArgs := []string{
 			"build",
 			"-v",
 			"-o",
-			fmt.Sprintf("%v/bin/%v_%v%v", e.gamePackage, strings.ToLower(e.gameName), simpleName, fileExtension),
+			fmt.Sprintf("src/%v/bin/%v_%v%v", e.gamePackage, strings.ToLower(e.gameName), simpleName, fileExtension),
 			"-tags",
-			fmt.Sprintf("deploy play %v %v", simpleName, GetTags()),
+			fmt.Sprintf("play %v %v", simpleName, GetTags()),
 			e.gamePackage,
 		}
 		cmd := exec.Command("go", cmdArgs...)
@@ -237,8 +258,8 @@ func (e *Engine) Deploy(platforms ...string) {
 
 		startErr := cmd.Start()
 		if startErr != nil {
-			log.Println("here")
-			log.Println(startErr)
+			// log.Println("here")
+			// log.Println(startErr)
 			// cmd.Wait()
 			return
 		}
@@ -269,21 +290,47 @@ func removeDuplicates(elements []string) []string {
 }
 
 func (e *Engine) update() {
-	log.Println("Engine Update")
-	e.newTime = time.Now()
-	frameTime := e.newTime.Sub(e.currentTime).Nanoseconds()
-	e.currentTime = e.newTime
-	e.accumulator += frameTime
+	const frameCap float64 = 250
+	var (
+		frames       uint64
+		frameCounter time.Duration
+		frameTime    time.Duration = time.Duration(1000/frameCap) * time.Millisecond
+		prevTime     time.Time     = time.Now()
+		unproccTime  time.Duration
+		render       bool
+	)
 
-	for e.accumulator >= e.deltaTime {
-		for _, updater := range updaters {
-			updater.Update()
+	for e.running {
+		startTime := time.Now()
+		elapsed := startTime.Sub(prevTime)
+		prevTime = startTime
+
+		unproccTime += elapsed
+		frameCounter += elapsed
+
+		for unproccTime > frameTime {
+			unproccTime -= frameTime
+
+			for _, updater := range updaters {
+				updater.Update()
+			}
+
+			if frameCounter >= time.Second {
+				// fmt.Printf("%d FPS\n", frames)
+				frames = 0
+				frameCounter -= time.Second
+			}
+			render = true
 		}
-		if !e.running {
-			os.Exit(0)
+
+		if render && drawer != nil {
+			// log.Fatal("here")
+			drawer.Draw()
+			frames++
+		} else {
+			time.Sleep(time.Millisecond)
 		}
 	}
-	e.accumulator -= e.deltaTime
 }
 
 func (e *Engine) Listener(lookup Listener) Listener {
@@ -293,5 +340,15 @@ func (e *Engine) Listener(lookup Listener) Listener {
 		}
 	}
 	log.Fatalf("%T - Listener requested but doens't exist. Make sure all packages are imported", lookup)
+	return nil
+}
+
+func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
+	for _, i := range integrants {
+		if fmt.Sprintf("%T", i) == fmt.Sprintf("%T", lookup) {
+			return i
+		}
+	}
+	log.Fatalf("%T - Integrant requested but doens't exist. Make sure all packages are imported", lookup)
 	return nil
 }

@@ -18,7 +18,7 @@ func NewRenderSystem(render RenderRoutine) {
 
 type RenderRoutine interface {
 	// engine.SystemRoutine
-	engine.Updater
+	engine.Drawer
 	NewShader(vs string, fs string) uint32
 	// UnRegisterEntity(*engine.Entity)
 	RegisterTransform(*std.Transform)

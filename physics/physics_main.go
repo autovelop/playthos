@@ -22,6 +22,8 @@ type Physics struct {
 
 func (p *Physics) InitSystem() {}
 
+func (p *Physics) Destroy() {}
+
 func (p *Physics) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
 func (p *Physics) AddComponent(component engine.ComponentRoutine) {
@@ -55,8 +57,7 @@ func (p *Physics) ComponentTypes() []engine.ComponentRoutine {
 
 func (p *Physics) Update() {
 	if len(p.velocities) != len(p.accelerations) {
-		log.Println("Skew components")
-		log.Fatalf("velocities: %v | accelerations: %v", len(p.velocities), len(p.accelerations))
+		log.Fatalf("Each acceleration component must be paired with a velocity component. And vice versa.")
 	}
 	for idx, velocity := range p.velocities {
 		if velocity.Active() {

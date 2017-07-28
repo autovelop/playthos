@@ -1,12 +1,12 @@
 package physics
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/autovelop/playthos"
 )
 
 func init() {
 	engine.RegisterPackage("physics")
-	log.Println("added physics to engine")
+	fmt.Println("> Physics: Initializing")
 }

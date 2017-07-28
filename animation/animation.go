@@ -1,11 +1,11 @@
 package animation
 
 import (
+	"fmt"
 	"github.com/autovelop/playthos"
-	"log"
 )
 
 func init() {
 	engine.RegisterPackage("desktop", "animation")
-	log.Println("added animation to engine")
+	fmt.Println("> Animation: Initializing")
 }

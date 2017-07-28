@@ -20,6 +20,8 @@ type Audio struct {
 
 func (a *Audio) InitSystem() {}
 
+func (a *Audio) Destroy() {}
+
 func NewSound() *Sound {
 	return &Sound{}
 }

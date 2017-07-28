@@ -1,11 +1,11 @@
 package opengl
 
 import (
+	"fmt"
 	"github.com/autovelop/playthos"
-	"log"
 )
 
 func init() {
 	engine.RegisterPackage("desktop", "opengl")
-	log.Println("added opengl to engine")
+	fmt.Println("> OpenGL: Initializing")
 }

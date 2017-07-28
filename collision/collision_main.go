@@ -28,6 +28,8 @@ func (c *Collision) DeleteEntity(entity *engine.Entity) {
 
 func (c *Collision) InitSystem() {}
 
+func (c *Collision) Destroy() {}
+
 func (c *Collision) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
 func (c *Collision) AddComponent(component engine.ComponentRoutine) {

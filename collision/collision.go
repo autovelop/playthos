@@ -1,12 +1,12 @@
 package collision
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/autovelop/playthos"
 )
 
 func init() {
 	engine.RegisterPackage("collision")
-	log.Println("added collision to engine")
+	fmt.Println("> Collision: Initializing")
 }

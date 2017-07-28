@@ -1,5 +1,4 @@
-// +build opengl
-// +build glfw
+// +build opengl glfw
 // +build linux windows darwin
 
 package opengl
@@ -19,13 +18,14 @@ import (
 
 	"log"
 	// "math"
+	"fmt"
 	"os"
 	"strings"
 )
 
 func init() {
 	render.NewRenderSystem(&OpenGL{})
-	log.Println("added opengl to engine2")
+	fmt.Println("> OpenGL Added")
 }
 
 type OpenGL struct {
@@ -44,9 +44,9 @@ type OpenGL struct {
 }
 
 func (o *OpenGL) InitSystem() {
+	o.SetActive(false)
 	o.settings = o.Engine().Settings()
 
-	log.Println("OpenGL Prepare")
 	o.screenWidth = o.settings.ResolutionX
 	o.screenHeight = o.settings.ResolutionY
 
@@ -89,12 +89,17 @@ func (o *OpenGL) InitSystem() {
 
 }
 
+func (o *OpenGL) Destroy() {
+}
+
 func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
 		o.window = integrant.Window()
 		o.majorVersion, o.minorVersion = integrant.OpenGLVersion()
-		log.Println("AddIntegrant(*glfw.GLFW)")
+		o.SetActive(true)
+		fmt.Println("> OpenGL: Discovered GLFW")
+		// log.Println("AddIntegrant(*glfw.GLFW)")
 		break
 	}
 }
@@ -102,19 +107,19 @@ func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 func (o *OpenGL) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *std.Transform:
-		log.Println("AddComponent(*std.Transform)")
+		// log.Println("AddComponent(*std.Transform)")
 		o.RegisterTransform(component)
 		break
 	case *render.Mesh:
-		log.Println("Addomponent(*render.Mesh)")
+		// log.Println("Addomponent(*render.Mesh)")
 		o.RegisterMesh(component)
 		break
 	case *render.Material:
-		log.Println("AddComponent(*render.Material)")
+		// log.Println("AddComponent(*render.Material)")
 		o.RegisterMaterial(component)
 		break
 	case *render.Camera:
-		log.Println("AddComponent(*render.Camera)")
+		// log.Println("AddComponent(*render.Camera)")
 		o.RegisterCamera(component)
 		break
 	}
@@ -124,166 +129,198 @@ func (o *OpenGL) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 }
 
-func (o *OpenGL) Update() {
+func (o *OpenGL) Draw() {
 	// log.Println(len(o.transforms), len(o.meshes), len(o.materials))
-
+	// log.Println(o.window)
+	// if o.window == nil {
+	// 	o.SetActive(false)
+	// 	glfw32.Terminate()
+	// }
 	if o.Active() {
-		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-		gl.UseProgram(o.shaderProgram)
-
 		if len(o.cameras) <= 0 {
-			log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow zero (for simulations) or more than one camera.")
+			o.createDefaultCamera()
 		}
-		camera := o.cameras[0]
-
-		proj := mgl32.Ortho(0, float32(o.settings.ResolutionX)/(*camera.Scale()), 0, float32(o.settings.ResolutionY)/(*camera.Scale()), -1000.0, 1000.0)
-		proj_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("projection\x00"))
-
-		view := mgl32.LookAtV(
-			mgl32.Vec3{
-				camera.Eye().X - ((o.settings.ResolutionX / 2) / (*camera.Scale())),
-				camera.Eye().Y - ((o.settings.ResolutionY / 2) / (*camera.Scale())),
-				camera.Eye().Z,
-			},
-			mgl32.Vec3{
-				camera.Center().X - ((o.settings.ResolutionX / 2) / (*camera.Scale())),
-				camera.Center().Y - ((o.settings.ResolutionY / 2) / (*camera.Scale())),
-				camera.Center().Z,
-			},
-			mgl32.Vec3{
-				camera.Up().X,
-				camera.Up().Y,
-				camera.Up().Z,
-			})
-		// float32(math.Cos(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
-		// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().Y)))),
-		// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
-
-		// front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		// front.y = sin(glm::radians(pitch));
-		// front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-		view_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("view\x00"))
-
-		model_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("model\x00"))
-
-		// if len(o.meshes) != len(o.transforms) || len(o.meshes) != len(o.materials) {
-		// 	log.Println("Skew components")
-		// 	log.Fatalf("meshes: %v | transforms: %v | materials: %v", len(o.meshes), len(o.transforms), len(o.materials))
-		// }
-
-		for idx, mesh := range o.meshes {
-			// mesh := o.meshes[idx]
-			if mesh == nil {
-				continue
-			}
-			gl.BindVertexArray(mesh.VAO())
-
-			transform := o.transforms[idx]
-			// this is a shortcut. should rather remove component from system registry
-			if transform == nil {
-				continue
-			} else if !transform.Active() {
-				// log.Fatal("here")
-				continue
-			}
-
-			position := transform.Position()
-			rotation := transform.Rotation()
-			scale := transform.Scale()
-			// log.Println(rotation)
-
-			// model = model.Mul4(mgl32.Scale3D(1, 1, 1))
-			model := mgl32.Ident4()
-			model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
-			model = model.Mul4(mgl32.Translate3D(scale.X/2, scale.Y/2, scale.Z/2))
-			model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
-			model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
-			model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
-			model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
-			model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
-			// model = model.Mul4(mgl32.Translate3D(-(position.X / 2), -(position.Y / 2), (position.Z / 2)))
-			// 				}
-
-			// 				texture := renderer.GetProperty("Texture")
-			// 				if texture != nil {
-			// 					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 1)
-
-			// 					switch texture := texture.(type) {
-			// 					case uint32:
-			// 						gl.ActiveTexture(gl.TEXTURE0)
-			// 						gl.BindTexture(gl.TEXTURE_2D, texture)
-			// 						gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
-			// 					}
-			// 				} else {
-			// 					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
-			// 				}
-			material := o.materials[idx]
-			color := material.Color()
-			if color != nil {
-				gl.Uniform4fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("color\x00")), 1, &color.R)
-			}
-
-			texture := material.Texture()
-			sprite := material.Sprite()
-			if texture != nil {
-				offset := std.Vector2{}
-				gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, texture.ID())
-				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
-				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
-			} else if sprite != nil {
-				// log.Println(float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))))
-				offset := std.Vector2{
-					sprite.Offset().X / float32(sprite.Width()),
-					sprite.Offset().Y / float32(sprite.Height()),
-					// float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))),
-					// float32(math.Floor(float64(sprite.Offset().Y / float32(sprite.Height())))),
-				}
-				// log.Printf("%v / %v = %v", sprite.Offset(), spirte.Width(), offset.X)
-				gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
-				gl.ActiveTexture(gl.TEXTURE0)
-				gl.BindTexture(gl.TEXTURE_2D, sprite.ID())
-				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
-				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
-			} else {
-				gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 0)
-			}
-
-			// 				color := renderer.GetProperty("Color")
-			// 				if color != nil {
-			// 					switch color := color.(type) {
-			// 					case *render.Color:
-			// 					}
-			// 				}
-			gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
-			gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
-			gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
-			gl.DrawElements(gl.TRIANGLES, 8, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
-			// 			} else {
-			// 				switch renderer := renderer.(type) {
-			// 				case *render.MeshRenderer:
-			// 					r.LoadRenderer(renderer)
-			// 				}
-			// 			}
-			// 		}
-			gl.BindVertexArray(0)
-		}
-
-		o.window.SwapBuffers()
-		glfw32.PollEvents()
-	} else {
 		if o.window.ShouldClose() {
-			glfw32.Terminate()
+			o.window.Destroy()
+			defer glfw32.Terminate()
+			// log.Fatal("here")
+			// glfw32.Terminate()
+		} else {
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+			gl.UseProgram(o.shaderProgram)
+
+			if len(o.cameras) <= 0 {
+				log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow zero (for simulations) or more than one camera.")
+			}
+			camera := o.cameras[0]
+			clearColor := camera.ClearColor()
+			gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
+
+			proj := mgl32.Ortho(0, float32(o.settings.ResolutionX)/(*camera.Scale()), 0, float32(o.settings.ResolutionY)/(*camera.Scale()), -1000.0, 1000.0)
+			proj_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("projection\x00"))
+
+			view := mgl32.LookAtV(
+				mgl32.Vec3{
+					camera.Eye().X - ((o.settings.ResolutionX / 2) / (*camera.Scale())),
+					camera.Eye().Y - ((o.settings.ResolutionY / 2) / (*camera.Scale())),
+					camera.Eye().Z,
+				},
+				mgl32.Vec3{
+					camera.Center().X - ((o.settings.ResolutionX / 2) / (*camera.Scale())),
+					camera.Center().Y - ((o.settings.ResolutionY / 2) / (*camera.Scale())),
+					camera.Center().Z,
+				},
+				mgl32.Vec3{
+					camera.Up().X,
+					camera.Up().Y,
+					camera.Up().Z,
+				})
+			// float32(math.Cos(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
+			// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().Y)))),
+			// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
+
+			// front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+			// front.y = sin(glm::radians(pitch));
+			// front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+			view_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("view\x00"))
+
+			model_uni := gl.GetUniformLocation(o.shaderProgram, gl.Str("model\x00"))
+
+			// if len(o.meshes) != len(o.transforms) || len(o.meshes) != len(o.materials) {
+			// 	log.Println("Skew components")
+			// 	log.Fatalf("meshes: %v | transforms: %v | materials: %v", len(o.meshes), len(o.transforms), len(o.materials))
+			// }
+
+			for idx, mesh := range o.meshes {
+				// mesh := o.meshes[idx]
+				if mesh == nil {
+					continue
+				}
+				gl.BindVertexArray(mesh.VAO())
+
+				transform := o.transforms[idx]
+				// this is a shortcut. should rather remove component from system registry
+				if transform == nil {
+					continue
+				} else if !transform.Active() {
+					// log.Fatal("here")
+					continue
+				}
+
+				position := transform.Position()
+				rotation := transform.Rotation()
+				scale := transform.Scale()
+				// log.Println(rotation)
+
+				// model = model.Mul4(mgl32.Scale3D(1, 1, 1))
+				model := mgl32.Ident4()
+				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
+				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
+				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
+				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
+				model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
+				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
+				// model = model.Mul4(mgl32.Translate3D(-(position.X / 2), -(position.Y / 2), (position.Z / 2)))
+				// 				}
+
+				// 				texture := renderer.GetProperty("Texture")
+				// 				if texture != nil {
+				// 					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 1)
+
+				// 					switch texture := texture.(type) {
+				// 					case uint32:
+				// 						gl.ActiveTexture(gl.TEXTURE0)
+				// 						gl.BindTexture(gl.TEXTURE_2D, texture)
+				// 						gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("texture\x00")), 0)
+				// 					}
+				// 				} else {
+				// 					gl.Uniform1i(gl.GetUniformLocation(r.ShaderProgram, gl.Str("hasTexture\x00")), 0)
+				// 				}
+				material := o.materials[idx]
+				if material == nil {
+					continue
+				} else if !material.Active() {
+					// log.Fatal("here")
+					continue
+				}
+
+				color := material.Color()
+				if color != nil {
+					gl.Uniform4fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("color\x00")), 1, &color.R)
+				}
+
+				texture := material.Texture()
+				sprite := material.Sprite()
+				if texture != nil {
+					offset := std.Vector2{}
+					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
+					gl.ActiveTexture(gl.TEXTURE0)
+					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
+					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
+					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
+				} else if sprite != nil {
+					// log.Println(float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))))
+					offset := std.Vector2{
+						sprite.Offset().X / float32(sprite.Width()),
+						sprite.Offset().Y / float32(sprite.Height()),
+						// float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))),
+						// float32(math.Floor(float64(sprite.Offset().Y / float32(sprite.Height())))),
+					}
+					// log.Printf("%v / %v = %v", sprite.Offset(), spirte.Width(), offset.X)
+					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
+					gl.ActiveTexture(gl.TEXTURE0)
+					gl.BindTexture(gl.TEXTURE_2D, sprite.ID())
+					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
+					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
+				} else {
+					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 0)
+				}
+
+				// 				color := renderer.GetProperty("Color")
+				// 				if color != nil {
+				// 					switch color := color.(type) {
+				// 					case *render.Color:
+				// 					}
+				// 				}
+				gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
+				gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
+				gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
+				gl.DrawElements(gl.TRIANGLES, 8, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
+				// 			} else {
+				// 				switch renderer := renderer.(type) {
+				// 				case *render.MeshRenderer:
+				// 					r.LoadRenderer(renderer)
+				// 				}
+				// 			}
+				// 		}
+				gl.BindVertexArray(0)
+			}
+
+			o.window.SwapBuffers()
+			glfw32.PollEvents()
 		}
 	}
 }
 
+func (o *OpenGL) createDefaultCamera() {
+	camera_transform := std.NewTransform()
+	camera_transform.Set(
+		&std.Vector3{0, 0, 3}, // POSITION
+		&std.Vector3{0, 0, 0}, // CENTER
+		&std.Vector3{0, 1, 0}, // UP
+	)
+	camera := render.NewCamera()
+	cameraSize := float32(1.0)
+	camera.Set(&cameraSize, &std.Color{0, 0, 0, 0})
+	camera.SetTransform(camera_transform)
+	o.cameras = append(o.cameras, camera)
+}
+
 func (o *OpenGL) NewShader(vs string, fs string) uint32 {
 	version := gl.GoStr(gl.GetString(gl.VERSION))
-	log.Printf("Render > OpenGL > Version: %v", version)
+	fmt.Printf("> OpenGL: Profile = %v\n", version)
 	// Create vertex shader
 	vshader := gl.CreateShader(gl.VERTEX_SHADER)
 	vsources, vfree := gl.Strs(vs)
@@ -364,6 +401,8 @@ func (o *OpenGL) RegisterTransform(transform *std.Transform) {
 func (o *OpenGL) RegisterCamera(camera *render.Camera) {
 	clearColor := camera.ClearColor()
 	gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
+	camera.SetWindow(o.settings.ResolutionX, o.settings.ResolutionY)
+	// gl.Viewport(0, 0, int32(), int32(o.settings.ResolutionY))
 	o.cameras = append(o.cameras, camera)
 	o.materials = append(o.materials, nil)
 	o.meshes = append(o.meshes, nil)

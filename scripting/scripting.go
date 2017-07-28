@@ -1,12 +1,12 @@
 package scripting
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/autovelop/playthos"
 )
 
 func init() {
 	engine.RegisterPackage("scripting")
-	log.Println("added script to engine")
+	fmt.Println("> Scripting: Initializing")
 }

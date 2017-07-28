@@ -28,6 +28,8 @@ func (a *Audio) InitSystem() {
 	al.SetListenerPosition([3]float32{0, 0, 0})
 }
 
+func (a *Audio) Destroy() {}
+
 func NewSound() *Sound {
 	s := &Sound{}
 	s.SetActive(true)
