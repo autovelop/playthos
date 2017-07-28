@@ -4,6 +4,8 @@
 
 ### [Documentation](http://www.autovelop.com/playthos/)
 ### [Feedback](mailto:playthos@autovelop.com)
+### [Twitter](https://twitter.com/autovelop)
+### [Facebook](https://www.facebook.com/autovelop/)
 
 ## Development
 ### Alpha
@@ -17,7 +19,9 @@ I started the development of this game engine because I felt like it should be e
 
 In comes Playthos. A game engine that promises to make game development easy. Even creators who are not coders by profession. The goal is the lay out an open-source code foundation for anyone to contribute, and end up with an engine that puts a game together based on set of basic instructions.
 
-## Simple Rendering
+## Feature Demo
+(Shape Rendering, Vector Animation, Color Animation, Physics, Collision)
+![Playthos Game Engine Feature Demo](http://www.autovelop.com/playthos-feature-demo.gif)
 
 ## Current Features
 - [x] ECS
@@ -36,6 +40,7 @@ In comes Playthos. A game engine that promises to make game development easy. Ev
 - [x] Deployable executables
 - [x] Assets library deploy with executable
 - [x] Cross compilation (from Linux to Linux, Windows, and Mac OS X)
+- [x] Dynamic compilation (only using systems that are supported)
 - [x] Documentation
 
 ## Upcoming Features
