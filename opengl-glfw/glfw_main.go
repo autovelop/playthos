@@ -84,7 +84,7 @@ func (g *GLFW) InitIntegrant() {
 		}
 	}
 	fmt.Printf("> GLFW: Resolution = %vx%v\n", g.settings.ResolutionX, g.settings.ResolutionY)
-	g.window, err = glfw.CreateWindow(int(g.settings.ResolutionX), int(g.settings.ResolutionY), "Cube", g.monitor, nil)
+	g.window, err = glfw.CreateWindow(int(g.settings.ResolutionX), int(g.settings.ResolutionY), "Game", g.monitor, nil)
 	if err != nil {
 		switch g.majorVersion {
 		case 4:

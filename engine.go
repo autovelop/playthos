@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 	"github.com/jteeuwen/go-bindata"
-	"go/build"
+	// "go/build"
 	"io/ioutil"
 	"log"
 	"os"
@@ -64,16 +64,16 @@ func New(n string, p string, s ...*Settings) *Engine {
 	game.Init()
 	game.gameName = n
 
-	if play || !deploy {
-		dir, err := build.Import(p, "", build.FindOnly)
-		if err != nil {
-			return nil
-		}
-		err = os.Chdir(dir.Dir)
-		if err != nil {
-			return nil
-		}
-	}
+	// if play || !deploy {
+	// 	dir, err := build.Import(p, "", build.FindOnly)
+	// 	if err != nil {
+	// 		log.Println("WARNING: Unable to import game folder")
+	// 	}
+	// 	err = os.Chdir(dir.Dir)
+	// 	if err != nil {
+	// 		log.Println("WARNING: Unable to read game folder")
+	// 	}
+	// }
 	game.gamePackage = p
 
 	return game
@@ -122,6 +122,7 @@ func (e *Engine) NewEntity() *Entity {
 		&unit{
 			e,
 			true,
+			0,
 		},
 		eid,
 		[]ComponentRoutine{},
@@ -192,7 +193,7 @@ func (e *Engine) Deploy(platforms ...string) {
 		Recursive: true,
 	}}
 	c.Package = "engine"
-	c.Tags = "deploy play"
+	c.Tags = "deployed"
 	c.Output = fmt.Sprintf("%v/assets.go", "../playthos")
 	// c.Output = fmt.Sprintf("%v/assets.go", e.gamePackage)
 	bindata.Translate(c)
@@ -231,9 +232,10 @@ func (e *Engine) Deploy(platforms ...string) {
 			"build",
 			"-v",
 			"-o",
-			fmt.Sprintf("src/%v/bin/%v_%v%v", e.gamePackage, strings.ToLower(e.gameName), simpleName, fileExtension),
+			// fmt.Sprintf("src/%v/bin/%v_%v%v", e.gamePackage, strings.ToLower(e.gameName), simpleName, fileExtension),
+			fmt.Sprintf("bin/%v_%v%v", strings.ToLower(e.gameName), simpleName, fileExtension),
 			"-tags",
-			fmt.Sprintf("play %v %v", simpleName, GetTags()),
+			fmt.Sprintf("deployed %v %v", simpleName, GetTags()),
 			e.gamePackage,
 		}
 		cmd := exec.Command("go", cmdArgs...)

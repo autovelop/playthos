@@ -10,6 +10,9 @@ type Component struct {
 }
 
 func (c *Component) Entity() *Entity {
+	if c.entity == nil {
+		return nil
+	}
 	return c.entity
 }
 

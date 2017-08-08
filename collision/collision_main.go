@@ -4,6 +4,7 @@ package collision
 
 import (
 	"github.com/autovelop/playthos"
+	// "log"
 )
 
 func init() {
@@ -45,24 +46,41 @@ func (c *Collision) ComponentTypes() []engine.ComponentRoutine {
 }
 
 func (c *Collision) Update() {
-	var prev_collider *Collider
-	for _, collider := range c.colliders {
-		if prev_collider == nil {
-			prev_collider = collider
-		} else {
-			c1 := collider.Entity()
-			c2 := prev_collider.Entity()
-			if c1 != nil && c2 != nil {
-				// p1 := c1.GetComponent(&render.Transform{}).(*render.Transform)
-				// p2 := c2.GetComponent(&render.Transform{}).(*render.Transform)
-
-				if CheckCollisionAABB(collider, prev_collider) {
-					// collider.Hit(c2)
-					prev_collider.Hit(c1)
+	// var prev_collider *Collider
+	for a, collider1 := range c.colliders {
+		for b, collider2 := range c.colliders {
+			if a != b {
+				// prev_collider := c.colliders[i-1]
+				// if prev_collider == nil {
+				// 	prev_collider = collider
+				// } else {
+				// log.Fatalf("%+v", collider)
+				if collider1 == nil {
+					continue
 				}
-				// if Distance3(p1.GetPosition(), p2.GetPosition()) < 80 {
-				// 	collider.Hit()
-				// 	prev_collider.Hit()
+				if collider2 == nil {
+					continue
+				}
+				c1 := collider1.Entity()
+				c2 := collider2.Entity()
+				// continue
+				if c1 != nil && c2 != nil {
+					// p1 := c1.GetComponent(&render.Transform{}).(*render.Transform)
+					// p2 := c2.GetComponent(&render.Transform{}).(*render.Transform)
+
+					if CheckCollisionAABB(collider1, collider2) {
+						// collider.Hit(c2)
+						// log.Printf("YES %v colliding with %v\n", c1.Tag(), c2.Tag())
+						collider2.Hit(c1)
+					}
+					// } else {
+					// 	log.Printf("NO %v colliding with %v\n", c1.Tag(), c2.Tag())
+					// }
+					// if Distance3(p1.GetPosition(), p2.GetPosition()) < 80 {
+					// 	collider.Hit()
+					// 	prev_collider.Hit()
+					// }
+				}
 				// }
 			}
 		}

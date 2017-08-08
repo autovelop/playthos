@@ -1,5 +1,4 @@
-// +build deploy
-// +build play
+// +build deployed
 
 package engine
 

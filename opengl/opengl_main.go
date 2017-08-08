@@ -254,22 +254,19 @@ func (o *OpenGL) Draw() {
 				texture := material.Texture()
 				sprite := material.Sprite()
 				if texture != nil {
-					offset := std.Vector2{}
-					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
+					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteScaler\x00")), 1, &sprite.SizeN().X)
+					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteOffset\x00")), 1, &sprite.Offset().X)
 					gl.ActiveTexture(gl.TEXTURE0)
 					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
 					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
 					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
 				} else if sprite != nil {
-					// log.Println(float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))))
-					offset := std.Vector2{
-						sprite.Offset().X / float32(sprite.Width()),
-						sprite.Offset().Y / float32(sprite.Height()),
-						// float32(math.Floor(float64(sprite.Offset().X / float32(sprite.Width())))),
-						// float32(math.Floor(float64(sprite.Offset().Y / float32(sprite.Height())))),
+					if sprite.ID() <= 0 {
+						o.RegisterMaterial(material)
 					}
-					// log.Printf("%v / %v = %v", sprite.Offset(), spirte.Width(), offset.X)
-					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("texOff\x00")), 1, &offset.X)
+					// log.Println(sprite.ID())
+					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteScaler\x00")), 1, &sprite.SizeN().X)
+					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteOffset\x00")), 1, &sprite.Offset().X)
 					gl.ActiveTexture(gl.TEXTURE0)
 					gl.BindTexture(gl.TEXTURE_2D, sprite.ID())
 					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)

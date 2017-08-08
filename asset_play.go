@@ -1,4 +1,4 @@
-// +build !deploy !play
+// +build !deployed
 
 package engine
 

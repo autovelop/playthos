@@ -28,11 +28,9 @@ func (t *Transform) SetPosition(x float32, y float32, z float32) {
 }
 
 func (t *Transform) SetRotation(x float32, y float32, z float32) {
-	// func (t *Transform) SetRotation(rotation *Vector3) {
 	t.rotation.X = x
 	t.rotation.Y = y
 	t.rotation.Z = z
-	// t.rotation = rotation
 }
 
 func (t *Transform) SetScale(scale *Vector3) {

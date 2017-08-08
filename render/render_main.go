@@ -45,9 +45,7 @@ const (
 
 	void main( void ) {
 		gl_Position = projection * view * model * pos;
-		// gl_Position = vec4(1.0, 1.0, 0.0, 1.0);
 		colOut = col;
-		// hasTexOut = hasTex;
 		texOut = tex;
 	}
 	` + "\x00"
@@ -60,14 +58,14 @@ const (
 	uniform int hasTexture;
 	uniform sampler2D textu;
 	layout (location = 1) in vec2 texOut;
-	uniform vec2 texOff;
+	uniform vec2 spriteScaler;
+	uniform vec2 spriteOffset;
 
 	layout (location = 0) out vec4 fragColor;
 
 	void main() {
 		if (hasTexture == 1) {
-			vec2 p = texOut + texOff;
-			vec4 frag_texture = texture(textu, p) * color;
+			vec4 frag_texture = texture(textu, (texOut * spriteScaler) + (spriteOffset * spriteScaler)) * color;
 			if(frag_texture.a < 0.1) {
 				discard;
 			}
@@ -95,9 +93,7 @@ const (
 
 	void main( void ) {
 		gl_Position = projection * view * model * pos;
-		// gl_Position = vec4(1.0, 1.0, 0.0, 1.0);
 		colOut = col;
-		// hasTexOut = hasTex;
 		texOut = tex;
 	}
 	` + "\x00"
@@ -110,12 +106,14 @@ const (
 	uniform int hasTexture;
 	uniform sampler2D textu;
 	layout (location = 1) in vec2 texOut;
+	uniform vec2 spriteScaler;
+	uniform vec2 spriteOffset;
 
 	layout (location = 0) out vec4 fragColor;
 
 	void main() {
 		if (hasTexture == 1) {
-			vec4 frag_texture = texture(textu, texOut) * color;
+			vec4 frag_texture = texture(textu, (texOut * spriteScaler) + (spriteOffset * spriteScaler)) * color;
 			if(frag_texture.a < 0.1) {
 				discard;
 			}
@@ -145,9 +143,7 @@ const (
 
 	void main( void ) {
 		gl_Position = projection * view * model * pos;
-		// gl_Position = vec4(1.0, 1.0, 0.0, 1.0);
 		colOut = col;
-		// hasTexOut = hasTex;
 		texOut = tex;
 	}
 	` + "\x00"
@@ -161,12 +157,14 @@ const (
 	uniform int hasTexture;
 	uniform sampler2D textu;
 	layout (location = 1) in vec2 texOut;
+	uniform vec2 spriteScaler;
+	uniform vec2 spriteOffset;
 
 	layout (location = 0) out vec4 fragColor;
 
 	void main() {
 		if (hasTexture == 1) {
-			vec4 frag_texture = texture(textu, texOut) * color;
+			vec4 frag_texture = texture(textu, (texOut * spriteScaler) + (spriteOffset * spriteScaler)) * color;
 			if(frag_texture.a < 0.1) {
 				discard;
 			}

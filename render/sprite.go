@@ -4,6 +4,7 @@ package render
 
 import (
 	"github.com/autovelop/playthos/std"
+	// "log"
 )
 
 type Sprite struct {
@@ -46,6 +47,10 @@ func (s *Sprite) SetSpriteOffset(v *std.Vector2) {
 
 func (s *Sprite) Size() *std.Vector2 {
 	return s.spriteSize
+}
+
+func (s *Sprite) SizeN() *std.Vector2 {
+	return &std.Vector2{s.spriteSize.X / float32(s.Width()), s.spriteSize.Y / float32(s.Height())}
 }
 
 func (s *Sprite) Offset() *std.Vector2 {
