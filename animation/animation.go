@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("desktop", "animation")
+	engine.RegisterPackage("autovelop_playthos_animation")
 	fmt.Println("> Animation: Initializing")
 }

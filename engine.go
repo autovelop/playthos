@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	PlatformLinux   = "linux"
-	PlatformWindows = "windows"
-	PlatformMacOS   = "macos"
+	PlatformLinux   = "lin"
+	PlatformWindows = "win"
+	PlatformMacOS   = "mac"
 	PlatformAndroid = "android"
 	PlatformIOS     = "ios"
 )
@@ -28,7 +28,7 @@ var drawer Drawer
 var listeners []Listener
 var integrants []IntegrantRoutine
 
-var play bool = true
+var play bool = false
 var deploy bool = false
 
 func init() {
@@ -56,6 +56,12 @@ type Engine struct {
 
 func New(n string, p string, s ...*Settings) *Engine {
 	game := &Engine{}
+	game.gamePackage = p
+	if !deploy && !play {
+		play = false
+		game.Run()
+		return game
+	}
 	if len(s) > 0 {
 		game.SetSettings(s[0])
 	} else {
@@ -63,18 +69,6 @@ func New(n string, p string, s ...*Settings) *Engine {
 	}
 	game.Init()
 	game.gameName = n
-
-	// if play || !deploy {
-	// 	dir, err := build.Import(p, "", build.FindOnly)
-	// 	if err != nil {
-	// 		log.Println("WARNING: Unable to import game folder")
-	// 	}
-	// 	err = os.Chdir(dir.Dir)
-	// 	if err != nil {
-	// 		log.Println("WARNING: Unable to read game folder")
-	// 	}
-	// }
-	game.gamePackage = p
 
 	return game
 }
@@ -184,6 +178,26 @@ func Play() bool {
 	return play
 }
 
+func Deploy() bool {
+	return deploy
+}
+
+func (e *Engine) Run() {
+	// cmd := exec.Command("pwd")
+	cmdArgs := []string{
+		"-c",
+		fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()),
+	}
+	cmd := exec.Command("/bin/sh", cmdArgs...)
+	cmdErr, _ := cmd.StderrPipe()
+	startErr := cmd.Start()
+	if startErr != nil {
+		return
+	}
+	errOutput, _ := ioutil.ReadAll(cmdErr)
+	fmt.Printf("%s", errOutput)
+}
+
 func (e *Engine) Deploy(platforms ...string) {
 	fmt.Printf("Deploying...\n")
 
@@ -272,9 +286,6 @@ func (e *Engine) Deploy(platforms ...string) {
 
 		// fmt.Printf("STDOUT: %s\n", stdOutput)
 		fmt.Printf("%s", errOutput)
-
-		// cmd.Wait()
-		// log.Fatal(err)
 	}
 }
 

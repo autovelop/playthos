@@ -1,5 +1,4 @@
-// +build opengl glfw
-// +build linux windows darwin
+// +build autovelop_playthos_opengl,autovelop_playthos_glfw !play
 
 package opengl
 

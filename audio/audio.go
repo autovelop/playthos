@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("desktop", "audio")
+	engine.RegisterPackage("autovelop_playthos_audio")
 	fmt.Println("> Audio: Initializing")
 }

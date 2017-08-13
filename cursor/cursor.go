@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("desktop", "cursor")
+	engine.RegisterPackage("autovelop_playthos_cursor")
 	fmt.Println("> Cursor: Initializing")
 }

@@ -1,4 +1,4 @@
-// +build builder render
+// +build autovelop_playthos_render !play
 
 package render
 

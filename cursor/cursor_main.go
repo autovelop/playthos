@@ -1,6 +1,4 @@
-// +build cursor
-// +build glfw
-// +build linux windows darwin
+// +build autovelop_playthos_cursor,autovelop_playthos_glfw !play
 
 package cursor
 

@@ -7,6 +7,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("scripting")
+	engine.RegisterPackage("autovelop_playthos_scripting")
 	fmt.Println("> Scripting: Initializing")
 }

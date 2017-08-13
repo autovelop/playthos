@@ -7,6 +7,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("render")
+	engine.RegisterPackage("autovelop_playthos_render")
 	fmt.Println("> Render: Ready")
 }

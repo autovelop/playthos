@@ -1,10 +1,9 @@
-// +build render
+// +build autovelop_playthos_render !play
 
 package render
 
 import (
 	"github.com/autovelop/playthos/std"
-	// "log"
 )
 
 type Sprite struct {

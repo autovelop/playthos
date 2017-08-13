@@ -1,6 +1,4 @@
-// +build audio
-// +build linux darwin
-// +build !windows
+// +build autovelop_playthos_audio !play
 
 package audio
 

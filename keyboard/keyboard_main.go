@@ -1,6 +1,4 @@
-// +build keyboard
-// +build glfw
-// +build linux windows darwin
+// +build autovelop_playthos_keyboard,autovelop_playthos_glfw !play
 
 package keyboard
 

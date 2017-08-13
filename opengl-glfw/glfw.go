@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("glfw")
+	engine.RegisterPackage("autovelop_playthos_glfw")
 	fmt.Println("> GLFW: Initializing")
 }

@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("desktop", "keyboard")
+	engine.RegisterPackage("autovelop_playthos_keyboard")
 	fmt.Println("> Keyboard: Initializing")
 }

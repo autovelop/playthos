@@ -1,4 +1,4 @@
-// +build audio
+// +build autovelop_playthos_audio !play
 
 package audio
 
