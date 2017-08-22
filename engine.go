@@ -3,12 +3,12 @@ package engine
 import (
 	"fmt"
 	"github.com/jteeuwen/go-bindata"
-	// "go/build"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -17,7 +17,7 @@ const (
 	PlatformLinux   = "lin"
 	PlatformWindows = "win"
 	PlatformMacOS   = "mac"
-	PlatformAndroid = "android"
+	PlatformAndroid = "and"
 	PlatformIOS     = "ios"
 )
 
@@ -28,7 +28,7 @@ var drawer Drawer
 var listeners []Listener
 var integrants []IntegrantRoutine
 
-var play bool = false
+var play bool = true
 var deploy bool = false
 
 func init() {
@@ -62,13 +62,34 @@ func New(n string, p string, s ...*Settings) *Engine {
 		game.Run()
 		return game
 	}
+	var osDetect string
+	switch runtime.GOOS {
+	case "windows":
+		osDetect = PlatformWindows
+		break
+	case "linux":
+		osDetect = PlatformLinux
+		break
+	case "darwin":
+		osDetect = PlatformMacOS
+		break
+	}
 	if len(s) > 0 {
-		game.SetSettings(s[0])
+		settings := s[0]
+		if len(settings.Platforms) <= 0 {
+			settings.Platforms = []string{osDetect}
+		}
+		game.SetSettings(settings)
 	} else {
-		game.SetSettings(&Settings{false, 800, 600, true})
+		game.SetSettings(&Settings{false, 800, 600, true, []string{osDetect}})
 	}
 	game.Init()
 	game.gameName = n
+
+	if deploy {
+		game.Deploy(game.settings.Platforms...)
+		os.Exit(0)
+	}
 
 	return game
 }
@@ -174,14 +195,6 @@ func (e *Engine) Settings() *Settings {
 	return e.settings
 }
 
-func Play() bool {
-	return play
-}
-
-func Deploy() bool {
-	return deploy
-}
-
 func (e *Engine) Run() {
 	// cmd := exec.Command("pwd")
 	cmdArgs := []string{
@@ -189,7 +202,7 @@ func (e *Engine) Run() {
 		fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()),
 	}
 	cmd := exec.Command("/bin/sh", cmdArgs...)
-	cmdErr, _ := cmd.StderrPipe()
+	cmdErr, _ := cmd.StdoutPipe()
 	startErr := cmd.Start()
 	if startErr != nil {
 		return
@@ -198,6 +211,7 @@ func (e *Engine) Run() {
 	fmt.Printf("%s", errOutput)
 }
 
+// TODO: This function is still a mess. Need to make Deploy system in order to tidy it up.
 func (e *Engine) Deploy(platforms ...string) {
 	fmt.Printf("Deploying...\n")
 
@@ -209,7 +223,6 @@ func (e *Engine) Deploy(platforms ...string) {
 	c.Package = "engine"
 	c.Tags = "deployed"
 	c.Output = fmt.Sprintf("%v/assets.go", "../playthos")
-	// c.Output = fmt.Sprintf("%v/assets.go", e.gamePackage)
 	bindata.Translate(c)
 
 	for _, platform := range platforms {
@@ -226,7 +239,6 @@ func (e *Engine) Deploy(platforms ...string) {
 			fmt.Printf("- MacOS\n- Requirements: xcode 7.3, cmake, libxml2, fuse, osxcross\n- Full details: https://github.com/tpoechtrager/osxcross#packaging-the-sdk\n\n")
 			simpleName = "darwin"
 			cgo = true
-			// cc = "CC=i386-apple-darwin15-g++"
 			cc = "CC=o32-clang"
 		case PlatformWindows:
 			fmt.Printf("- Windows (32-bit only)\n- Requirements: mingw-w64-gcc\n\n")
@@ -240,13 +252,11 @@ func (e *Engine) Deploy(platforms ...string) {
 			continue
 			break
 		}
-		// log.Fatalf("%v/bin/%v_%v", e.gamePackage, strings.ToLower(e.gameName), simpleName)
-		// fmt.Sprintf("bin/%v_%v%v", strings.ToLower(e.gameName), simpleName, fileExtension),
+
 		cmdArgs := []string{
 			"build",
 			"-v",
 			"-o",
-			// fmt.Sprintf("src/%v/bin/%v_%v%v", e.gamePackage, strings.ToLower(e.gameName), simpleName, fileExtension),
 			fmt.Sprintf("bin/%v_%v%v", strings.ToLower(e.gameName), simpleName, fileExtension),
 			"-tags",
 			fmt.Sprintf("deployed %v %v", simpleName, GetTags()),
@@ -264,27 +274,19 @@ func (e *Engine) Deploy(platforms ...string) {
 		} else {
 			cmd.Env = append(cmd.Env, "GOARCH=amd64")
 		}
+
 		if len(cc) > 0 {
 			cmd.Env = append(cmd.Env, cc)
 		}
 		cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
 
-		// cmdOut, _ := cmd.StdoutPipe()
 		cmdErr, _ := cmd.StderrPipe()
 
 		startErr := cmd.Start()
 		if startErr != nil {
-			// log.Println("here")
-			// log.Println(startErr)
-			// cmd.Wait()
 			return
 		}
-
-		// read stdout and stderr
-		// stdOutput, _ := ioutil.ReadAll(cmdOut)
 		errOutput, _ := ioutil.ReadAll(cmdErr)
-
-		// fmt.Printf("STDOUT: %s\n", stdOutput)
 		fmt.Printf("%s", errOutput)
 	}
 }
@@ -337,7 +339,6 @@ func (e *Engine) update() {
 		}
 
 		if render && drawer != nil {
-			// log.Fatal("here")
 			drawer.Draw()
 			frames++
 		} else {
