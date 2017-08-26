@@ -1,4 +1,4 @@
-// +build autovelop_playthos_physics !play
+// +build deploy physics
 
 package physics
 

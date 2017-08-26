@@ -7,6 +7,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("autovelop_playthos_collision")
+	engine.RegisterPackage(&engine.Package{"collision", []string{}, []string{"collision"}, []string{"generic"}})
 	fmt.Println("> Collision: Initializing")
 }

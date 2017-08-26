@@ -5,5 +5,4 @@ type Settings struct {
 	ResolutionX float32
 	ResolutionY float32
 	Cursor      bool
-	Platforms   []string
 }

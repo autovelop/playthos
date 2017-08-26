@@ -2,14 +2,14 @@ package engine
 
 import (
 	"fmt"
-	"github.com/jteeuwen/go-bindata"
-	"io/ioutil"
+	// "github.com/jteeuwen/go-bindata"
+	// "io/ioutil"
 	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
-	"strings"
+	// "os"
+	// "os/exec"
+	// "path/filepath"
+	// "runtime"
+	// "strings"
 	"time"
 )
 
@@ -21,10 +21,15 @@ const (
 	PlatformIOS     = "ios"
 )
 
-var packages []string
+var packages []*Package
+
+// var dependencies []string
+// var resolvers []string
+var platforms map[string]*Platform
 var systems []SystemRoutine
 var updaters []Updater
 var drawer Drawer
+var platformer Platformer
 var listeners []Listener
 var integrants []IntegrantRoutine
 
@@ -35,14 +40,29 @@ func init() {
 	fmt.Println("> Engine: Initializing")
 }
 
-func RegisterPackage(tags ...string) {
-	packages = append(packages, tags...)
+func RegisterPlatform(n string, p *Platform) {
+	if platforms == nil {
+		platforms = make(map[string]*Platform)
+	}
+	platforms[n] = p
 }
 
-func GetTags() string {
-	packages = removeDuplicates(packages)
-	return strings.Join(packages[:], " ")
+// func RegisterDependency(deps ...string) {
+// 	dependencies = append(dependencies, deps...)
+// }
+
+// func RegisterResolver(res ...string) {
+// 	resolvers = append(resolvers, res...)
+// }
+
+func RegisterPackage(pckg *Package) {
+	packages = append(packages, pckg)
 }
+
+// func GetTags() string {
+// 	packages = removeDuplicates(packages)
+// 	return strings.Join(packages[:], " ")
+// }
 
 type Engine struct {
 	gameName    string
@@ -55,42 +75,59 @@ type Engine struct {
 }
 
 func New(n string, p string, s ...*Settings) *Engine {
+	// fmt.Printf("%v\n%v\n", platforms, packages)
+	if deploy {
+		initDeploy(n, p)
+		return nil
+	}
+	// Objectives:
+	// Every time you run, it will always include all the systems. The inits for registering the packages, and the mains to make sure the code compiles
+	// IF deploying
+	// - check registered OSs
+	// ELSE (and also if deployed)
+	// - get local OS
+	// - validate systems required with OS
+	// - run
+	// log.Println("New()")
 	game := &Engine{}
 	game.gamePackage = p
-	if !deploy && !play {
-		play = false
-		game.Run()
-		return game
-	}
-	var osDetect string
-	switch runtime.GOOS {
-	case "windows":
-		osDetect = PlatformWindows
-		break
-	case "linux":
-		osDetect = PlatformLinux
-		break
-	case "darwin":
-		osDetect = PlatformMacOS
-		break
-	}
+	game.gameName = n
+	// no tags, just to rerun go run with the system tags in
+	// if !play && !deploy && !deployed {
+	// 	play = true
+	// 	game.Run()
+	// 	return game
+	// }
+	// var osDetect string
+	// switch runtime.GOOS {
+	// case "windows":
+	// 	osDetect = PlatformWindows
+	// 	break
+	// case "linux":
+	// 	osDetect = PlatformLinux
+	// 	break
+	// case "darwin":
+	// 	osDetect = PlatformMacOS
+	// 	break
+	// }
 	if len(s) > 0 {
 		settings := s[0]
-		if len(settings.Platforms) <= 0 {
-			settings.Platforms = []string{osDetect}
-		}
+		// if len(settings.Platforms) <= 0 {
+		// 	settings.Platforms = []string{osDetect}
+		// }
 		game.SetSettings(settings)
 	} else {
-		game.SetSettings(&Settings{false, 800, 600, true, []string{osDetect}})
+		game.SetSettings(&Settings{false, 800, 600, true})
 	}
+
+	// deploy tag, just to rerun go run again with system and os tags
+	// if deploy {
+	// 	game.Deploy(game.settings.Platforms...)
+	// 	os.Exit(0)
+	// }
+
+	// deployed or play tag, just runs game
 	game.Init()
-	game.gameName = n
-
-	if deploy {
-		game.Deploy(game.settings.Platforms...)
-		os.Exit(0)
-	}
-
 	return game
 }
 
@@ -183,8 +220,12 @@ func NewSystem(s SystemRoutine) {
 	}
 }
 
-func NewIntegrant(integrant IntegrantRoutine) {
-	integrants = append(integrants, integrant)
+func NewIntegrant(i IntegrantRoutine) {
+	integrants = append(integrants, i)
+
+	if p, ok := i.(Platformer); ok {
+		platformer = p
+	}
 }
 
 func (e *Engine) SetSettings(settings *Settings) {
@@ -195,114 +236,27 @@ func (e *Engine) Settings() *Settings {
 	return e.settings
 }
 
-func (e *Engine) Run() {
-	// cmd := exec.Command("pwd")
-	cmdArgs := []string{
-		"-c",
-		fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()),
-	}
-	cmd := exec.Command("/bin/sh", cmdArgs...)
-	cmdErr, _ := cmd.StdoutPipe()
-	startErr := cmd.Start()
-	if startErr != nil {
-		return
-	}
-	errOutput, _ := ioutil.ReadAll(cmdErr)
-	fmt.Printf("%s", errOutput)
+func LoadAsset(path string) {
+	platformer.LoadAsset(path)
 }
 
-// TODO: This function is still a mess. Need to make Deploy system in order to tidy it up.
-func (e *Engine) Deploy(platforms ...string) {
-	fmt.Printf("Deploying...\n")
-
-	c := bindata.NewConfig()
-	c.Input = []bindata.InputConfig{bindata.InputConfig{
-		Path:      filepath.Clean("assets"),
-		Recursive: true,
-	}}
-	c.Package = "engine"
-	c.Tags = "deployed"
-	c.Output = fmt.Sprintf("%v/assets.go", "../playthos")
-	bindata.Translate(c)
-
-	for _, platform := range platforms {
-		simpleName := "linux"
-		fileExtension := ""
-		cgo := false
-		var cc string
-		arch386 := false
-		switch platform {
-		case PlatformLinux:
-			fmt.Printf("- Linux\n- Requirements: libgl1-mesa-dev, xorg-dev\n\n")
-			break
-		case PlatformMacOS:
-			fmt.Printf("- MacOS\n- Requirements: xcode 7.3, cmake, libxml2, fuse, osxcross\n- Full details: https://github.com/tpoechtrager/osxcross#packaging-the-sdk\n\n")
-			simpleName = "darwin"
-			cgo = true
-			cc = "CC=o32-clang"
-		case PlatformWindows:
-			fmt.Printf("- Windows (32-bit only)\n- Requirements: mingw-w64-gcc\n\n")
-			simpleName = "windows"
-			cgo = true
-			arch386 = true
-			fileExtension = ".exe"
-			cc = "CC=i686-w64-mingw32-gcc -fno-stack-protector -D_FORTIFY_SOURCE=0 -lssp"
-			break
-		default:
-			continue
-			break
-		}
-
-		cmdArgs := []string{
-			"build",
-			"-v",
-			"-o",
-			fmt.Sprintf("bin/%v_%v%v", strings.ToLower(e.gameName), simpleName, fileExtension),
-			"-tags",
-			fmt.Sprintf("deployed %v %v", simpleName, GetTags()),
-			e.gamePackage,
-		}
-		cmd := exec.Command("go", cmdArgs...)
-		cmd.Env = os.Environ()
-
-		if cgo {
-			cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
-		}
-
-		if arch386 {
-			cmd.Env = append(cmd.Env, "GOARCH=386")
-		} else {
-			cmd.Env = append(cmd.Env, "GOARCH=amd64")
-		}
-
-		if len(cc) > 0 {
-			cmd.Env = append(cmd.Env, cc)
-		}
-		cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
-
-		cmdErr, _ := cmd.StderrPipe()
-
-		startErr := cmd.Start()
-		if startErr != nil {
-			return
-		}
-		errOutput, _ := ioutil.ReadAll(cmdErr)
-		fmt.Printf("%s", errOutput)
-	}
-}
-
-func removeDuplicates(elements []string) []string {
-	encountered := map[string]bool{}
-	result := []string{}
-	for v := range elements {
-		if encountered[elements[v]] == true {
-		} else {
-			encountered[elements[v]] = true
-			result = append(result, elements[v])
-		}
-	}
-	return result
-}
+// func (e *Engine) Run() {
+// 	// cmd := exec.Command("pwd")
+// 	log.Println("Run()")
+// 	cmdArgs := []string{
+// 		"-c",
+// 		fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()),
+// 	}
+// 	log.Println(fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()))
+// 	cmd := exec.Command("/bin/sh", cmdArgs...)
+// 	cmdErr, _ := cmd.StderrPipe()
+// 	startErr := cmd.Start()
+// 	if startErr != nil {
+// 		return
+// 	}
+// 	errOutput, _ := ioutil.ReadAll(cmdErr)
+// 	fmt.Printf("%s", errOutput)
+// }
 
 func (e *Engine) update() {
 	const frameCap float64 = 250

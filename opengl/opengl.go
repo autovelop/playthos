@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("autovelop_playthos_opengl")
+	engine.RegisterPackage(&engine.Package{"opengl", []string{"window_context", "asset_loader"}, []string{"drawing"}, []string{"linux", "windows", "darwin"}})
 	fmt.Println("> OpenGL: Initializing")
 }

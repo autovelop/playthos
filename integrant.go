@@ -10,3 +10,8 @@ type IntegrantRoutine interface {
 	SetActive(bool)
 	Destroy()
 }
+
+type Platformer interface {
+	IntegrantRoutine
+	LoadAsset(string)
+}

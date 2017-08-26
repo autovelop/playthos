@@ -1,4 +1,4 @@
-// +build autovelop_playthos_render !play
+// +build deploy render
 
 package render
 
@@ -9,17 +9,20 @@ import (
 
 type Material struct {
 	engine.Component
-	color   *std.Color
-	texture *Texture
-	sprite  *Sprite
+	color       *std.Color
+	textureBase *Texture
+	// sprite  *Sprite
+	SetTexture func(*Texture)
 }
 
 func NewMaterial() *Material {
-	return &Material{}
+	m := &Material{}
+	m.SetTexture = m.setTexture
+	return m
 }
 
 func (m *Material) Set(texture *Texture, col *std.Color) {
-	m.texture = texture
+	m.textureBase = texture
 	m.color = col
 }
 
@@ -31,18 +34,18 @@ func (m *Material) Color() *std.Color {
 	return m.color
 }
 
-func (m *Material) SetTexture(texture *Texture) {
-	m.texture = texture
+func (m *Material) setTexture(texture *Texture) {
+	m.textureBase = texture
 }
 
 func (m *Material) Texture() *Texture {
-	return m.texture
+	return m.textureBase
 }
 
-func (m *Material) SetSprite(s *Sprite) {
-	m.sprite = s
-}
+// func (m *Material) SetSprite(s *Sprite) {
+// 	m.sprite = s
+// }
 
-func (m *Material) Sprite() *Sprite {
-	return m.sprite
-}
+// func (m *Material) Sprite() *Sprite {
+// 	return m.sprite
+// }

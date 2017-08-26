@@ -7,6 +7,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage("autovelop_playthos_physics")
+	engine.RegisterPackage(&engine.Package{"physics", []string{}, []string{"physics"}, []string{"generic"}})
 	fmt.Println("> Physics: Initializing")
 }

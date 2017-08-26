@@ -1,4 +1,4 @@
-// +build autovelop_playthos_render !play
+// +build deploy render
 
 package render
 

@@ -1,4 +1,4 @@
-// +build autovelop_playthos_scripting !play
+// +build deploy scripting
 
 package scripting
 

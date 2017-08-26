@@ -1,4 +1,4 @@
-// +build autovelop_playthos_collision !play
+// +build deploy collision
 
 package collision
 

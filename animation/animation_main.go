@@ -1,4 +1,4 @@
-// +build autovelop_playthos_animation !play
+// +build deploy animation
 
 package animation
 
