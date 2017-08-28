@@ -217,12 +217,7 @@ func (o *OpenGL) Draw() {
 				model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
 				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
 
-				material_opengl := o.materials[idx]
-				if material_opengl == nil {
-					continue
-				}
-
-				material := material_opengl.m
+				material := o.materials[idx]
 				if material == nil {
 					continue
 				} else if !material.Active() {
@@ -235,15 +230,11 @@ func (o *OpenGL) Draw() {
 				}
 
 				texture := material.Texture()
-				texture_opengl := material_opengl.Texture()
 				if texture != nil {
-					if texture_opengl.ID() <= 0 {
-						o.RegisterMaterial(material)
-					}
 					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteScaler\x00")), 1, &texture.SizeN().X)
 					gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteOffset\x00")), 1, &texture.Offset().X)
 					gl.ActiveTexture(gl.TEXTURE0)
-					gl.BindTexture(gl.TEXTURE_2D, texture_opengl.ID())
+					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
 					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
 					gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
 				} else {
@@ -310,90 +301,54 @@ func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
 }
 
 func (o *OpenGL) RegisterMaterial(material *render.Material) {
-	// texture := material.Texture()
-	texture := material.Texture()
-	openGLMaterial := &OpenGLMaterial{m: material}
+	texture := material.BaseTexture()
+	openGLMaterial := &OpenGLMaterial{Material: material}
 	if texture != nil {
-		raw := o.platform.Asset(texture.Path())
+		openGLMaterial.OverrideTexture(func(t render.Textureable) {
+			raw := o.platform.Asset(t.Path())
 
-		img, _, err := image.Decode(bytes.NewReader(raw))
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			img, _, err := image.Decode(bytes.NewReader(raw))
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		rgba := image.NewRGBA(img.Bounds())
-		if rgba.Stride != rgba.Rect.Size().X*4 {
-			log.Println("rgba stride error")
-			return
-		}
+			rgba := image.NewRGBA(img.Bounds())
+			if rgba.Stride != rgba.Rect.Size().X*4 {
+				log.Println("rgba stride error")
+				return
+			}
 
-		texture.SetHeight(int32(rgba.Rect.Size().Y))
-		texture.SetWidth(int32(rgba.Rect.Size().X))
+			t.SetHeight(int32(rgba.Rect.Size().Y))
+			t.SetWidth(int32(rgba.Rect.Size().X))
 
-		pix := rgba.Pix
-		draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+			pix := rgba.Pix
+			draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
-		// fmt.Println(sprite)
-		// fmt.Println(o.platform)
-		// fmt.Println(material.Sprite().Path())
-		// if texture != nil {
-		// 	// Load texture
-		// 	var tid uint32
-		// 	gl.GenTextures(1, &tid)
-		// 	gl.ActiveTexture(gl.TEXTURE0)
-		// 	gl.BindTexture(gl.TEXTURE_2D, tid)
-		// 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		// 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-		// 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-		// 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-		// 	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		// 	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		// 	gl.TexImage2D(
-		// 		gl.TEXTURE_2D,
-		// 		0,
-		// 		gl.RGBA,
-		// 		texture.Width(),
-		// 		texture.Height(),
-		// 		0,
-		// 		gl.RGBA,
-		// 		gl.UNSIGNED_BYTE,
-		// 		gl.Ptr(texture.RGBA()))
-		// 	texture.SetID(tid)
-		// } else if sprite != nil {
-		var tid uint32
-		gl.GenTextures(1, &tid)
-		gl.ActiveTexture(gl.TEXTURE0)
-		gl.BindTexture(gl.TEXTURE_2D, tid)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		gl.TexImage2D(
-			gl.TEXTURE_2D,
-			0,
-			gl.RGBA,
-			texture.Width(),
-			texture.Height(),
-			0,
-			gl.RGBA,
-			gl.UNSIGNED_BYTE,
-			gl.Ptr(pix))
+			var tid uint32
+			gl.GenTextures(1, &tid)
+			gl.ActiveTexture(gl.TEXTURE0)
+			gl.BindTexture(gl.TEXTURE_2D, tid)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+			gl.TexImage2D(
+				gl.TEXTURE_2D,
+				0,
+				gl.RGBA,
+				t.Width(),
+				t.Height(),
+				0,
+				gl.RGBA,
+				gl.UNSIGNED_BYTE,
+				gl.Ptr(pix))
 
-		openGLTexture := &OpenGLTexture{t: texture}
-		openGLTexture.SetID(tid)
-		openGLMaterial.m.SetTexture = func(t *render.Texture) {
-			openGLTexture.t = t
-		}
-
-		openGLMaterial.SetTexture(openGLTexture)
-
-		// 	// log.Fatal("here")
-		// }
+			openGLMaterial.texture = &OpenGLTexture{t.(*render.Texture), tid}
+		})
 	}
-
 	o.materials = append(o.materials, openGLMaterial)
 }
 

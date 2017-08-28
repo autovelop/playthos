@@ -94,12 +94,8 @@ func (m *WebGLMesh) VAO() *js.Object {
 }
 
 type WebGLTexture struct {
-	t  *render.Texture
+	*render.Texture
 	id *js.Object
-}
-
-func (t *WebGLTexture) SetID(id *js.Object) {
-	t.id = id
 }
 
 func (t *WebGLTexture) ID() *js.Object {
@@ -107,14 +103,23 @@ func (t *WebGLTexture) ID() *js.Object {
 }
 
 type WebGLMaterial struct {
-	m       *render.Material
+	*render.Material
 	texture *WebGLTexture
 }
 
-func (m *WebGLMaterial) SetTexture(t *WebGLTexture) {
-	m.texture = t
+func NewWebGLMaterial(m *render.Material) *WebGLMaterial {
+	webGLMaterial := &WebGLMaterial{Material: m}
+	return webGLMaterial
 }
 
-func (m *WebGLMaterial) Texture() *WebGLTexture {
-	return m.texture
+func (w *WebGLMaterial) OverrideTexture(fn func(render.Textureable)) {
+	w.SetTexture = fn
+	w.SetTexture(w.BaseTexture().(*render.Texture))
+}
+
+func (w *WebGLMaterial) Texture() *WebGLTexture {
+	return w.texture
+}
+func (w *WebGLMaterial) ID() *js.Object {
+	return w.texture.id
 }

@@ -55,3 +55,11 @@ func (t *Texture) SizeN() *std.Vector2 {
 func (t *Texture) Offset() *std.Vector2 {
 	return t.offset
 }
+
+type Textureable interface {
+	Path() string
+	Width() int32
+	Height() int32
+	SetWidth(int32)
+	SetHeight(int32)
+}

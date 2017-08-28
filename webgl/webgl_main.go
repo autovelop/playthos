@@ -204,9 +204,7 @@ func (w *WebGL) requestAnimationFrame(float32) {
 				position := transform.Position()
 				rotation := transform.Rotation()
 				scale := transform.Scale()
-				// log.Println(rotation)
 
-				// model = model.Mul4(mgl32.Scale3D(1, 1, 1))
 				model := mgl32.Ident4()
 				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
 				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
@@ -214,12 +212,11 @@ func (w *WebGL) requestAnimationFrame(float32) {
 				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
 				model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
 				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
-				material := w.materials[idx].m
-				material_webgl := w.materials[idx]
+
+				material := w.materials[idx]
 				if material == nil {
 					continue
 				} else if !material.Active() {
-					// log.Fatal("here")
 					continue
 				}
 
@@ -228,22 +225,17 @@ func (w *WebGL) requestAnimationFrame(float32) {
 					gl.Uniform4f(gl.GetUniformLocation(w.shaderProgram, gl.Str("color")), color.R, color.G, color.B, color.A)
 				}
 				texture := material.Texture()
-				texture_webgl := material_webgl.Texture()
 				if texture != nil {
-					if texture_webgl.ID() == nil {
-						w.RegisterMaterial(material)
-					}
 					gl.Uniform2f(gl.GetUniformLocation(w.shaderProgram, gl.Str("spriteScaler")), texture.SizeN().X, texture.SizeN().Y)
 					gl.Uniform2f(gl.GetUniformLocation(w.shaderProgram, gl.Str("spriteOffset")), texture.Offset().X, texture.Offset().Y)
 					gl.ActiveTexture(gl.TEXTURE0)
-					gl.BindTexture(gl.TEXTURE_2D, texture_webgl.ID())
+					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
 					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("texture")), 0)
 					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("hasTexture")), 1)
 				} else {
 					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("hasTexture")), 0)
 				}
 
-				// gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("hasTexture")), 0)
 				gl.UniformMatrix4fv(model_uni, false, model[:])
 				gl.UniformMatrix4fv(view_uni, false, view[:])
 				gl.UniformMatrix4fv(proj_uni, false, proj[:])
@@ -304,34 +296,32 @@ func (w *WebGL) DeleteEntity(entity *engine.Entity) {
 
 func (w *WebGL) RegisterMaterial(material *render.Material) {
 	gl := w.gl
-	texture := material.Texture()
-	webGLMaterial := &WebGLMaterial{m: material}
+	texture := material.BaseTexture()
+	webGLMaterial := &WebGLMaterial{Material: material}
 	if texture != nil {
-		raw := w.platform.Asset(texture.Path())
-		texture.SetHeight(int32(raw.Get("height").Int()))
-		texture.SetWidth(int32(raw.Get("width").Int()))
-		tid := gl.CreateTexture()
-		gl.ActiveTexture(gl.TEXTURE0)
-		gl.BindTexture(gl.TEXTURE_2D, tid)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-		gl.TexImage2D(
-			gl.TEXTURE_2D,
-			0,
-			gl.RGBA,
-			gl.RGBA,
-			gl.UNSIGNED_BYTE,
-			raw)
-		webGLTexture := &WebGLTexture{t: texture}
-		webGLTexture.SetID(tid)
+		webGLMaterial.OverrideTexture(func(t render.Textureable) {
+			raw := w.platform.Asset(t.Path())
 
-		webGLMaterial.m.SetTexture = func(t *render.Texture) {
-			webGLTexture.t = t
-		}
+			t.SetHeight(int32(raw.Get("height").Int()))
+			t.SetWidth(int32(raw.Get("width").Int()))
 
-		webGLMaterial.SetTexture(webGLTexture)
+			tid := gl.CreateTexture()
+			gl.ActiveTexture(gl.TEXTURE0)
+			gl.BindTexture(gl.TEXTURE_2D, tid)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+			gl.TexImage2D(
+				gl.TEXTURE_2D,
+				0,
+				gl.RGBA,
+				gl.RGBA,
+				gl.UNSIGNED_BYTE,
+				raw)
+
+			webGLMaterial.texture = &WebGLTexture{t.(*render.Texture), tid}
+		})
 	}
 	w.materials = append(w.materials, webGLMaterial)
 }

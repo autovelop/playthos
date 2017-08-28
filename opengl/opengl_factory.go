@@ -115,12 +115,8 @@ func (m *OpenGLMesh) VAO() uint32 {
 }
 
 type OpenGLTexture struct {
-	t  *render.Texture
+	*render.Texture
 	id uint32
-}
-
-func (t *OpenGLTexture) SetID(id uint32) {
-	t.id = id
 }
 
 func (t *OpenGLTexture) ID() uint32 {
@@ -128,14 +124,23 @@ func (t *OpenGLTexture) ID() uint32 {
 }
 
 type OpenGLMaterial struct {
-	m       *render.Material
+	*render.Material
 	texture *OpenGLTexture
 }
 
-func (m *OpenGLMaterial) SetTexture(t *OpenGLTexture) {
-	m.texture = t
+func NewOpenGLMaterial(m *render.Material) *OpenGLMaterial {
+	openGLMaterial := &OpenGLMaterial{Material: m}
+	return openGLMaterial
 }
 
-func (m *OpenGLMaterial) Texture() *OpenGLTexture {
-	return m.texture
+func (o *OpenGLMaterial) OverrideTexture(fn func(render.Textureable)) {
+	o.SetTexture = fn
+	o.SetTexture(o.BaseTexture().(*render.Texture))
+}
+
+func (o *OpenGLMaterial) Texture() *OpenGLTexture {
+	return o.texture
+}
+func (o *OpenGLMaterial) ID() uint32 {
+	return o.texture.id
 }
