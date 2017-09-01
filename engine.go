@@ -154,6 +154,9 @@ func (e *Engine) Init() {
 			integrant.initUnit(e)
 			integrant.InitIntegrant()
 			integrant.SetActive(true)
+			for _, i := range integrants {
+				i.AddIntegrant(integrant)
+			}
 		}
 		for _, system := range systems {
 			for _, integrant := range integrants {
@@ -215,9 +218,6 @@ func NewSystem(s SystemRoutine) {
 	if u, ok := s.(Updater); ok {
 		updaters = append(updaters, u)
 	}
-	if l, ok := s.(Listener); ok {
-		listeners = append(listeners, l)
-	}
 }
 
 func NewIntegrant(i IntegrantRoutine) {
@@ -225,6 +225,9 @@ func NewIntegrant(i IntegrantRoutine) {
 
 	if p, ok := i.(Platformer); ok {
 		platformer = p
+	}
+	if l, ok := i.(Listener); ok {
+		listeners = append(listeners, l)
 	}
 }
 

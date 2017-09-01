@@ -26,6 +26,8 @@ func (l *Linux) InitIntegrant() {
 	l.assets = make(map[string][]byte, 0)
 }
 
+func (l *Linux) AddIntegrant(engine.IntegrantRoutine) {}
+
 func (l *Linux) Destroy() {}
 
 func (l *Linux) Asset(p string) []byte {

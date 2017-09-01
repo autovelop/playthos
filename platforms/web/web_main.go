@@ -10,7 +10,7 @@ import (
 	// "go/build"
 	// "io/ioutil"
 	// "os"
-	// "strings"
+	"strings"
 )
 
 func init() {
@@ -24,6 +24,8 @@ type Web struct {
 	Loaded  func()
 	waiting int
 }
+
+func (w *Web) AddIntegrant(engine.IntegrantRoutine) {}
 
 func (w *Web) InitIntegrant() {
 	w.assets = make(map[string]*js.Object, 0)
@@ -52,12 +54,27 @@ func (w *Web) Asset(p string) *js.Object {
 
 func (w *Web) LoadAsset(p string) {
 	ready := make(chan bool)
-	bodyImage := js.Global.Get("Image").New()
-	bodyImage.Set("onload", func(s *js.Object) {
-		w.assets[p] = bodyImage
-		ready <- true
-	})
-	bodyImage.Set("src", p)
+	dotSplit := strings.Split(p, ".")
+	ext := dotSplit[len(dotSplit)-1]
+	switch ext {
+	case "png":
+		imageFile := js.Global.Get("Image").New()
+		imageFile.Set("onload", func(s *js.Object) {
+			w.assets[p] = imageFile
+			ready <- true
+		})
+		imageFile.Set("src", p)
+		break
+	case "wav":
+		audioFile := js.Global.Get("Audio").New()
+		audioFile.Set("oncanplaythrough", func(s *js.Object) {
+			w.assets[p] = audioFile
+			ready <- true
+		})
+		audioFile.Set("src", p)
+		// audioFile.Set("autoplay", true)
+		break
+	}
 	w.waiting++
 	<-ready
 	w.waiting--

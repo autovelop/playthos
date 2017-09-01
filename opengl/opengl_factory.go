@@ -21,9 +21,9 @@ type OpenGLFactory struct {
 	engine.Integrant
 }
 
-func (o *OpenGLFactory) InitIntegrant() {}
-
-func (o *OpenGLFactory) Destroy() {}
+func (o *OpenGLFactory) InitIntegrant()                                 {}
+func (o *OpenGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
+func (o *OpenGLFactory) Destroy()                                       {}
 
 func (o *OpenGLFactory) NewShader(vs string, fs string) uint32 {
 	version := gl.GoStr(gl.GetString(gl.VERSION))

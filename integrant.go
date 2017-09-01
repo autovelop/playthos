@@ -7,8 +7,16 @@ type Integrant struct {
 type IntegrantRoutine interface {
 	initUnit(*Engine)
 	InitIntegrant()
+	AddIntegrant(IntegrantRoutine)
 	SetActive(bool)
 	Destroy()
+}
+
+type Listener interface {
+	IntegrantRoutine
+	On(int, func(...int))
+	IsSet(int) bool
+	Emit(int, int)
 }
 
 type Platformer interface {

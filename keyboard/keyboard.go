@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage(&engine.Package{"keyboard", []string{"window_context"}, []string{"keyboard_input"}, []string{"windows", "linux", "darwin"}})
+	engine.RegisterPackage(&engine.Package{"keyboard", []string{"window_context"}, []string{"keyboard_input"}, []string{"generic"}})
 	fmt.Println("> Keyboard: Initializing")
 }

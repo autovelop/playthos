@@ -18,9 +18,9 @@ type WebGLFactory struct {
 	engine.Integrant
 }
 
-func (w *WebGLFactory) InitIntegrant() {}
-
-func (w *WebGLFactory) Destroy() {}
+func (w *WebGLFactory) InitIntegrant()                                 {}
+func (w *WebGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
+func (w *WebGLFactory) Destroy()                                       {}
 
 func (w *WebGLFactory) NewShader(gl *Context, vs string, fs string) *js.Object {
 	version := gl.GetParameter(gl.VERSION)

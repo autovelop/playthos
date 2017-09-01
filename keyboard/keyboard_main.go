@@ -4,193 +4,172 @@ package keyboard
 
 import (
 	"github.com/autovelop/playthos"
-	glfw "github.com/autovelop/playthos/glfw"
-	glfw32 "github.com/go-gl/glfw/v3.2/glfw"
 )
 
 func init() {
-	engine.NewSystem(&Keyboard{})
+	engine.NewIntegrant(&Keyboard{})
 }
-
-type Action uint
-
-const (
-	// https://github.com/go-gl/glfw/blob/228fbf8cdbdda24bd57b5405bab240da3900b9a7/v3.2/glfw/glfw/include/GLFW/glfw3.h
-	ActionRelease = 0
-	ActionPress   = 1
-	ActionRepeat  = 2
-
-	KeyUnknown      = -1
-	KeySpace        = 32
-	KeyApostrophe   = 39 /* ' */
-	KeyComma        = 44 /* , */
-	KeyMinus        = 45 /* - */
-	KeyPeriod       = 46 /* . */
-	KeySlash        = 47 /* / */
-	Key0            = 48
-	Key1            = 49
-	Key2            = 50
-	Key3            = 51
-	Key4            = 52
-	Key5            = 53
-	Key6            = 54
-	Key7            = 55
-	Key8            = 56
-	Key9            = 57
-	KeySemicolon    = 59 /* ; */
-	KeyEqual        = 61 /* = */
-	KeyA            = 65
-	KeyB            = 66
-	KeyC            = 67
-	KeyD            = 68
-	KeyE            = 69
-	KeyF            = 70
-	KeyG            = 71
-	KeyH            = 72
-	KeyI            = 73
-	KeyJ            = 74
-	KeyK            = 75
-	KeyL            = 76
-	KeyM            = 77
-	KeyN            = 78
-	KeyO            = 79
-	KeyP            = 80
-	KeyQ            = 81
-	KeyR            = 82
-	KeyS            = 83
-	KeyT            = 84
-	KeyU            = 85
-	KeyV            = 86
-	KeyW            = 87
-	KeyX            = 88
-	KeyY            = 89
-	KeyZ            = 90
-	KeyLeftBracket  = 91  /* [ */
-	KeyBackslash    = 92  /* \ */
-	KeyRightBracket = 93  /* ] */
-	KeyGraveAccent  = 96  /* ` */
-	KeyWorld_1      = 161 /* non-US #1 */
-	KeyWorld_2      = 162 /* non-US #2 */
-	KeyEscape       = 256
-	KeyEnter        = 257
-	KeyTab          = 258
-	KeyBackspace    = 259
-	KeyInsert       = 260
-	KeyDelete       = 261
-	KeyRight        = 262
-	KeyLeft         = 263
-	KeyDown         = 264
-	KeyUp           = 265
-	KeyPage_down    = 267
-	KeyHome         = 268
-	KeyEnd          = 269
-	KeyCapsLock     = 280
-	KeyScrollLock   = 281
-	KeyNumLock      = 282
-	KeyPrintScreen  = 283
-	KeyPause        = 284
-	KeyF1           = 290
-	KeyF2           = 291
-	KeyF3           = 292
-	KeyF4           = 293
-	KeyF5           = 294
-	KeyF6           = 295
-	KeyF7           = 296
-	KeyF8           = 297
-	KeyF9           = 298
-	KeyF10          = 299
-	KeyF11          = 300
-	KeyF13          = 302
-	KeyF14          = 303
-	KeyF15          = 304
-	KeyF16          = 305
-	KeyF17          = 306
-	KeyF18          = 307
-	KeyF19          = 308
-	KeyF20          = 309
-	KeyF21          = 310
-	KeyF22          = 311
-	KeyF23          = 312
-	KeyF24          = 313
-	KeyF25          = 314
-	KeyKP0          = 320
-	KeyKP1          = 321
-	KeyKP2          = 322
-	KeyKP3          = 323
-	KeyKP4          = 324
-	KeyKP5          = 325
-	KeyKP6          = 326
-	KeyKP7          = 327
-	KeyKP8          = 328
-	KeyKP9          = 329
-	KeyKPDecimal    = 330
-	KeyKPMultiply   = 332
-	KeyKPSubtract   = 333
-	KeyKPAdd        = 334
-	KeyKPEnter      = 335
-	KeyKPEqual      = 336
-	KeyLeftShift    = 340
-	KeyLeftControl  = 341
-	KeyLeftAlt      = 342
-	KeyLeftSuper    = 343
-	KeyRightShift   = 344
-	KeyRightControl = 345
-	KeyRightAlt     = 346
-	KeyRightSuper   = 347
-	KeyMenu         = 348
-	KeyLast         = KeyMenu
-)
-
-var keyboard *Keyboard
 
 type Keyboard struct {
-	engine.System
-	window   *glfw32.Window
-	keypress []func(...uint)
+	engine.Integrant
+	keypress []func(...int)
 }
 
-func (k *Keyboard) InitSystem() {
-	k.keypress = make([]func(...uint), 512, 512) // this is probably too much but safe for now
+func (k *Keyboard) InitIntegrant() {
+	k.keypress = make([]func(...int), 300, 300) // this is probably too much but safe for now
 }
 
 func (k *Keyboard) Destroy() {
 }
 
-func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
-
-func (k *Keyboard) On(key uint, fn func(...uint)) {
-	// if k.Active() && k.keypress[key] != nil {
-	if k.Active() {
-		// log.Fatal("here")
-		k.keypress[key] = fn
-	}
-}
-
 func (k *Keyboard) AddComponent(component engine.ComponentRoutine) {}
+
+func (k *Keyboard) AddIntegrant(integrant engine.IntegrantRoutine) {
+}
 
 func (k *Keyboard) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{}
 }
+func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
-func (k *Keyboard) AddIntegrant(integrant engine.IntegrantRoutine) {
-	switch integrant := integrant.(type) {
-	case *glfw.GLFW:
-		k.window = integrant.Window()
-		break
-	}
-
-	// CANT GET THIS TO WORK
-	// k.window.SetUserPointer(unsafe.Pointer(k))
-	// DOING GLOBAL SADNESS INSTEAD
-	keyboard = k
-
-	k.window.SetKeyCallback(onKey)
+func (k *Keyboard) IsSet(key int) bool {
+	return k.keypress[key] != nil
 }
 
-func onKey(w *glfw32.Window, keycode glfw32.Key, scancode int, action glfw32.Action, mods glfw32.ModifierKey) {
-	// log.Printf("Key Code: %v\n", key)
-	// log.Printf("Scan Code: %v\n", scancode)
-	if keyboard.keypress[keycode] != nil {
-		keyboard.keypress[keycode](uint(action))
-	}
+func (k *Keyboard) Emit(kc int, a int) {
+	k.keypress[kc](a)
 }
+
+func (k *Keyboard) On(key int, fn func(...int)) {
+	k.keypress[key] = fn
+}
+
+const (
+	ActionRelease = 0
+	ActionPress   = 1
+	ActionRepeat  = 2
+)
+
+var (
+	KeyUnknown      int = 0
+	KeySpace        int = 0
+	KeyApostrophe   int = 0
+	KeyComma        int = 0
+	KeyMinus        int = 0
+	KeyPeriod       int = 0
+	KeySlash        int = 0
+	Key0            int = 0
+	Key1            int = 0
+	Key2            int = 0
+	Key3            int = 0
+	Key4            int = 0
+	Key5            int = 0
+	Key6            int = 0
+	Key7            int = 0
+	Key8            int = 0
+	Key9            int = 0
+	KeySemicolon    int = 0
+	KeyEqual        int = 0
+	KeyA            int = 0
+	KeyB            int = 0
+	KeyC            int = 0
+	KeyD            int = 0
+	KeyE            int = 0
+	KeyF            int = 0
+	KeyG            int = 0
+	KeyH            int = 0
+	KeyI            int = 0
+	KeyJ            int = 0
+	KeyK            int = 0
+	KeyL            int = 0
+	KeyM            int = 0
+	KeyN            int = 0
+	KeyO            int = 0
+	KeyP            int = 0
+	KeyQ            int = 0
+	KeyR            int = 0
+	KeyS            int = 0
+	KeyT            int = 0
+	KeyU            int = 0
+	KeyV            int = 0
+	KeyW            int = 0
+	KeyX            int = 0
+	KeyY            int = 0
+	KeyZ            int = 0
+	KeyLeftBracket  int = 0
+	KeyBackslash    int = 0
+	KeyRightBracket int = 0
+	KeyGraveAccent  int = 0
+	KeyWorld_1      int = 0
+	KeyWorld_2      int = 0
+	KeyEscape       int = 0
+	KeyEnter        int = 0
+	KeyTab          int = 0
+	KeyBackspace    int = 0
+	KeyInsert       int = 0
+	KeyDelete       int = 0
+	KeyRight        int = 0
+	KeyLeft         int = 0
+	KeyDown         int = 0
+	KeyUp           int = 0
+	KeyPageUp       int = 0
+	KeyPageDown     int = 0
+	KeyHome         int = 0
+	KeyEnd          int = 0
+	KeyCapsLock     int = 0
+	KeyScrollLock   int = 0
+	KeyNumLock      int = 0
+	KeyPrintScreen  int = 0
+	KeyPause        int = 0
+	KeyF1           int = 0
+	KeyF2           int = 0
+	KeyF3           int = 0
+	KeyF4           int = 0
+	KeyF5           int = 0
+	KeyF6           int = 0
+	KeyF7           int = 0
+	KeyF8           int = 0
+	KeyF9           int = 0
+	KeyF10          int = 0
+	KeyF11          int = 0
+	KeyF12          int = 0
+	KeyF13          int = 0
+	KeyF14          int = 0
+	KeyF15          int = 0
+	KeyF16          int = 0
+	KeyF17          int = 0
+	KeyF18          int = 0
+	KeyF19          int = 0
+	KeyF20          int = 0
+	KeyF21          int = 0
+	KeyF22          int = 0
+	KeyF23          int = 0
+	KeyF24          int = 0
+	KeyF25          int = 0
+	KeyKP0          int = 0
+	KeyKP1          int = 0
+	KeyKP2          int = 0
+	KeyKP3          int = 0
+	KeyKP4          int = 0
+	KeyKP5          int = 0
+	KeyKP6          int = 0
+	KeyKP7          int = 0
+	KeyKP8          int = 0
+	KeyKP9          int = 0
+	KeyKPDecimal    int = 0
+	KeyKPMultiply   int = 0
+	KeyKPSubtract   int = 0
+	KeyKPAdd        int = 0
+	KeyKPEnter      int = 0
+	KeyKPEqual      int = 0
+	KeyLeftShift    int = 0
+	KeyLeftControl  int = 0
+	KeyLeftAlt      int = 0
+	KeyLeftSuper    int = 0
+	KeyRightShift   int = 0
+	KeyRightControl int = 0
+	KeyRightAlt     int = 0
+	KeyRightSuper   int = 0
+	KeyMenu         int = 0
+	KeyLast         int = 0
+)

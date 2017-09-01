@@ -25,8 +25,3 @@ type Updater interface {
 	SystemRoutine
 	Update()
 }
-
-type Listener interface {
-	SystemRoutine
-	On(uint, func(...uint))
-}

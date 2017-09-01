@@ -243,8 +243,8 @@ func (w *WebGL) requestAnimationFrame(float32) {
 				gl.BindVertexArray(nil)
 			}
 		}
+		js.Global.Call("requestAnimationFrame", w.requestAnimationFrame)
 	}
-	js.Global.Call("requestAnimationFrame", w.requestAnimationFrame)
 }
 
 func (w *WebGL) createDefaultCamera() {

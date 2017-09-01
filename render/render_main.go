@@ -9,7 +9,6 @@ import (
 
 type Render struct {
 	engine.System
-	// RenderRoutine
 }
 
 func NewRenderSystem(render RenderRoutine) {

@@ -128,6 +128,8 @@ func (g *GLFW) Destroy() {
 	// g.window = nil
 }
 
+func (g *GLFW) AddIntegrant(engine.IntegrantRoutine) {
+}
 func (g *GLFW) Window() *glfw.Window {
 	return g.window
 }
