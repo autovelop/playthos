@@ -25,7 +25,7 @@ Playthos a open source game engine that promises to make game development easy. 
 [Ludum Dare 39: Power Hero](https://fanus.itch.io/power-hero)
 
 ## Current Features
-- [x] Windows, Linux, MacOS platform support
+- [x] Windows, Linux, MacOS, Chrome, Firefox support
 - [x] ECS
 - [x] Standards library
 - [x] 2D Graphics (GLFW & OpenGL)
@@ -46,7 +46,6 @@ Playthos a open source game engine that promises to make game development easy. 
 - [x] Documentation
 
 ## Upcoming Features
-- [ ] WebGL platform (using GopherJS)
 - [ ] Robust shader system
 - [ ] Creator Hub
 - [ ] Network
