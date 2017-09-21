@@ -1,4 +1,4 @@
-// +build autovelop_playthos_collision !play
+// +build collision !play
 
 package collision
 
@@ -9,29 +9,41 @@ import (
 
 type Collider struct {
 	engine.Component
-	transform *std.Transform
-	relative  *std.Rect
-	onHit     func(*engine.Entity)
+	position *std.Vector3
+	offset   *std.Vector2
+	size     *std.Vector2
+	onHit    func(*Collider)
+	reverse  bool
 }
 
 func NewCollider() *Collider {
 	return &Collider{}
 }
-func (c *Collider) Set(transform *std.Transform, relative *std.Rect) {
-	c.transform = transform
-	c.relative = relative
+func (c *Collider) Set(position *std.Vector3, offset *std.Vector2, size *std.Vector2) {
+	c.position = position
+	// calculate bounds based on shape & orientation
+	c.offset = offset
+	c.size = size
 }
 
-func (c *Collider) OnHit(onHit func(*engine.Entity)) {
+func (c *Collider) Reverse() bool {
+	return c.reverse
+}
+
+func (c *Collider) SetReverse(r bool) {
+	c.reverse = r
+}
+
+func (c *Collider) OnHit(onHit func(*Collider)) {
 	c.onHit = onHit
 }
 
-func (c *Collider) Hit(other *engine.Entity) {
+func (c *Collider) Hit(other *Collider) {
 	if c.onHit != nil {
 		c.onHit(other)
 	}
 }
 
-func (c *Collider) Get() (*std.Transform, *std.Rect) {
-	return c.transform, c.relative
+func (c *Collider) Get() (*std.Vector3, *std.Vector2, *std.Vector2) {
+	return c.position, c.offset, c.size
 }

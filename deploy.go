@@ -20,40 +20,34 @@ func initDeploy(n string, p string) {
 	for name, platform := range platforms {
 		valid, deps := validate(name)
 		if valid {
-			// cmdArgs := []string{
-			// 	"build",
-			// 	"-v",
-			// 	"-o",
-			// 	"-tags",
-			// 	fmt.Sprintf("deployed %v %v %v", platform, simpleName, GetTags()),
-			// 	e.p,
-			// }
 			cmdrm := exec.Command("rm", fmt.Sprintf("bin/%v_%v%v", strings.Replace(strings.ToLower(n), " ", "_", -1), name, platform.BinaryFileExtension))
 			cmdrm.Start()
 
-			// all the systems go here
 			platform.Tags = append(platform.Tags, deps...)
+
+			// Make sure all go dependencies are installed
+			cmdinstall := exec.Command("go", "install", fmt.Sprintf("-tags=%v", strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")), p)
+			cmdinstall.Start()
+
 			platform.Args = append(platform.Args, "-o",
 				fmt.Sprintf("bin/%v_%v%v", strings.Replace(strings.ToLower(n), " ", "_", -1), name, platform.BinaryFileExtension),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
-			platform.Args = append(platform.Args)
 			platform.Args = append(platform.Args, p)
-			fmt.Println(platform)
+			//fmt.Println(platform)
 
 			cmd := exec.Command(platform.Command, platform.Args...)
 			cmd.Env = os.Environ()
 
+			// Bring back this code later when we cross compile again
 			// if cgo {
 			// 	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 			// }
-
 			// if arch386 {
 			// 	cmd.Env = append(cmd.Env, "GOARCH=386")
 			// } else {
 			// 	cmd.Env = append(cmd.Env, "GOARCH=amd64")
 			// }
-
 			// if len(cc) > 0 {
 			// 	cmd.Env = append(cmd.Env, cc)
 			// }

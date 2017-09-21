@@ -4,7 +4,8 @@ package collision
 
 import (
 	"github.com/autovelop/playthos"
-	// "log"
+	"github.com/autovelop/playthos/physics"
+	"github.com/autovelop/playthos/std"
 )
 
 func init() {
@@ -13,7 +14,9 @@ func init() {
 
 type Collision struct {
 	engine.System
-	colliders []*Collider
+	colliders   []*Collider
+	transforms  []*std.Transform
+	rigidbodies []*physics.RigidBody
 }
 
 func (c *Collision) DeleteEntity(entity *engine.Entity) {
@@ -36,7 +39,25 @@ func (c *Collision) AddIntegrant(integrant engine.IntegrantRoutine) {}
 func (c *Collision) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *Collider:
+		ent := component.Entity()
+		if ent == nil {
+			return
+		}
+		trns := ent.Component(&std.Transform{}).(*std.Transform)
+		if trns == nil {
+			return
+		}
 		c.colliders = append(c.colliders, component)
+		c.transforms = append(c.transforms, trns)
+		rbe := ent.Component(&physics.RigidBody{})
+		if rbe != nil {
+			rb := rbe.(*physics.RigidBody)
+			if rb != nil {
+				c.rigidbodies = append(c.rigidbodies, rb)
+				break
+			}
+		}
+		c.rigidbodies = append(c.rigidbodies, nil)
 		break
 	}
 }
@@ -46,42 +67,19 @@ func (c *Collision) ComponentTypes() []engine.ComponentRoutine {
 }
 
 func (c *Collision) Update() {
-	// var prev_collider *Collider
-	for a, collider1 := range c.colliders {
-		for b, collider2 := range c.colliders {
-			if a != b {
-				// prev_collider := c.colliders[i-1]
-				// if prev_collider == nil {
-				// 	prev_collider = collider
-				// } else {
-				// log.Fatalf("%+v", collider)
-				if collider1 == nil {
-					continue
+	for a := 0; a < len(c.colliders)-1; a++ {
+		for b := len(c.colliders) - 1; b > a; b-- {
+			c1 := c.colliders[a]
+			c2 := c.colliders[b]
+			px, py := CheckCollisionAABB(c1, c2)
+			if px < 0 || py < 0 {
+				pos := c.transforms[a].Position()
+				if c.rigidbodies[a] != nil {
+					rb := c.rigidbodies[a]
+					vel := rb.Velocity()
+					rb.SetVelocity(vel.X*(1-(rb.Friction()*rb.Mass())), 0, 0)
 				}
-				if collider2 == nil {
-					continue
-				}
-				c1 := collider1.Entity()
-				c2 := collider2.Entity()
-				// continue
-				if c1 != nil && c2 != nil {
-					// p1 := c1.GetComponent(&render.Transform{}).(*render.Transform)
-					// p2 := c2.GetComponent(&render.Transform{}).(*render.Transform)
-
-					if CheckCollisionAABB(collider1, collider2) {
-						// collider.Hit(c2)
-						// log.Printf("YES %v colliding with %v\n", c1.Tag(), c2.Tag())
-						collider2.Hit(c1)
-					}
-					// } else {
-					// 	log.Printf("NO %v colliding with %v\n", c1.Tag(), c2.Tag())
-					// }
-					// if Distance3(p1.GetPosition(), p2.GetPosition()) < 80 {
-					// 	collider.Hit()
-					// 	prev_collider.Hit()
-					// }
-				}
-				// }
+				c.transforms[a].SetPosition(pos.X-px, pos.Y-py, pos.Z)
 			}
 		}
 	}

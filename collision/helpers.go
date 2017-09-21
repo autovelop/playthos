@@ -4,28 +4,51 @@ package collision
 
 import (
 	"github.com/autovelop/playthos/std"
-	// "log"
+	"log"
 	"math"
 )
 
 // TODO: run tests through these functions
 
-func CheckCollisionAABB(one *Collider, two *Collider) bool {
-	// collisionX := one.Get().Position().X+one.Get().GetScale().X >= two.Get().Position().X &&
-	// 	two.Get().Position().X+two.Get().GetScale().X >= one.Get().Position().X
-	// collisionY := one.Get().Position().Y+one.Get().GetScale().Y >= two.Get().Position().Y &&
-	// 	two.Get().Position().Y+two.Get().GetScale().Y >= one.Get().Position().Y
-	one_transform, one_relative := one.Get()
-	two_transform, two_relative := two.Get()
-	collisionX := one_transform.Position().X+one_relative.X+one_relative.W >= two_transform.Position().X+two_relative.X &&
-		two_transform.Position().X+two_relative.X+two_relative.W >= one_transform.Position().X+one_relative.X
+func CheckCollisionAABB(one *Collider, two *Collider) (float32, float32) {
+	one_position, _, one_size := one.Get()
+	two_position, _, two_size := two.Get()
 
-	collisionY := one_transform.Position().Y+one_relative.Y+one_relative.H >= two_transform.Position().Y+two_relative.Y &&
-		two_transform.Position().Y+two_relative.Y+two_relative.H >= one_transform.Position().Y+one_relative.Y
+	one_position_max := std.Vector2{
+		one_position.X + (one_size.X / 2),
+		one_position.Y + (one_size.Y / 2),
+	}
+	one_position_min := std.Vector2{
+		one_position.X - (one_size.X / 2),
+		one_position.Y - (one_size.Y / 2),
+	}
+	two_position_max := std.Vector2{
+		two_position.X + (two_size.X / 2),
+		two_position.Y + (two_size.Y / 2),
+	}
+	two_position_min := std.Vector2{
+		two_position.X - (two_size.X / 2),
+		two_position.Y - (two_size.Y / 2),
+	}
 
-	// log.Println(one.Get().Position().Y)
-	// log.Println(two.Get().Position().Y)
-	return collisionX && collisionY
+	collisionX := one_position_max.X > two_position_min.X && two_position_max.X > one_position_min.X
+	collisionY := one_position_max.Y > two_position_min.Y && two_position_max.Y > one_position_min.Y
+	//log.Println(collisionY)
+
+	if collisionX && collisionY {
+		penY, penX := float32(0), float32(0)
+		if collisionY {
+			if one_position.Y > two_position.Y {
+				penY = one_position_min.Y - two_position_max.Y
+			}
+		}
+		if collisionX && one_position.X > two_position.X {
+			penX = one_position_min.X - two_position_max.X
+		}
+		log.Println(penY)
+		return penX, penY
+	}
+	return 0, 0
 }
 
 // returns two axis representing all four sides of the rect
