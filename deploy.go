@@ -22,7 +22,7 @@ func initDeploy(n string, p string) {
 		fmt.Println(platform)
 		if valid {
 			if platform.BuildDependency != "" {
-				cmdDep := exec.Command("go", "install", platform.BuildDependency)
+				cmdDep := exec.Command("go", "install", "-i", platform.BuildDependency)
 				cmdErrDep, _ := cmdDep.StderrPipe()
 
 				err := cmdDep.Start()
