@@ -16,7 +16,7 @@ type Keyboard struct {
 }
 
 func (k *Keyboard) InitIntegrant() {
-	k.keypress = make([]func(...int), 300, 300) // this is probably too much but safe for now
+	k.keypress = make([]func(...int), 350, 350) // this is probably too much but safe for now
 }
 
 func (k *Keyboard) Destroy() {

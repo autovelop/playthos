@@ -4,13 +4,13 @@ package collision
 
 import (
 	"github.com/autovelop/playthos/std"
-	"log"
 	"math"
 )
 
 // TODO: run tests through these functions
 
-func CheckCollisionAABB(one *Collider, two *Collider) (float32, float32) {
+// AABB should not detect penetration
+func CheckCollisionAABB(one *Collider, two *Collider) bool {
 	one_position, _, one_size := one.Get()
 	two_position, _, two_size := two.Get()
 
@@ -33,22 +33,8 @@ func CheckCollisionAABB(one *Collider, two *Collider) (float32, float32) {
 
 	collisionX := one_position_max.X > two_position_min.X && two_position_max.X > one_position_min.X
 	collisionY := one_position_max.Y > two_position_min.Y && two_position_max.Y > one_position_min.Y
-	//log.Println(collisionY)
 
-	if collisionX && collisionY {
-		penY, penX := float32(0), float32(0)
-		if collisionY {
-			if one_position.Y > two_position.Y {
-				penY = one_position_min.Y - two_position_max.Y
-			}
-		}
-		if collisionX && one_position.X > two_position.X {
-			penX = one_position_min.X - two_position_max.X
-		}
-		log.Println(penY)
-		return penX, penY
-	}
-	return 0, 0
+	return collisionX && collisionY
 }
 
 // returns two axis representing all four sides of the rect

@@ -4,7 +4,6 @@ package engine
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -20,21 +19,11 @@ func initDeploy(n string, p string) {
 	for name, platform := range platforms {
 		valid, deps := validate(name)
 		if valid {
-			cmdrm := exec.Command("rm", fmt.Sprintf("bin/%v_%v%v", strings.Replace(strings.ToLower(n), " ", "_", -1), name, platform.BinaryFileExtension))
-			cmdrm.Start()
-
 			platform.Tags = append(platform.Tags, deps...)
-
-			// Make sure all go dependencies are installed
-			cmdinstall := exec.Command("go", "install", fmt.Sprintf("-tags=%v", strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")), p)
-			cmdinstall.Start()
-
-			platform.Args = append(platform.Args, "-o",
-				fmt.Sprintf("bin/%v_%v%v", strings.Replace(strings.ToLower(n), " ", "_", -1), name, platform.BinaryFileExtension),
+			platform.Args = append(platform.Args,
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
 			platform.Args = append(platform.Args, p)
-			//fmt.Println(platform)
 
 			cmd := exec.Command(platform.Command, platform.Args...)
 			cmd.Env = os.Environ()
@@ -53,100 +42,22 @@ func initDeploy(n string, p string) {
 			// }
 			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
 
-			cmdErr, _ := cmd.StderrPipe()
+			// cmdErr, _ := cmd.StderrPipe()
 
 			startErr := cmd.Start()
 			if startErr != nil {
-				return
+				fmt.Printf("> Engine: Error during deploy - %v\n", startErr)
+				os.Exit(0)
 			}
-			errOutput, _ := ioutil.ReadAll(cmdErr)
-			fmt.Printf("%s", errOutput)
+			// errOutput, _ := ioutil.ReadAll(cmdErr)
+			// fmt.Printf("%s", errOutput)
 		} else {
-			fmt.Printf("> Engine: Platform '%v' has the following unresolved dependencies %v...\n", name, deps)
+			fmt.Printf("> Engine: Deploying platform '%v' has the following unresolved dependencies %v...\n", name, deps)
+			os.Exit(0)
 		}
 	}
+	fmt.Printf("> Engine: Deployed\n")
 	os.Exit(0)
-
-	// Objectives:
-	// only needs deploy tag to trigger
-	// deploy concurrently
-	// use cgo, gopherjs, or just go (if no opengl/glfw is required)
-	// optionally package assets inside binaries
-
-	// 	c := bindata.NewConfig()
-	// 	c.Input = []bindata.InputConfig{bindata.InputConfig{
-	// 		Path:      filepath.Clean("assets"),
-	// 		Recursive: true,
-	// 	}}
-	// 	c.Package = "engine"
-	// 	c.Tags = "deployed"
-	// 	c.Output = fmt.Sprintf("%v/assets.go", "../playthos")
-	// 	bindata.Translate(c)
-
-	// 	for _, platform := range platforms {
-	// 		simpleName := "linux"
-	// 		fileExtension := ""
-	// 		cgo := false
-	// 		var cc string
-	// 		arch386 := false
-	// 		switch platform {
-	// 		case PlatformLinux:
-	// 			fmt.Printf("- Linux\n- Requirements: libgl1-mesa-dev, xorg-dev\n\n")
-	// 			break
-	// 		case PlatformMacOS:
-	// 			fmt.Printf("- MacOS\n- Requirements: xcode 7.3, cmake, libxml2, fuse, osxcross\n- Full details: https://github.com/tpoechtrager/osxcross#packaging-the-sdk\n\n")
-	// 			simpleName = "darwin"
-	// 			cgo = true
-	// 			cc = "CC=o32-clang"
-	// 		case PlatformWindows:
-	// 			fmt.Printf("- Windows (32-bit only)\n- Requirements: mingw-w64-gcc\n\n")
-	// 			simpleName = "windows"
-	// 			cgo = true
-	// 			arch386 = true
-	// 			fileExtension = ".exe"
-	// 			cc = "CC=i686-w64-mingw32-gcc -fno-stack-protector -D_FORTIFY_SOURCE=0 -lssp"
-	// 			break
-	// 		default:
-	// 			continue
-	// 			break
-	// 		}
-
-	// 		cmdArgs := []string{
-	// 			"build",
-	// 			"-v",
-	// 			"-o",
-	// 			fmt.Sprintf("bin/%v_%v%v", strings.ToLower(e.gameName), simpleName, fileExtension),
-	// 			"-tags",
-	// 			fmt.Sprintf("deployed %v %v %v", platform, simpleName, GetTags()),
-	// 			e.gamePackage,
-	// 		}
-	// 		cmd := exec.Command("go", cmdArgs...)
-	// 		cmd.Env = os.Environ()
-
-	// 		if cgo {
-	// 			cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
-	// 		}
-
-	// 		if arch386 {
-	// 			cmd.Env = append(cmd.Env, "GOARCH=386")
-	// 		} else {
-	// 			cmd.Env = append(cmd.Env, "GOARCH=amd64")
-	// 		}
-
-	// 		if len(cc) > 0 {
-	// 			cmd.Env = append(cmd.Env, cc)
-	// 		}
-	// 		cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
-
-	// 		cmdErr, _ := cmd.StderrPipe()
-
-	// 		startErr := cmd.Start()
-	// 		if startErr != nil {
-	// 			return
-	// 		}
-	// 		errOutput, _ := ioutil.ReadAll(cmdErr)
-	// 		fmt.Printf("%s", errOutput)
-	// 	}
 }
 
 func validate(o string) (bool, []string) {

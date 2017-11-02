@@ -71,15 +71,15 @@ func (c *Collision) Update() {
 		for b := len(c.colliders) - 1; b > a; b-- {
 			c1 := c.colliders[a]
 			c2 := c.colliders[b]
-			px, py := CheckCollisionAABB(c1, c2)
-			if px < 0 || py < 0 {
+			isCollision := CheckCollisionAABB(c1, c2)
+			if isCollision {
 				pos := c.transforms[a].Position()
 				if c.rigidbodies[a] != nil {
 					rb := c.rigidbodies[a]
 					vel := rb.Velocity()
 					rb.SetVelocity(vel.X*(1-(rb.Friction()*rb.Mass())), 0, 0)
 				}
-				c.transforms[a].SetPosition(pos.X-px, pos.Y-py, pos.Z)
+				c.transforms[a].SetPosition(pos.X, pos.Y, pos.Z)
 			}
 		}
 	}
