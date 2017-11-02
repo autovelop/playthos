@@ -6,4 +6,5 @@ type Platform struct {
 	TagsArg             string
 	Tags                []string
 	BinaryFileExtension string
+	BuildDependency     string
 }

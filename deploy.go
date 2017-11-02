@@ -4,6 +4,7 @@ package engine
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,7 +19,21 @@ func initDeploy(n string, p string) {
 	fmt.Printf("> Engine: Deploying...\n")
 	for name, platform := range platforms {
 		valid, deps := validate(name)
+		fmt.Println(platform)
 		if valid {
+			if platform.BuildDependency != "" {
+				cmdDep := exec.Command("go", "install", platform.BuildDependency)
+				cmdErrDep, _ := cmdDep.StderrPipe()
+
+				err := cmdDep.Start()
+				if err != nil {
+					fmt.Printf("> Engine: Error during deploy (installing build depencency) - %v\n", err)
+					os.Exit(0)
+				}
+				errOutput, _ := ioutil.ReadAll(cmdErrDep)
+				fmt.Printf("%s", errOutput)
+			}
+
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
