@@ -36,7 +36,7 @@ func initDeploy(n string, p string) {
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
 				// fmt.Sprintf("-o=%v/bin/%v", name),
-				fmt.Sprintf("-o=%v/bin/%v_%v%v", os.Getenv("GOPATH"), strings.Replace(strings.ToLower(n), " ", "_", -1), name, platform.BinaryFileExtension),
+				fmt.Sprintf("-o=%v/bin/%v%v", os.Getenv("GOPATH"), strings.Replace(strings.ToLower(n), " ", "-", -1), name, platform.BinaryFileExtension),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
 			platform.Args = append(platform.Args, p)
