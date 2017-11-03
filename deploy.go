@@ -19,10 +19,9 @@ func initDeploy(n string, p string) {
 	fmt.Printf("> Engine: Deploying...\n")
 	for name, platform := range platforms {
 		valid, deps := validate(name)
-		fmt.Println(platform)
 		if valid {
 			if platform.BuildDependency != "" {
-				cmdDep := exec.Command("go", "install", "-i", platform.BuildDependency)
+				cmdDep := exec.Command("go", "get", "-u", platform.BuildDependency)
 				cmdErrDep, _ := cmdDep.StderrPipe()
 
 				err := cmdDep.Start()
@@ -36,12 +35,15 @@ func initDeploy(n string, p string) {
 
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
+				// fmt.Sprintf("-o=%v/bin/%v", name),
+				fmt.Sprintf("-o=%v/bin/%v_%v%v", os.Getenv("GOPATH"), strings.Replace(strings.ToLower(n), " ", "_", -1), name, platform.BinaryFileExtension),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
 			platform.Args = append(platform.Args, p)
 
 			cmd := exec.Command(platform.Command, platform.Args...)
-			cmd.Env = os.Environ()
+			// fmt.Printf("> GOPATH: %v\n", os.Getenv("GOPATH"))
+			// cmd.Env = os.Environ()
 
 			// Bring back this code later when we cross compile again
 			// if cgo {
