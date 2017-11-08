@@ -57,8 +57,10 @@ func (w *WebGL) InitSystem() {
 	canvas.Set("id", "canvas")
 	canvas.Set("width", w.screenWidth*2)
 	canvas.Set("height", w.screenHeight*2)
-	canvas.Get("style").Set("width", fmt.Sprintf("%dpx", int(w.screenWidth)))
-	canvas.Get("style").Set("height", fmt.Sprintf("%dpx", int(w.screenHeight)))
+	canvas.Get("style").Set("width", "100vw")
+	canvas.Get("style").Set("max-width", fmt.Sprintf("calc(100vh * (%d / %d))", int(w.screenWidth), int(w.screenHeight)))
+	// canvas.Get("style").Set("height", fmt.Sprintf("%dpx", int(w.screenHeight)))
+	canvas.Get("style").Set("max-height", "100vh")
 	document.Get("body").Call("appendChild", canvas)
 
 	attrs := DefaultAttributes()
@@ -301,26 +303,27 @@ func (w *WebGL) RegisterMaterial(material *render.Material) {
 	if texture != nil {
 		webGLMaterial.OverrideTexture(func(t render.Textureable) {
 			raw := w.platform.Asset(t.Path())
+			if raw != nil {
 
-			t.SetHeight(int32(raw.Get("height").Int()))
-			t.SetWidth(int32(raw.Get("width").Int()))
+				t.SetHeight(int32(raw.Get("height").Int()))
+				t.SetWidth(int32(raw.Get("width").Int()))
 
-			tid := gl.CreateTexture()
-			gl.ActiveTexture(gl.TEXTURE0)
-			gl.BindTexture(gl.TEXTURE_2D, tid)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-			gl.TexImage2D(
-				gl.TEXTURE_2D,
-				0,
-				gl.RGBA,
-				gl.RGBA,
-				gl.UNSIGNED_BYTE,
-				raw)
-
-			webGLMaterial.texture = &WebGLTexture{t.(*render.Texture), tid}
+				tid := gl.CreateTexture()
+				gl.ActiveTexture(gl.TEXTURE0)
+				gl.BindTexture(gl.TEXTURE_2D, tid)
+				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+				gl.TexImage2D(
+					gl.TEXTURE_2D,
+					0,
+					gl.RGBA,
+					gl.RGBA,
+					gl.UNSIGNED_BYTE,
+					raw)
+				webGLMaterial.texture = &WebGLTexture{t.(*render.Texture), tid}
+			}
 		})
 	}
 	w.materials = append(w.materials, webGLMaterial)

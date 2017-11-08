@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"github.com/autovelop/playthos"
 	"github.com/gopherjs/gopherjs/js"
-	"time"
-	// "go/build"
-	// "io/ioutil"
-	// "os"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -54,6 +51,7 @@ func (w *Web) Asset(p string) *js.Object {
 
 func (w *Web) LoadAsset(p string) {
 	ready := make(chan bool)
+	fmt.Println(p)
 	dotSplit := strings.Split(p, ".")
 	ext := dotSplit[len(dotSplit)-1]
 	switch ext {
@@ -63,12 +61,24 @@ func (w *Web) LoadAsset(p string) {
 			w.assets[p] = imageFile
 			ready <- true
 		})
+		imageFile.Set("onabort", func(s *js.Object) {
+			ready <- true
+		})
+		imageFile.Set("onerror", func(s *js.Object) {
+			ready <- true
+		})
 		imageFile.Set("src", p)
 		break
 	case "wav":
 		audioFile := js.Global.Get("Audio").New()
 		audioFile.Set("oncanplaythrough", func(s *js.Object) {
 			w.assets[p] = audioFile
+			ready <- true
+		})
+		audioFile.Set("onabort", func(s *js.Object) {
+			ready <- true
+		})
+		audioFile.Set("onerror", func(s *js.Object) {
 			ready <- true
 		})
 		audioFile.Set("src", p)

@@ -4,6 +4,7 @@ package engine
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,12 +17,21 @@ func init() {
 
 // TODO: This function is still a mess. Need to make Deploy system in order to tidy it up.
 func initDeploy(n string, p string) {
+	packageSplit := strings.Split(p, "/")
+	repoName := packageSplit[len(packageSplit)-1]
+
 	fmt.Printf("> Engine: Deploying...\n")
 	for name, platform := range platforms {
 		valid, deps := validate(name)
 		if valid {
+			fmt.Printf("> Engine: Deploying platform '%v'\n", name)
 			if platform.BuildDependency != "" {
-				cmdDep := exec.Command("go", "get", "-u", platform.BuildDependency)
+				fmt.Printf("> Engine: Resolving build dependency '%v'\n", platform.BuildDependency)
+
+				// consider manually forcing a update check via user interface
+				// cmdDep := exec.Command("go", "get", "-u", platform.BuildDependency)
+
+				cmdDep := exec.Command("go", "get", platform.BuildDependency)
 				cmdErrDep, _ := cmdDep.StderrPipe()
 
 				err := cmdDep.Start()
@@ -35,10 +45,12 @@ func initDeploy(n string, p string) {
 
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
-				// fmt.Sprintf("-o=%v/bin/%v", name),
-				fmt.Sprintf("-o=%v/bin/%v%v", os.Getenv("GOPATH"), strings.Replace(strings.ToLower(n), " ", "-", -1), platform.BinaryFileExtension),
+				fmt.Sprintf("-o=%v/bin/%v%v", os.Getenv("GOPATH"), repoName, platform.DeployFileExtension),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
+			fmt.Printf("> Engine: Deploy tags %v\n", fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")))
+			fmt.Printf("> Engine: Deploy source %v\n", p)
+			fmt.Printf("> Engine: Deploy destination %v\n", fmt.Sprintf("%v/bin/%v%v", os.Getenv("GOPATH"), repoName, platform.DeployFileExtension))
 			platform.Args = append(platform.Args, p)
 
 			cmd := exec.Command(platform.Command, platform.Args...)
@@ -58,23 +70,65 @@ func initDeploy(n string, p string) {
 			// 	cmd.Env = append(cmd.Env, cc)
 			// }
 			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
-
-			// cmdErr, _ := cmd.StderrPipe()
+			cmdErr, _ := cmd.StderrPipe()
 
 			startErr := cmd.Start()
 			if startErr != nil {
 				fmt.Printf("> Engine: Error during deploy - %v\n", startErr)
 				os.Exit(0)
 			}
-			// errOutput, _ := ioutil.ReadAll(cmdErr)
-			// fmt.Printf("%s", errOutput)
+
+			errOutput, _ := ioutil.ReadAll(cmdErr)
+			if len(errOutput) > 0 {
+				fmt.Printf("> Engine: Error during deploy - %v\n", string(errOutput))
+			}
+
 		} else {
 			fmt.Printf("> Engine: Deploying platform '%v' has the following unresolved dependencies %v...\n", name, deps)
 			os.Exit(0)
 		}
 	}
-	fmt.Printf("> Engine: Deployed\n")
+
+	// Copy assets
+	fmt.Printf("> Engine: Deploying assets\n")
+	assetDest := fmt.Sprintf("%v/bin/", os.Getenv("GOPATH"))
+	assetSrc := fmt.Sprintf("%v/src/%v/", os.Getenv("GOPATH"), p)
+	for _, asset := range assetRegistry {
+		assetPath := fmt.Sprintf("%v%v", assetDest, asset)
+		assetPathSplit := strings.Split(assetPath, "/")
+		assetDir := strings.Join(assetPathSplit[:len(assetPathSplit)-1], "/")
+		if _, err := os.Stat(assetDir); os.IsNotExist(err) {
+			os.MkdirAll(assetDir, os.ModePerm)
+		}
+		fmt.Printf("> Engine: Copying asset to '%v' from '%v'...\n", assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
+		err := cp(assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
+		if err != nil {
+			fmt.Printf("> Engine: Deploying asset '%v' failed - %v\n", asset, err)
+			os.Exit(0)
+		}
+	}
+
+	fmt.Printf("> Engine: Deployment completely successfully\n")
 	os.Exit(0)
+}
+
+func cp(dst, src string) error {
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	// no need to check errors on read only file, we already got everything
+	// we need from the filesystem, so nothing can go wrong now.
+	defer s.Close()
+	d, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(d, s); err != nil {
+		d.Close()
+		return err
+	}
+	return d.Close()
 }
 
 func validate(o string) (bool, []string) {

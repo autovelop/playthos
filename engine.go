@@ -2,14 +2,8 @@ package engine
 
 import (
 	"fmt"
-	// "github.com/jteeuwen/go-bindata"
-	// "io/ioutil"
 	"log"
-	// "os"
-	// "os/exec"
-	// "path/filepath"
-	// "runtime"
-	// "strings"
+	"os"
 	"time"
 )
 
@@ -23,8 +17,6 @@ const (
 
 var packages []*Package
 
-// var dependencies []string
-// var resolvers []string
 var platforms map[string]*Platform
 var systems []SystemRoutine
 var updaters []Updater
@@ -32,12 +24,14 @@ var drawer Drawer
 var platformer Platformer
 var listeners []Listener
 var integrants []IntegrantRoutine
+var assetRegistry []string
 
 var play bool = true
 var deploy bool = false
 
 func init() {
 	fmt.Println("> Engine: Initializing")
+	assetRegistry = make([]string, 0)
 }
 
 func RegisterPlatform(n string, p *Platform) {
@@ -47,22 +41,9 @@ func RegisterPlatform(n string, p *Platform) {
 	platforms[n] = p
 }
 
-// func RegisterDependency(deps ...string) {
-// 	dependencies = append(dependencies, deps...)
-// }
-
-// func RegisterResolver(res ...string) {
-// 	resolvers = append(resolvers, res...)
-// }
-
 func RegisterPackage(pckg *Package) {
 	packages = append(packages, pckg)
 }
-
-// func GetTags() string {
-// 	packages = removeDuplicates(packages)
-// 	return strings.Join(packages[:], " ")
-// }
 
 type Engine struct {
 	gameName    string
@@ -74,59 +55,25 @@ type Engine struct {
 	running  bool
 }
 
-func New(n string, p string, s ...*Settings) *Engine {
-	// fmt.Printf("%v\n%v\n", platforms, packages)
+func RegisterAsset(p string) {
+	assetRegistry = append(assetRegistry, p)
+}
+
+func New(n string, s ...*Settings) *Engine {
 	if deploy {
-		initDeploy(n, p)
+		initDeploy(n, os.Args[1])
 		return nil
 	}
-	// Objectives:
-	// Every time you run, it will always include all the systems. The inits for registering the packages, and the mains to make sure the code compiles
-	// IF deploying
-	// - check registered OSs
-	// ELSE (and also if deployed)
-	// - get local OS
-	// - validate systems required with OS
-	// - run
-	// log.Println("New()")
 	game := &Engine{}
-	game.gamePackage = p
 	game.gameName = n
-	// no tags, just to rerun go run with the system tags in
-	// if !play && !deploy && !deployed {
-	// 	play = true
-	// 	game.Run()
-	// 	return game
-	// }
-	// var osDetect string
-	// switch runtime.GOOS {
-	// case "windows":
-	// 	osDetect = PlatformWindows
-	// 	break
-	// case "linux":
-	// 	osDetect = PlatformLinux
-	// 	break
-	// case "darwin":
-	// 	osDetect = PlatformMacOS
-	// 	break
-	// }
+
 	if len(s) > 0 {
 		settings := s[0]
-		// if len(settings.Platforms) <= 0 {
-		// 	settings.Platforms = []string{osDetect}
-		// }
 		game.SetSettings(settings)
 	} else {
 		game.SetSettings(&Settings{false, 800, 600, true})
 	}
 
-	// deploy tag, just to rerun go run again with system and os tags
-	// if deploy {
-	// 	game.Deploy(game.settings.Platforms...)
-	// 	os.Exit(0)
-	// }
-
-	// deployed or play tag, just runs game
 	game.Init()
 	return game
 }
@@ -243,24 +190,6 @@ func LoadAsset(path string) {
 	platformer.LoadAsset(path)
 }
 
-// func (e *Engine) Run() {
-// 	// cmd := exec.Command("pwd")
-// 	log.Println("Run()")
-// 	cmdArgs := []string{
-// 		"-c",
-// 		fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()),
-// 	}
-// 	log.Println(fmt.Sprintf("go run -tags=\"play %v\" *.go", GetTags()))
-// 	cmd := exec.Command("/bin/sh", cmdArgs...)
-// 	cmdErr, _ := cmd.StderrPipe()
-// 	startErr := cmd.Start()
-// 	if startErr != nil {
-// 		return
-// 	}
-// 	errOutput, _ := ioutil.ReadAll(cmdErr)
-// 	fmt.Printf("%s", errOutput)
-// }
-
 func (e *Engine) update() {
 	const frameCap float64 = 250
 	var (
@@ -288,7 +217,6 @@ func (e *Engine) update() {
 			}
 
 			if frameCounter >= time.Second {
-				// fmt.Printf("%d FPS\n", frames)
 				frames = 0
 				frameCounter -= time.Second
 			}
