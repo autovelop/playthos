@@ -31,7 +31,7 @@ func initDeploy(n string, p string) {
 				// consider manually forcing a update check via user interface
 				// cmdDep := exec.Command("go", "get", "-u", platform.BuildDependency)
 
-				cmdDep := exec.Command("go", "get", platform.BuildDependency)
+				cmdDep := exec.Command("go", "get", "-v", platform.BuildDependency)
 				cmdErrDep, _ := cmdDep.StderrPipe()
 
 				err := cmdDep.Start()
@@ -45,6 +45,7 @@ func initDeploy(n string, p string) {
 
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
+				"-v",
 				fmt.Sprintf("-o=%v/bin/%v%v", os.Getenv("GOPATH"), repoName, platform.DeployFileExtension),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
