@@ -51,6 +51,7 @@ func (w *WebGL) InitSystem() {
 	w.screenWidth = w.settings.ResolutionX
 	w.screenHeight = w.settings.ResolutionY
 	fmt.Println("> WebGL Init System")
+	// This should be under the web platform and now webgl
 
 	document := js.Global.Get("document")
 	canvas := document.Call("createElement", "canvas")

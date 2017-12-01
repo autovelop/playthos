@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"github.com/gopherjs/gopherjs/js"
 	// "io"
-	// "log"
 )
 
 func init() {
@@ -89,10 +88,12 @@ func (a *WebAudio) DeleteEntity(entity *engine.Entity) {
 
 func (a *WebAudio) RegisterSource(s *audio.Source) {
 	webAudioSource := &WebAudioSource{Source: s}
-	webAudioSource.OverridePlaySound(func(s audio.Soundable) {
-		if a.sounds[s.Index()] != nil {
-			soundSource := a.sounds[s.Index()].Buffer()
-			soundSource.Set("loop", webAudioSource.Loop)
+	webAudioSource.OverridePlaySound(func(so audio.Soundable) {
+		if a.sounds[so.Index()] != nil {
+			soundSource := a.sounds[so.Index()].Buffer()
+			if s.Loop() {
+				soundSource.Get("mediaElement").Set("loop", "true")
+			}
 			soundSource.Get("mediaElement").Call("play")
 		}
 	})

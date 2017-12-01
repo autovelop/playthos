@@ -96,12 +96,23 @@ func (o *OpenAL) RegisterSource(s *audio.Source) {
 	// play := s.BasePlay()
 	openALSource := &OpenALSource{Source: s}
 	source := &al.GenSources(1)[0]
-	openALSource.OverridePlaySound(func(s audio.Soundable) {
-		// fmt.Println(o.sounds[s.Index()].Buffer())
+	openALSource.OverridePlaySound(func(so audio.Soundable) {
+		// fmt.Println(o.sounds[so.Index()].Buffer())
 		// openALSource.source =
 		// openALSource.PlaySound(p)
-		source.QueueBuffers(*o.sounds[s.Index()].Buffer())
+		source.QueueBuffers(*o.sounds[so.Index()].Buffer())
 		al.PlaySources(*source)
+
+		if s.Loop() {
+			source.Seti(paramLooping, 1)
+		}
+		// log.Fatal(sound.audioFile.Duration())
+		// } else {
+		// 	go func(sound *Sound) {
+		// 		time.Sleep(sound.audioFile.Duration())
+		// 		sound.playing = false
+		// 	}(sound)
+		// }
 	})
 	openALSource.source = source
 	o.sources = append(o.sources, openALSource)
@@ -155,3 +166,7 @@ func (o *OpenAL) RegisterListener(l *audio.Listener) {
 	al.SetListenerPosition([3]float32{pos.X, pos.Y, pos.Z})
 	o.listener = l
 }
+
+const (
+	paramLooping = 0x1007
+)

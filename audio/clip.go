@@ -51,6 +51,10 @@ func (c *Clip) Length() uint32 {
 	return c.length
 }
 
+func (c *Clip) Duration() time.Duration {
+	return c.duration
+}
+
 func (c *Clip) SampleRate() uint32 {
 	return c.sampleRate
 }

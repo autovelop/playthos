@@ -80,6 +80,7 @@ func (c *Collision) Update() {
 					rb.SetVelocity(vel.X*(1-(rb.Friction()*rb.Mass())), 0, 0)
 				}
 				c.transforms[a].SetPosition(pos.X, pos.Y, pos.Z)
+				c2.Hit(c1)
 			}
 		}
 	}
