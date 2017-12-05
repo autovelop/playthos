@@ -216,10 +216,16 @@ func (w *WebGL) requestAnimationFrame(float32) {
 				model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
 				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
 
+				if idx >= len(w.materials) {
+					gl.BindVertexArray(nil)
+					continue
+				}
 				material := w.materials[idx]
 				if material == nil {
+					gl.BindVertexArray(nil)
 					continue
 				} else if !material.Active() {
+					gl.BindVertexArray(nil)
 					continue
 				}
 

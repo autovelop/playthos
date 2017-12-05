@@ -217,10 +217,16 @@ func (o *OpenGL) Draw() {
 				model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
 				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
 
+				if idx >= len(o.materials) {
+					gl.BindVertexArray(0)
+					continue
+				}
 				material := o.materials[idx]
 				if material == nil {
+					gl.BindVertexArray(0)
 					continue
 				} else if !material.Active() {
+					gl.BindVertexArray(0)
 					continue
 				}
 
