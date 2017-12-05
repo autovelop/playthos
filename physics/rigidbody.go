@@ -54,6 +54,10 @@ func (r *RigidBody) Friction() float32 {
 	return r.friction
 }
 
+func (r *RigidBody) SetMass(m float32) {
+	r.mass = m
+}
+
 func (r *RigidBody) Mass() float32 {
 	return r.mass
 }

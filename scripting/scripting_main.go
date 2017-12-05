@@ -31,8 +31,8 @@ func (s *Scripting) AddComponent(component engine.ComponentRoutine) {
 
 func (s *Scripting) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(s.scripts); i++ {
-		collider := s.scripts[i]
-		if collider.Entity().ID() == entity.ID() {
+		script := s.scripts[i]
+		if script.Entity().ID() == entity.ID() {
 			copy(s.scripts[i:], s.scripts[i+1:])
 			s.scripts[len(s.scripts)-1] = nil
 			s.scripts = s.scripts[:len(s.scripts)-1]

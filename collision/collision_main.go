@@ -21,11 +21,14 @@ type Collision struct {
 
 func (c *Collision) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(c.colliders); i++ {
+
 		collider := c.colliders[i]
-		if collider.Entity().ID() == entity.ID() {
-			copy(c.colliders[i:], c.colliders[i+1:])
-			c.colliders[len(c.colliders)-1] = nil
-			c.colliders = c.colliders[:len(c.colliders)-1]
+		if collider.Entity() != nil {
+			if collider.Entity().ID() == entity.ID() {
+				copy(c.colliders[i:], c.colliders[i+1:])
+				c.colliders[len(c.colliders)-1] = nil
+				c.colliders = c.colliders[:len(c.colliders)-1]
+			}
 		}
 	}
 }
@@ -67,21 +70,34 @@ func (c *Collision) ComponentTypes() []engine.ComponentRoutine {
 }
 
 func (c *Collision) Update() {
-	for a := 0; a < len(c.colliders)-1; a++ {
-		for b := len(c.colliders) - 1; b > a; b-- {
+	length := len(c.colliders) - 1
+	for a := 0; a < length; a++ {
+		for b := length; b > a; b-- {
+			if len(c.colliders)-1 != length {
+				break
+			}
 			c1 := c.colliders[a]
+			if c1 == nil {
+				continue
+			}
 			c2 := c.colliders[b]
+			if c2 == nil {
+				continue
+			}
 			isCollision := CheckCollisionAABB(c1, c2)
 			if isCollision {
 				pos := c.transforms[a].Position()
-				if c.rigidbodies[a] != nil {
-					rb := c.rigidbodies[a]
-					vel := rb.Velocity()
-					rb.SetVelocity(vel.X*(1-(rb.Friction()*rb.Mass())), 0, 0)
-				}
+				// if c.rigidbodies[a] != nil {
+				// 	rb := c.rigidbodies[a]
+				// 	vel := rb.Velocity()
+				// 	rb.SetVelocity(vel.X*(1-(rb.Friction()*rb.Mass())), 0, 0)
+				// }
 				c.transforms[a].SetPosition(pos.X, pos.Y, pos.Z)
 				c2.Hit(c1)
 			}
+		}
+		if len(c.colliders)-1 != length {
+			break
 		}
 	}
 }
