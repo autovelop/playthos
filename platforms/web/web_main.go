@@ -51,7 +51,6 @@ func (w *Web) Asset(p string) *js.Object {
 
 func (w *Web) LoadAsset(p string) {
 	ready := make(chan bool)
-	fmt.Println(p)
 	dotSplit := strings.Split(p, ".")
 	ext := dotSplit[len(dotSplit)-1]
 	switch ext {
