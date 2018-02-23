@@ -22,4 +22,5 @@ type Listener interface {
 type Platformer interface {
 	IntegrantRoutine
 	LoadAsset(string)
+	Asset(string) []byte
 }

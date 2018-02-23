@@ -8,7 +8,7 @@ import (
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
 
-	"github.com/autovelop/playthos/platforms/linux"
+	// "github.com/autovelop/playthos/platforms/linux"
 
 	// for now we always pull in glfw if opengl is used until other window managers exist
 	_ "github.com/autovelop/playthos/glfw"
@@ -34,7 +34,7 @@ func init() {
 type OpenGL struct {
 	render.Render
 	factory       *OpenGLFactory
-	platform      *linux.Linux
+	platform      engine.Platformer
 	window        *glfw32.Window
 	screenWidth   float32
 	screenHeight  float32
@@ -108,7 +108,7 @@ func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	case *OpenGLFactory:
 		o.factory = integrant
 		break
-	case *linux.Linux:
+	case engine.Platformer:
 		o.platform = integrant
 		break
 	}
