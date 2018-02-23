@@ -6,8 +6,6 @@ import (
 	"github.com/autovelop/playthos"
 	"github.com/autovelop/playthos/audio"
 
-	"github.com/autovelop/playthos/platforms/linux"
-
 	// for now we always pull in wav if openal is used until other audio file decoders exist
 	// _ "github.com/autovelop/playthos/glfw"
 	"bytes"
@@ -27,7 +25,7 @@ func init() {
 type OpenAL struct {
 	audio.Audio
 	// factory  *OpenALFactory
-	platform *linux.Linux
+	platform engine.Platformer
 
 	sources  []*OpenALSource
 	sounds   []*OpenALSound
@@ -48,7 +46,7 @@ func (o *OpenAL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	// case *OpenALFactory:
 	// 	o.factory = integrant
 	// 	break
-	case *linux.Linux:
+	case engine.Platformer:
 		o.platform = integrant
 		break
 	}
