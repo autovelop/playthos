@@ -22,7 +22,13 @@ Playthos a open source game engine that promises to make game development easy. 
 ![Playthos Game Engine Feature Demo](http://www.autovelop.com/playthos-feature-demo.gif)
 
 ## Games
-[Ludum Dare 39: Power Hero](https://fanus.itch.io/power-hero)
+### [Ludum Dare 39: Power Hero](https://fanus.itch.io/power-hero)
+
+![Ludum Dare 39: Power Hero Thumbnail](http://www.autovelop.com/playthos-power.png)
+
+### [Ludum Dare 40: Runner](http://playthos.io/fanus/ldjam40-runner/)
+
+![Ludum Dare 40: Runner Thumbnail](http://www.autovelop.com/playthos-runner.png)
 
 ## Current Features
 - [x] Windows, Linux, MacOS, Chrome, Firefox support
@@ -47,10 +53,10 @@ Playthos a open source game engine that promises to make game development easy. 
 
 ## Upcoming Features
 - [ ] Robust shader system
-- [ ] Creator Hub
-- [ ] Network
-- [ ] Euler camera
-- [ ] 3D graphics
-- [ ] Game Editor
-- [ ] Android platform
+- [ ] Creator Hub (Prototype -> http://playthos.io)
+- [ ] Network (POC verified)
+- [ ] Euler camera (POC verified)
+- [ ] 3D graphics (POC verified)
+- [ ] Game Editor (POC verified)
+- [ ] Android platform (POC verified)
 - [ ] iOS platform
