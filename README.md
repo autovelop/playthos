@@ -24,11 +24,11 @@ Playthos a open source game engine that promises to make game development easy. 
 ## Games
 ### [Ludum Dare 39: Power Hero](https://fanus.itch.io/power-hero)
 
-![Ludum Dare 39: Power Hero Thumbnail](http://www.autovelop.com/playthos-power.png)
+![Ludum Dare 39: Power Hero Thumbnail](http://www.autovelop.com/playthos-power.png?)
 
 ### [Ludum Dare 40: Runner](http://playthos.io/fanus/ldjam40-runner/)
 
-![Ludum Dare 40: Runner Thumbnail](http://www.autovelop.com/playthos-runner.png)
+![Ludum Dare 40: Runner Thumbnail](http://www.autovelop.com/playthos-runner.png?)
 
 ## Current Features
 - [x] Windows, Linux, MacOS, Chrome, Firefox support
