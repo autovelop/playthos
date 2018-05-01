@@ -1,5 +1,9 @@
 ![Playthos Game Engine Logo](http://www.autovelop.com/playthos-git.png)
 
+[![godoc](https://godoc.org/github.com/autovelop/playthos?status.svg)](https://godoc.org/github.com/autovelop/playthos)
+[![Go Report Card](https://goreportcard.com/badge/github.com/autovelop/playthos)](https://goreportcard.com/report/github.com/autovelop/playthos)
+[![Coverage Status](https://coveralls.io/repos/github/autovelop/playthos/badge.svg?branch=master)](https://coveralls.io/github/autovelop/playthos?branch=master)
+
 #  Playthos Game Engine
 
 ### [Documentation](http://www.autovelop.com/playthos/)
