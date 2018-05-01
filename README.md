@@ -6,7 +6,7 @@
 
 #  Playthos Game Engine
 
-### [Documentation](http://www.autovelop.com/playthos/)
+### [Tutorial, Examples, Documentation](http://www.autovelop.com/playthos/)
 ### [Feedback](mailto:playthos@autovelop.com)
 ### [Twitter](https://twitter.com/autovelop)
 ### [Facebook](https://www.facebook.com/autovelop/)
