@@ -36,7 +36,7 @@ func initDeploy(n string, p string) {
 
 				err := cmdDep.Start()
 				if err != nil {
-					fmt.Printf("> Engine: Error during deploy (installing build depencency) - %v\n", err)
+					fmt.Printf("> Engine: Error during deploy (installing build dependency) - %v\n", err)
 					os.Exit(0)
 				}
 				errOutput, _ := ioutil.ReadAll(cmdErrDep)

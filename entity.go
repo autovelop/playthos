@@ -10,6 +10,7 @@ type Entity struct {
 	components []ComponentRoutine
 }
 
+// ID returns unique entity identifier
 func (e *Entity) ID() uint {
 	return e.id
 }
@@ -21,8 +22,8 @@ func (e *Entity) AddComponent(component ComponentRoutine) {
 
 		e.components = append(e.components, component)
 		for _, system := range systems {
-			for _, component_type := range system.ComponentTypes() {
-				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", component_type) {
+			for _, componentType := range system.ComponentTypes() {
+				if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", componentType) {
 					system.AddComponent(component)
 				}
 			}
@@ -30,6 +31,8 @@ func (e *Entity) AddComponent(component ComponentRoutine) {
 		component.SetActive(true)
 	}
 }
+
+// Component returns ComponentRoutine of empty component given as parameter
 func (e *Entity) Component(lookup interface{}) ComponentRoutine {
 	for _, component := range e.components {
 		if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", lookup) {

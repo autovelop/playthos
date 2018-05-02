@@ -132,11 +132,12 @@ func (o *OpenAL) RegisterSound(c *audio.Sound) {
 				r := bytes.NewReader(openALClip.data)
 
 				s := make([]byte, openALClip.Length())
-				size := int64(0)
+				// Uncomment this variable and try use it to determine the size of the audio clip
+				// size := int64(0)
 				for {
 					n, err := r.Read(s)
 					if n > 0 {
-						size += int64(n)
+						// size += int64(n)
 						buffer.BufferData(al.FormatStereo16, s[:n], int32(openALClip.SampleRate()))
 					}
 					if err == io.EOF {

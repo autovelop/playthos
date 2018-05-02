@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Platform consts to use for packages that are targeted at specific platforms
 const (
 	PlatformLinux   = "lin"
 	PlatformWindows = "win"
@@ -26,8 +27,8 @@ var listeners []Listener
 var integrants []IntegrantRoutine
 var assetRegistry []string
 
-var play bool = true
-var deploy bool = false
+var play = true
+var deploy = false
 
 func init() {
 	fmt.Println("> Engine: Initializing")

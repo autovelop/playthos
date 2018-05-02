@@ -11,28 +11,28 @@ import (
 
 // AABB should not detect penetration
 func CheckCollisionAABB(one *Collider, two *Collider) bool {
-	one_position, _, one_size := one.Get()
-	two_position, _, two_size := two.Get()
+	onePosition, _, oneSize := one.Get()
+	twoPosition, _, twoSize := two.Get()
 
-	one_position_max := std.Vector2{
-		one_position.X + (one_size.X / 2),
-		one_position.Y + (one_size.Y / 2),
+	onePositionMax := std.Vector2{
+		onePosition.X + (oneSize.X / 2),
+		onePosition.Y + (oneSize.Y / 2),
 	}
-	one_position_min := std.Vector2{
-		one_position.X - (one_size.X / 2),
-		one_position.Y - (one_size.Y / 2),
+	onePositionMin := std.Vector2{
+		onePosition.X - (oneSize.X / 2),
+		onePosition.Y - (oneSize.Y / 2),
 	}
-	two_position_max := std.Vector2{
-		two_position.X + (two_size.X / 2),
-		two_position.Y + (two_size.Y / 2),
+	twoPositionMax := std.Vector2{
+		twoPosition.X + (twoSize.X / 2),
+		twoPosition.Y + (twoSize.Y / 2),
 	}
-	two_position_min := std.Vector2{
-		two_position.X - (two_size.X / 2),
-		two_position.Y - (two_size.Y / 2),
+	twoPositionMin := std.Vector2{
+		twoPosition.X - (twoSize.X / 2),
+		twoPosition.Y - (twoSize.Y / 2),
 	}
 
-	collisionX := one_position_max.X > two_position_min.X && two_position_max.X > one_position_min.X
-	collisionY := one_position_max.Y > two_position_min.Y && two_position_max.Y > one_position_min.Y
+	collisionX := onePositionMax.X > twoPositionMin.X && twoPositionMax.X > onePositionMin.X
+	collisionY := onePositionMax.Y > twoPositionMin.Y && twoPositionMax.Y > onePositionMin.Y
 
 	return collisionX && collisionY
 }
@@ -40,11 +40,11 @@ func CheckCollisionAABB(one *Collider, two *Collider) bool {
 // returns two axis representing all four sides of the rect
 // assumes always a rect
 func FindRectAxis(rect *std.Rect) (std.Vector2, std.Vector2) {
-	half_w := rect.W / 2
-	half_h := rect.H / 2
-	axis_x := std.Vector2{rect.X + half_w, rect.X - half_w}
-	axis_y := std.Vector2{rect.Y + half_h, rect.Y - half_h}
-	return axis_x, axis_y
+	halfW := rect.W / 2
+	halfH := rect.H / 2
+	axisX := std.Vector2{rect.X + halfW, rect.X - halfW}
+	axisY := std.Vector2{rect.Y + halfH, rect.Y - halfH}
+	return axisX, axisY
 }
 
 func Dot(point std.Vector2, axis std.Vector2) float32 {
@@ -60,13 +60,13 @@ func Distance2(p1 std.Vector2, p2 std.Vector2) float32 {
 
 // returns max and min of a signle rect projected onto the axis
 func ProjectRectOnAxis(rect *std.Rect, axis *std.Vector2) (float32, float32) {
-	half_w := rect.W / 2
-	half_h := rect.H / 2
+	halfW := rect.W / 2
+	halfH := rect.H / 2
 
-	ul := std.Vector2{rect.X - half_w, rect.Y + half_h}
-	ur := std.Vector2{rect.X + half_w, rect.Y + half_h}
-	ll := std.Vector2{rect.X - half_w, rect.Y - half_h}
-	lr := std.Vector2{rect.X + half_w, rect.Y - half_h}
+	ul := std.Vector2{rect.X - halfW, rect.Y + halfH}
+	ur := std.Vector2{rect.X + halfW, rect.Y + halfH}
+	ll := std.Vector2{rect.X - halfW, rect.Y - halfH}
+	lr := std.Vector2{rect.X + halfW, rect.Y - halfH}
 
 	min := Dot(ul, *axis)
 	max := min

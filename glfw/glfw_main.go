@@ -46,8 +46,8 @@ func (g *GLFW) InitIntegrant() {
 	fmt.Printf("> GLFW: Version %v.%v\n", g.majorVersion, g.minorVersion)
 	// Intialize GLFW
 	if err := glfw.Init(); err != nil {
-		panic("failed to initialize glfw")
 		glfw.Terminate()
+		panic("failed to initialize glfw")
 	}
 	glfw.WindowHint(glfw.ContextVersionMajor, g.majorVersion)
 	glfw.WindowHint(glfw.ContextVersionMinor, g.minorVersion)
