@@ -1,3 +1,6 @@
+/*
+Package windows adds windows support to engine.
+*/
 package windows
 
 import (

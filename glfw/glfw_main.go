@@ -19,6 +19,7 @@ func init() {
 // Don't like this at all
 var thisglfw *GLFW
 
+// GLFW defines the window and monitor of a rendering application
 type GLFW struct {
 	engine.Integrant
 	window       *glfw.Window
@@ -28,10 +29,12 @@ type GLFW struct {
 	minorVersion int
 }
 
+// OpenGLVersion returns the major and minor versions of opengl on the supported operating system
 func (g *GLFW) OpenGLVersion() (int, int) {
 	return g.majorVersion, g.minorVersion
 }
 
+// InitIntegrant called when the integrant plugs into the engine
 func (g *GLFW) InitIntegrant() {
 	// start at the top and work our way down
 	// g.majorVersion = 3
@@ -116,6 +119,7 @@ func (g *GLFW) InitIntegrant() {
 	thisglfw = g
 }
 
+// Destroy called when engine is gracefully shutting down
 func (g *GLFW) Destroy() {
 	// defer glfw.Terminate()
 	// log.Fatal("here")
@@ -128,8 +132,11 @@ func (g *GLFW) Destroy() {
 	// g.window = nil
 }
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (g *GLFW) AddIntegrant(engine.IntegrantRoutine) {
 }
+
+// Window returns pointer to the current glfw window
 func (g *GLFW) Window() *glfw.Window {
 	return g.window
 }

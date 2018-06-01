@@ -12,6 +12,7 @@ func init() {
 	engine.NewSystem(&Cursor{})
 }
 
+// Action number representing a button associated with the cursor (click, tap, stare, etc.)
 type Action uint
 
 const (
@@ -37,6 +38,7 @@ const (
 
 var cursor *Cursor
 
+// Cursor defines the position of a cursor on the current display
 type Cursor struct {
 	engine.System
 	window      *glfw32.Window
@@ -46,14 +48,18 @@ type Cursor struct {
 	move        []func(...uint)
 }
 
+// InitSystem called when the system plugs into the engine
 func (c *Cursor) InitSystem() {
 	c.buttonpress = make([]func(...uint), 32, 32) // this is probably too much but safe for now
 }
 
+// Destroy called when engine is gracefully shutting down
 func (c *Cursor) Destroy() {}
 
+// DeleteEntity removes all entity's compoents from this system
 func (c *Cursor) DeleteEntity(entity *engine.Entity) {}
 
+// On binds an given event based on a key
 func (c *Cursor) On(key uint, fn func(...uint)) {
 	if c.Active() {
 		if key == ActionMove {
@@ -64,12 +70,15 @@ func (c *Cursor) On(key uint, fn func(...uint)) {
 	}
 }
 
+// AddComponent unorphans a component by adding it to this system
 func (c *Cursor) AddComponent(component engine.ComponentRoutine) {}
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (c *Cursor) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{}
 }
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (c *Cursor) AddIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
@@ -86,6 +95,7 @@ func (c *Cursor) AddIntegrant(integrant engine.IntegrantRoutine) {
 	c.window.SetMouseButtonCallback(onButton)
 }
 
+// onMove called every time the cursor moves
 func onMove(w *glfw32.Window, x float64, y float64) {
 	cursor.X = x
 	cursor.Y = y
@@ -95,6 +105,7 @@ func onMove(w *glfw32.Window, x float64, y float64) {
 	// cursor.[keycode](uint(action))
 }
 
+// onButton is called every time a cursor associated action is emitted
 func onButton(w *glfw32.Window, button glfw32.MouseButton, action glfw32.Action, mods glfw32.ModifierKey) {
 	if cursor.buttonpress[button] != nil {
 		cursor.buttonpress[button](uint(action), uint(cursor.X), uint(cursor.Y))

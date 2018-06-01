@@ -1,3 +1,11 @@
+/*
+Package engine orchestrates all the platforms, systems, entities, assets, and deploy procedures of an application.
+
+ECS
+
+Playthos uses the ECS pattern to manage how objects are preceived in the virtual space. ECS stands for Entity-component-system.
+What this means is that as a developer, you will be working with these in order to build an application and manipulate objects at runtime.
+*/
 package engine
 
 import (
@@ -7,34 +15,37 @@ import (
 	"time"
 )
 
-// Platform consts to use for packages that are targeted at specific platforms
-const (
-	PlatformLinux   = "lin"
-	PlatformWindows = "win"
-	PlatformMacOS   = "mac"
-	PlatformAndroid = "and"
-	PlatformIOS     = "ios"
-)
+// Registries
+var packages []*Package            // Packages required by other imported packages. Used to deploy to multiple platforms, each using it's subset of packages, through a single execution.
+var platforms map[string]*Platform // Platforms targeted by application. Used to deploy and to distinguish each platform's packages.
+var systems []SystemRoutine        // Systems
+var updaters []Updater             // Updater systems (ticks with engine loop)
+var drawer Drawer                  // Drawer system (draws with engine loop or when able to)
+var integrants []IntegrantRoutine  // Integrants
+var listeners []Listener           // Listener integrant (on demand calls like input, audio, etc.)
+var platformer Platformer          // Platformer integrant (loading and retrieving assets)
+var assets []string                // Assets
 
-var packages []*Package
-
-var platforms map[string]*Platform
-var systems []SystemRoutine
-var updaters []Updater
-var drawer Drawer
-var platformer Platformer
-var listeners []Listener
-var integrants []IntegrantRoutine
-var assetRegistry []string
-
-var play = true
-var deploy = false
+// Build Flags
+var play = true    // Run application immediately.
+var deploy = false // Auto detect package dependencies and build an executable.
 
 func init() {
 	fmt.Println("> Engine: Initializing")
-	assetRegistry = make([]string, 0)
+	assets = make([]string, 0)
+	packages = make([]*Package, 0)
 }
 
+// RegisterPackage adds a Package to engine's package registry.
+//
+// TODO(F): Create a database of official package names.
+func RegisterPackage(pckg *Package) {
+	packages = append(packages, pckg)
+}
+
+// RegisterPlatform adds a Platform to engine's platform registry.
+//
+// TODO(F): Create a database of official platform names.
 func RegisterPlatform(n string, p *Platform) {
 	if platforms == nil {
 		platforms = make(map[string]*Platform)
@@ -42,24 +53,12 @@ func RegisterPlatform(n string, p *Platform) {
 	platforms[n] = p
 }
 
-func RegisterPackage(pckg *Package) {
-	packages = append(packages, pckg)
-}
-
-type Engine struct {
-	gameName    string
-	gamePackage string
-
-	entities []*Entity
-	updaters []Updater
-	settings *Settings
-	running  bool
-}
-
+// RegisterAsset adds asset string path engine registry.
 func RegisterAsset(p string) {
-	assetRegistry = append(assetRegistry, p)
+	assets = append(assets, p)
 }
 
+// New initializes an Engine instance that could either deploy (platforms and packages are detected automatically) or run the application with an optional Settings parameter.
 func New(n string, s ...*Settings) *Engine {
 	if deploy {
 		initDeploy(n, os.Args[1])
@@ -79,12 +78,53 @@ func New(n string, s ...*Settings) *Engine {
 	return game
 }
 
+// NewSystem registers and organises the system into its appropriate registries (Drawer, Updater).
+func NewSystem(s SystemRoutine) {
+	systems = append(systems, s)
+
+	if d, ok := s.(Drawer); ok {
+		drawer = d
+	}
+	if u, ok := s.(Updater); ok {
+		updaters = append(updaters, u)
+	}
+}
+
+// NewIntegrant registers and organises the integrant into its appropriate registries (Platformer, Listener).
+func NewIntegrant(i IntegrantRoutine) {
+	integrants = append(integrants, i)
+
+	if p, ok := i.(Platformer); ok {
+		platformer = p
+	}
+	if l, ok := i.(Listener); ok {
+		listeners = append(listeners, l)
+	}
+}
+
+// LoadAsset instructs the current platform to load the asset correctly to be used for the application (binary, blob, etc.).
+func LoadAsset(path string) {
+	platformer.LoadAsset(path)
+}
+
+// Engine ties the ECS pattern together, manages application running state, and stores meta information.
+type Engine struct {
+	gameName string
+
+	entities []*Entity
+	updaters []Updater
+	settings *Settings
+	running  bool
+}
+
+// Start updates engine state and executes the first update call.
 func (e *Engine) Start() {
 	fmt.Println("> Engine: Enjoy!")
 	e.running = true
 	e.update()
 }
 
+// Stop updates engine state and gracefully stops all systems and integrants from running.
 func (e *Engine) Stop() {
 	for _, system := range systems {
 		system.SetActive(false)
@@ -96,6 +136,7 @@ func (e *Engine) Stop() {
 	e.running = false
 }
 
+// Init detects which systems work with eachother and pairs them up. This always runs before engine is started (not when deploying).
 func (e *Engine) Init() {
 	if play {
 		for _, integrant := range integrants {
@@ -117,8 +158,10 @@ func (e *Engine) Init() {
 	}
 }
 
-var eid uint = 0
-
+var eid uint = 0 // Entity IDs
+// NewEntity initializes and returns an empty Entity
+//
+// TODO(F): Generate unique entity ID in "NewEntity()"
 func (e *Engine) NewEntity() *Entity {
 	eid++
 	entity := &Entity{
@@ -134,6 +177,9 @@ func (e *Engine) NewEntity() *Entity {
 	return entity
 }
 
+// Entity returns Entity pointer by given ID
+//
+// BUG(F): Entity() function current returning nil. Find proper way to lookup entities by ID
 func (e *Engine) Entity(id uint) *Entity {
 	// for _, entity := range e.entities {
 	// 	if entity.ID() == id {
@@ -143,6 +189,7 @@ func (e *Engine) Entity(id uint) *Entity {
 	return nil
 }
 
+// DeleteEntity removes entity from all systems (also empties its components) and the engine's registry
 func (e *Engine) DeleteEntity(entity *Entity) {
 	for _, system := range systems {
 		system.DeleteEntity(entity)
@@ -157,40 +204,41 @@ func (e *Engine) DeleteEntity(entity *Entity) {
 	}
 }
 
-func NewSystem(s SystemRoutine) {
-	systems = append(systems, s)
-
-	if d, ok := s.(Drawer); ok {
-		drawer = d
-	}
-	if u, ok := s.(Updater); ok {
-		updaters = append(updaters, u)
-	}
-}
-
-func NewIntegrant(i IntegrantRoutine) {
-	integrants = append(integrants, i)
-
-	if p, ok := i.(Platformer); ok {
-		platformer = p
-	}
-	if l, ok := i.(Listener); ok {
-		listeners = append(listeners, l)
-	}
-}
-
+// SetSettings overwrites the engines settings
 func (e *Engine) SetSettings(settings *Settings) {
 	e.settings = settings
 }
 
+// Settings returns the engines settings
 func (e *Engine) Settings() *Settings {
 	return e.settings
 }
 
-func LoadAsset(path string) {
-	platformer.LoadAsset(path)
+// Listener returns a Listener based on the given Listener type
+func (e *Engine) Listener(lookup Listener) Listener {
+	for _, listener := range listeners {
+		if fmt.Sprintf("%T", listener) == fmt.Sprintf("%T", lookup) {
+			return listener
+		}
+	}
+	log.Fatalf("%T - Listener requested but doens't exist. Make sure all packages are imported", lookup)
+	return nil
 }
 
+// Integrant returns an Integrant based on the given Integrant type
+func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
+	for _, i := range integrants {
+		if fmt.Sprintf("%T", i) == fmt.Sprintf("%T", lookup) {
+			return i
+		}
+	}
+	log.Fatalf("%T - Integrant requested but doens't exist. Make sure all packages are imported", lookup)
+	return nil
+}
+
+// Game Loop
+//
+// BUG(F): Game loop currently performing very badly on desktop OSs
 func (e *Engine) update() {
 	const frameCap float64 = 250
 	var (
@@ -231,24 +279,4 @@ func (e *Engine) update() {
 			time.Sleep(time.Millisecond)
 		}
 	}
-}
-
-func (e *Engine) Listener(lookup Listener) Listener {
-	for _, listener := range listeners {
-		if fmt.Sprintf("%T", listener) == fmt.Sprintf("%T", lookup) {
-			return listener
-		}
-	}
-	log.Fatalf("%T - Listener requested but doens't exist. Make sure all packages are imported", lookup)
-	return nil
-}
-
-func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
-	for _, i := range integrants {
-		if fmt.Sprintf("%T", i) == fmt.Sprintf("%T", lookup) {
-			return i
-		}
-	}
-	log.Fatalf("%T - Integrant requested but doens't exist. Make sure all packages are imported", lookup)
-	return nil
 }

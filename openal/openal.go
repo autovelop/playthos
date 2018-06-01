@@ -1,3 +1,6 @@
+/*
+Package openal adds the OpenAL listener integrant.
+*/
 package openal
 
 import (

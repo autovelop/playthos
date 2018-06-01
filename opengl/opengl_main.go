@@ -4,14 +4,13 @@ package opengl
 
 import (
 	"github.com/autovelop/playthos"
-	glfw "github.com/autovelop/playthos/glfw"
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
 
 	// "github.com/autovelop/playthos/platforms/linux"
 
 	// for now we always pull in glfw if opengl is used until other window managers exist
-	_ "github.com/autovelop/playthos/glfw"
+	glfw "github.com/autovelop/playthos/glfw"
 
 	"github.com/go-gl/gl/all-core/gl"
 	glfw32 "github.com/go-gl/glfw/v3.2/glfw"
@@ -31,6 +30,7 @@ func init() {
 	fmt.Println("> OpenGL Added")
 }
 
+// OpenGL uses GLFW window to render graphics on desktop devices
 type OpenGL struct {
 	render.Render
 	factory       *OpenGLFactory
@@ -48,6 +48,7 @@ type OpenGL struct {
 	minorVersion  int
 }
 
+// InitSystem called when the system plugs into the engine
 func (o *OpenGL) InitSystem() {
 	o.SetActive(false)
 	o.settings = o.Engine().Settings()
@@ -94,9 +95,11 @@ func (o *OpenGL) InitSystem() {
 
 }
 
+// Destroy called when engine is gracefully shutting down
 func (o *OpenGL) Destroy() {
 }
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	case *glfw.GLFW:
@@ -114,6 +117,7 @@ func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	}
 }
 
+// AddComponent unorphans a component by adding it to this system
 func (o *OpenGL) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *std.Transform:
@@ -135,10 +139,12 @@ func (o *OpenGL) AddComponent(component engine.ComponentRoutine) {
 	}
 }
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (o *OpenGL) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 }
 
+// Draw renders all entity components into scene
 func (o *OpenGL) Draw() {
 	if o.Active() {
 		if len(o.cameras) <= 0 {
@@ -259,6 +265,7 @@ func (o *OpenGL) Draw() {
 	}
 }
 
+// createDefaultCamera creates a camera if not set explicitly
 func (o *OpenGL) createDefaultCamera() {
 	camera_transform := std.NewTransform()
 	camera_transform.Set(
@@ -273,10 +280,12 @@ func (o *OpenGL) createDefaultCamera() {
 	o.cameras = append(o.cameras, camera)
 }
 
+// RegisterTransform tells opengl about a given transform component
 func (o *OpenGL) RegisterTransform(transform *std.Transform) {
 	o.transforms = append(o.transforms, transform)
 }
 
+// RegisterCamera tells opengl about a given camera component
 func (o *OpenGL) RegisterCamera(camera *render.Camera) {
 	clearColor := camera.ClearColor()
 	gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
@@ -287,6 +296,7 @@ func (o *OpenGL) RegisterCamera(camera *render.Camera) {
 	o.meshes = append(o.meshes, nil)
 }
 
+// DeleteEntity removes all entity's compoents from this system
 func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(o.transforms); i++ {
 		transform := o.transforms[i]
@@ -306,6 +316,7 @@ func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
 	}
 }
 
+// RegisterMaterial tells opengl about a given material component
 func (o *OpenGL) RegisterMaterial(material *render.Material) {
 	texture := material.BaseTexture()
 	openGLMaterial := &OpenGLMaterial{Material: material}
@@ -358,6 +369,7 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 	o.materials = append(o.materials, openGLMaterial)
 }
 
+// RegisterMesh tells opengl about a given mesh component
 func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
 	var verticies []float32 = mesh.Vertices()
 	var indicies []uint8 = mesh.Indicies()

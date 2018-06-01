@@ -1,3 +1,6 @@
+/*
+Package keyboard adds a empty Keyboard listener integrant to be overwriten by the platform specific integrant.
+*/
 package keyboard
 
 import (

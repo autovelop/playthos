@@ -1,3 +1,6 @@
+/*
+Package glfw adds the GLFW integrant.
+*/
 package glfw
 
 import (

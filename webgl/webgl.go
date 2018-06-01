@@ -1,3 +1,6 @@
+/*
+Package webgl adds the WebGL drawer system.
+*/
 package webgl
 
 import (

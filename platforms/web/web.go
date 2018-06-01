@@ -1,3 +1,6 @@
+/*
+Package web adds web/javascript support to engine.
+*/
 package web
 
 import (

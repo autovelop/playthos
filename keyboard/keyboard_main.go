@@ -10,40 +10,52 @@ func init() {
 	engine.NewIntegrant(&Keyboard{})
 }
 
+// Keyboard defines all the keyboard related actions (press, release, hold)
 type Keyboard struct {
 	engine.Integrant
 	keypress []func(...int)
 }
 
+// InitIntegrant called when the integrant plugs into the engine
 func (k *Keyboard) InitIntegrant() {
 	k.keypress = make([]func(...int), 350, 350) // this is probably too much but safe for now
 }
 
+// Destroy called when engine is gracefully shutting down
 func (k *Keyboard) Destroy() {
 }
 
+// AddComponent unorphans a component by adding it to this system
 func (k *Keyboard) AddComponent(component engine.ComponentRoutine) {}
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (k *Keyboard) AddIntegrant(integrant engine.IntegrantRoutine) {
 }
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (k *Keyboard) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{}
 }
+
+// DeleteEntity removes all entity's compoents from this system
 func (k *Keyboard) DeleteEntity(entity *engine.Entity) {}
 
+// IsSet returns whether the given key has already been bound to an action
 func (k *Keyboard) IsSet(key int) bool {
 	return k.keypress[key] != nil
 }
 
+// Emit triggers the given key's action
 func (k *Keyboard) Emit(kc int, a int) {
 	k.keypress[kc](a)
 }
 
+// On defines the action of a given key press
 func (k *Keyboard) On(key int, fn func(...int)) {
 	k.keypress[key] = fn
 }
 
+// Empty Defaults
 const (
 	ActionRelease = 0
 	ActionPress   = 1

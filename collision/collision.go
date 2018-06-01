@@ -1,3 +1,6 @@
+/*
+Package collision adds the Collision updater system with the collider component as well as helpers for collision detection
+*/
 package collision
 
 import (

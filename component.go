@@ -1,8 +1,5 @@
 package engine
 
-// NOTE
-// https://play.golang.org/p/JUpq7Tsf8P
-
 type Component struct {
 	unit
 	id     string

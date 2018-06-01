@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Entity is used to group components with an unique identifier in order to form a virtual/game object
 type Entity struct {
 	*unit
 	id         uint
@@ -15,6 +16,7 @@ func (e *Entity) ID() uint {
 	return e.id
 }
 
+// AddComponent adds a new component to an entity
 func (e *Entity) AddComponent(component ComponentRoutine) {
 	if play {
 		component.initUnit(e.engine)
@@ -32,7 +34,7 @@ func (e *Entity) AddComponent(component ComponentRoutine) {
 	}
 }
 
-// Component returns ComponentRoutine of empty component given as parameter
+// Component returns a ComponentRoutine based on the given Component type
 func (e *Entity) Component(lookup interface{}) ComponentRoutine {
 	for _, component := range e.components {
 		if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", lookup) {

@@ -1,3 +1,6 @@
+/*
+Package render adds an empty Render system to be overwritten by platform specific drawer with material, mesh, camera, and texture components.
+*/
 package render
 
 import (

@@ -10,15 +10,18 @@ import (
 	"golang.org/x/mobile/exp/audio/al"
 )
 
+// OpenALClip defines a clip component specifically with OpenAL
 type OpenALClip struct {
 	*audio.Clip
 	data []byte
 }
 
+// Data returns binary data of openal clip
 func (o *OpenALClip) Data() []byte {
 	return o.data
 }
 
+// Decode decodes clip for openal playback
 func (o *OpenALClip) Decode() {
 	o.Clip.Set(
 		binary.LittleEndian.Uint32(o.data[4:8]),
@@ -29,36 +32,43 @@ func (o *OpenALClip) Decode() {
 	o.data = o.data[44:]
 }
 
+// OpenALSound defines sound component specifically with OpenAL
 type OpenALSound struct {
 	*audio.Sound
 	clip   *OpenALClip
 	buffer *al.Buffer
 }
 
+// NewOpenALSound creates and sets a new orphan openal sound
 func NewOpenALSound(s *audio.Sound) *OpenALSound {
 	openALSound := &OpenALSound{Sound: s}
 	return openALSound
 }
 
+// OverrideClip overrides base clip with openal clip
 func (o *OpenALSound) OverrideClip(fn func(audio.Clipable)) {
 	o.SetClip = fn
 	o.SetClip(o.BaseClip().(*audio.Clip))
 }
 
+// Buffer returns pointer to openal buffer
 func (o *OpenALSound) Buffer() *al.Buffer {
 	return o.buffer
 }
 
+// OpenALSource defines source component specifically with OpenAL
 type OpenALSource struct {
 	*audio.Source
 	source *al.Source
 }
 
+// NewOpenALSource creates and sets a new orphan openal source
 func NewOpenALSource(s *audio.Source) *OpenALSource {
 	openALSource := &OpenALSource{Source: s}
 	return openALSource
 }
 
+// OverridePlaySound overrides base sound with openal sound
 func (o *OpenALSource) OverridePlaySound(fn func(audio.Soundable)) {
 	o.PlaySound = fn
 	s := o.BasePlaySound()
@@ -66,13 +76,3 @@ func (o *OpenALSource) OverridePlaySound(fn func(audio.Soundable)) {
 		o.PlaySound(s.(*audio.Sound))
 	}
 }
-
-// func (o *OpenALSource) OverridePlay(fn func(audio.Playable)) {
-// 	o.Play = fn
-// o.Play(o.BasePlay().(*audio.Source))
-// }
-
-// func (o *OpenALSource) PlaySound(s *OpenALSound) {
-// 	o.source.QueueBuffers(*s.buffer)
-// 	al.PlaySources(*o.source)
-// }

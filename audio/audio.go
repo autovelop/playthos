@@ -1,3 +1,6 @@
+/*
+Package audio adds the Audio listener integrant with the clip, sound, source, and listener components.
+*/
 package audio
 
 import (

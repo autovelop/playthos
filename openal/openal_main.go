@@ -22,9 +22,9 @@ func init() {
 	fmt.Println("> OpenAL Added")
 }
 
+// OpenAL listener used for spacial audio using OpenAL
 type OpenAL struct {
 	audio.Audio
-	// factory  *OpenALFactory
 	platform engine.Platformer
 
 	sources  []*OpenALSource
@@ -33,14 +33,17 @@ type OpenAL struct {
 	settings *engine.Settings
 }
 
+// InitSystem called when the system plugs into the engine
 func (o *OpenAL) InitSystem() {
 	al.OpenDevice()
 }
 
+// Destroy called when engine is gracefully shutting down
 func (o *OpenAL) Destroy() {
 	al.CloseDevice()
 }
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (o *OpenAL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	// case *OpenALFactory:
@@ -52,6 +55,7 @@ func (o *OpenAL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	}
 }
 
+// AddComponent unorphans a component by adding it to this system
 func (o *OpenAL) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *audio.Source:
@@ -66,6 +70,7 @@ func (o *OpenAL) AddComponent(component engine.ComponentRoutine) {
 	}
 }
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (o *OpenAL) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&audio.Source{}, &audio.Sound{}, &audio.Listener{}}
 }
@@ -75,6 +80,7 @@ func (o *OpenAL) ComponentTypes() []engine.ComponentRoutine {
 // 	}
 // }
 
+// DeleteEntity removes all entity's compoents from this system
 func (o *OpenAL) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(o.sounds); i++ {
 		clip := o.sounds[i]
@@ -90,6 +96,7 @@ func (o *OpenAL) DeleteEntity(entity *engine.Entity) {
 	}
 }
 
+// RegisterSource tells open al about a given source
 func (o *OpenAL) RegisterSource(s *audio.Source) {
 	// play := s.BasePlay()
 	openALSource := &OpenALSource{Source: s}
@@ -116,6 +123,7 @@ func (o *OpenAL) RegisterSource(s *audio.Source) {
 	o.sources = append(o.sources, openALSource)
 }
 
+// RegisterSource tells open al about a given sound
 func (o *OpenAL) RegisterSound(c *audio.Sound) {
 	clip := c.BaseClip()
 	openALSound := &OpenALSound{Sound: c}
@@ -160,6 +168,7 @@ func (o *OpenAL) RegisterSound(c *audio.Sound) {
 	// }
 }
 
+// RegisterSource tells open al about a given listener
 func (o *OpenAL) RegisterListener(l *audio.Listener) {
 	pos := l.Position()
 	al.SetListenerPosition([3]float32{pos.X, pos.Y, pos.Z})

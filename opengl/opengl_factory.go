@@ -17,14 +17,21 @@ func init() {
 	fmt.Println("> OpenGLFactory: Ready")
 }
 
+// OpenGLFactory used to override basic render system functions
 type OpenGLFactory struct {
 	engine.Integrant
 }
 
-func (o *OpenGLFactory) InitIntegrant()                                 {}
-func (o *OpenGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
-func (o *OpenGLFactory) Destroy()                                       {}
+// InitIntegrant called when the integrant plugs into the engine
+func (o *OpenGLFactory) InitIntegrant() {}
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
+func (o *OpenGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
+
+// Destroy called when engine is gracefully shutting down
+func (o *OpenGLFactory) Destroy() {}
+
+// NewShader creates a new vertex and fragment shader
 func (o *OpenGLFactory) NewShader(vs string, fs string) uint32 {
 	version := gl.GoStr(gl.GetString(gl.VERSION))
 	fmt.Printf("> OpenGL: Profile = %v\n", version)
@@ -101,46 +108,57 @@ func (o *OpenGLFactory) NewShader(vs string, fs string) uint32 {
 	return shaderProgram
 }
 
+// OpenGLMesh defines a mesh (opengl)
 type OpenGLMesh struct {
 	m   *render.Mesh
 	vao uint32
 }
 
+// SetVAO sets the VAO (opengl)
 func (m *OpenGLMesh) SetVAO(vao uint32) {
 	m.vao = vao
 }
 
+// VAO returns a opengl VAO
 func (m *OpenGLMesh) VAO() uint32 {
 	return m.vao
 }
 
+// OpenGLTexture defines a texture (opengl)
 type OpenGLTexture struct {
 	*render.Texture
 	id uint32
 }
 
+// ID returns a opengl texture id
 func (t *OpenGLTexture) ID() uint32 {
 	return t.id
 }
 
+// OpenGLMaterial defines a material (opengl)
 type OpenGLMaterial struct {
 	*render.Material
 	texture *OpenGLTexture
 }
 
+// NewOpenGLMaterial creates a meterial (opengl)
 func NewOpenGLMaterial(m *render.Material) *OpenGLMaterial {
 	openGLMaterial := &OpenGLMaterial{Material: m}
 	return openGLMaterial
 }
 
+// OverrideTexture overrides base texture (opengl)
 func (o *OpenGLMaterial) OverrideTexture(fn func(render.Textureable)) {
 	o.SetTexture = fn
 	o.SetTexture(o.BaseTexture().(*render.Texture))
 }
 
+// Texture returns a opengl texture
 func (o *OpenGLMaterial) Texture() *OpenGLTexture {
 	return o.texture
 }
+
+// ID returns a opengl material id
 func (o *OpenGLMaterial) ID() uint32 {
 	return o.texture.id
 }

@@ -7,9 +7,7 @@ import (
 	"math"
 )
 
-// TODO: run tests through these functions
-
-// AABB should not detect penetration
+// CheckCollisionAABB tests whether two colliders are intersecting
 func CheckCollisionAABB(one *Collider, two *Collider) bool {
 	onePosition, _, oneSize := one.Get()
 	twoPosition, _, twoSize := two.Get()
@@ -37,8 +35,7 @@ func CheckCollisionAABB(one *Collider, two *Collider) bool {
 	return collisionX && collisionY
 }
 
-// returns two axis representing all four sides of the rect
-// assumes always a rect
+// FindRectAxis returns two axis representing all four sides of the rect
 func FindRectAxis(rect *std.Rect) (std.Vector2, std.Vector2) {
 	halfW := rect.W / 2
 	halfH := rect.H / 2
@@ -47,18 +44,22 @@ func FindRectAxis(rect *std.Rect) (std.Vector2, std.Vector2) {
 	return axisX, axisY
 }
 
+// Dot returns dot product of points and axis (Vector2)
 func Dot(point std.Vector2, axis std.Vector2) float32 {
 	return point.X*axis.X + point.Y*axis.Y
 }
 
+// Distance3 returns distance between two Vector3 points
 func Distance3(p1 std.Vector3, p2 std.Vector3) float32 {
 	return float32(math.Sqrt(float64((p1.X-p2.X)*(p1.X-p2.X) + (p1.Y-p2.Y)*(p1.Y-p2.Y))))
 }
+
+// Distance2 returns distance between two Vector2 points
 func Distance2(p1 std.Vector2, p2 std.Vector2) float32 {
 	return float32(math.Sqrt(float64((p1.X-p2.X)*(p1.X-p2.X) + (p1.Y-p2.Y)*(p1.Y-p2.Y))))
 }
 
-// returns max and min of a signle rect projected onto the axis
+// ProjectRectOnAxis returns max and min of a single rect projected onto the axis
 func ProjectRectOnAxis(rect *std.Rect, axis *std.Vector2) (float32, float32) {
 	halfW := rect.W / 2
 	halfH := rect.H / 2

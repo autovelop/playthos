@@ -8,7 +8,8 @@ import (
 	"log"
 )
 
-type AnimationClip struct {
+// Clip is the sequence of all the frames of a animation. It also controls the state, direction, repetition, and speed of the animation.
+type Clip struct {
 	engine.Component
 	frames          []*AnimationKeyFrame
 	currentKeyFrame *AnimationKeyFrame
@@ -22,7 +23,8 @@ type AnimationClip struct {
 	tick            float64
 }
 
-func (a *AnimationClip) Set(s float64, f float64, o std.Animatable) {
+// Set used to define all the require properties of a Clip
+func (a *Clip) Set(s float64, f float64, o std.Animatable) {
 	a.speed = s
 	a.frameCount = f
 	a.value = o
@@ -30,7 +32,8 @@ func (a *AnimationClip) Set(s float64, f float64, o std.Animatable) {
 	a.running = true
 }
 
-func (a *AnimationClip) Update() {
+// Update is called on every tick of the game loop if running is set to true
+func (a *Clip) Update() {
 	if a.running {
 		if a.tick > a.frameCount {
 			a.tick = 0
@@ -54,33 +57,39 @@ func (a *AnimationClip) Update() {
 	}
 }
 
-func (a *AnimationClip) Stop() {
+// Stop and reset the clip
+func (a *Clip) Stop() {
 	a.running = false
 	a.paused = false
 	a.tick = 0
 }
 
-func (a *AnimationClip) Start() {
+// Start or resume the clip
+func (a *Clip) Start() {
 	a.running = true
 	a.paused = false
 }
 
-func (a *AnimationClip) Pause() {
+// Pause the clip
+func (a *Clip) Pause() {
 	a.paused = true
 	a.running = true
 }
 
-func (a *AnimationClip) SetAutoplay(ap bool) {
+// SetAutoplay set the autoplay property of the clip
+func (a *Clip) SetAutoplay(ap bool) {
 	a.autoplay = ap
 	a.running = ap
 	// a.running = true
 }
 
-func (a *AnimationClip) Loop() {
+// Loop set the clip to loop
+func (a *Clip) Loop() {
 	a.loop = true
 }
 
-func (a *AnimationClip) AddKeyFrame(i float64, d float64, t std.Animatable) {
+// AddKeyFrame appends an animation frame to the clip.
+func (a *Clip) AddKeyFrame(i float64, d float64, t std.Animatable) {
 	// calculate and set keyframe step
 	k := &AnimationKeyFrame{}
 	k.set(i, d, t)
@@ -100,6 +109,5 @@ func (a *AnimationClip) AddKeyFrame(i float64, d float64, t std.Animatable) {
 		diffValue.Div(float32(diffFrames - prevFrame.Duration()))
 
 		prevFrame.SetStep(diffValue)
-
 	}
 }

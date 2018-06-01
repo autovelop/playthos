@@ -1,3 +1,6 @@
+/*
+Package physics adds the Physics updater system with the rigidbody component.
+*/
 package physics
 
 import (

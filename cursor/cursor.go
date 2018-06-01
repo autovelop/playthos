@@ -1,3 +1,6 @@
+/*
+Package cursor adds the Cursor updater system.
+*/
 package cursor
 
 import (

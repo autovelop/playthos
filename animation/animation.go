@@ -1,3 +1,6 @@
+/*
+Package animation adds the Animation updater system with the clip and keyframe components
+*/
 package animation
 
 import (

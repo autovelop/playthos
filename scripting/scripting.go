@@ -1,3 +1,6 @@
+/*
+Package scripting adds the Scripting updater system.
+*/
 package scripting
 
 import (

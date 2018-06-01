@@ -12,6 +12,7 @@ func init() {
 	engine.NewSystem(&Collision{})
 }
 
+// Collision system used to update rigidbodies and colliders in the event of a collision
 type Collision struct {
 	engine.System
 	colliders   []*Collider
@@ -19,6 +20,7 @@ type Collision struct {
 	rigidbodies []*physics.RigidBody
 }
 
+// DeleteEntity removes all entity's compoents from this system
 func (c *Collision) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(c.colliders); i++ {
 
@@ -33,12 +35,16 @@ func (c *Collision) DeleteEntity(entity *engine.Entity) {
 	}
 }
 
+// InitSystem called when the system plugs into the engine
 func (c *Collision) InitSystem() {}
 
+// Destroy called when engine is gracefully shutting down
 func (c *Collision) Destroy() {}
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (c *Collision) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
+// AddComponent unorphans a component by adding it to this system
 func (c *Collision) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *Collider:
@@ -65,10 +71,12 @@ func (c *Collision) AddComponent(component engine.ComponentRoutine) {
 	}
 }
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (c *Collision) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&Collider{}}
 }
 
+// Update called by engine to progress this system to the next engine loop
 func (c *Collision) Update() {
 	length := len(c.colliders) - 1
 	for a := 0; a < length; a++ {

@@ -1,3 +1,6 @@
+/*
+Package linux adds linux support to engine.
+*/
 package linux
 
 import (

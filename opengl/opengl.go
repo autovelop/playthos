@@ -1,3 +1,6 @@
+/*
+Package opengl adds the OpenGL drawer system.
+*/
 package opengl
 
 import (
