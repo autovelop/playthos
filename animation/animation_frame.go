@@ -6,7 +6,7 @@ import (
 	"github.com/autovelop/playthos/std"
 )
 
-// Keyframe holds the duration that a animation frame as well as the targeted value it is animating towards
+// KeyFrame holds the duration that a animation frame as well as the targeted value it is animating towards
 type KeyFrame struct {
 	frameIndex float64
 
@@ -33,7 +33,7 @@ func (a *KeyFrame) FrameIndex() float64 {
 	return a.frameIndex
 }
 
-// FrameIndex returns frame duration
+// Duration returns frame duration
 func (a *KeyFrame) Duration() float64 {
 	return a.duration
 }

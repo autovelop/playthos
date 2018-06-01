@@ -7,7 +7,6 @@ import (
 	glfw "github.com/autovelop/playthos/glfw"
 	"github.com/autovelop/playthos/keyboard"
 	glfw32 "github.com/go-gl/glfw/v3.2/glfw"
-	"log"
 )
 
 func init() {

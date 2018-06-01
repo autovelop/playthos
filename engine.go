@@ -3,7 +3,7 @@ Package engine orchestrates all the platforms, systems, entities, assets, and de
 
 ECS
 
-Playthos uses the ECS pattern to manage how objects are preceived in the virtual space. ECS stands for Entity-component-system.
+Playthos uses the ECS pattern to manage how objects are perceived in the virtual space. ECS stands for Entity-component-system.
 What this means is that as a developer, you will be working with these in order to build an application and manipulate objects at runtime.
 */
 package engine
@@ -158,7 +158,7 @@ func (e *Engine) Init() {
 	}
 }
 
-var eid uint = 0 // Entity IDs
+var eid uint // Entity IDs
 // NewEntity initializes and returns an empty Entity
 //
 // TODO(F): Generate unique entity ID in "NewEntity()"
