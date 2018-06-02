@@ -7,6 +7,7 @@ import (
 	"github.com/autovelop/playthos/std"
 )
 
+// Camera defines the origin, lookat, and up vectors of the camera. Also contains the viewport data (zoom, clear color)
 type Camera struct {
 	engine.Component
 	eye    *std.Vector3
@@ -17,12 +18,13 @@ type Camera struct {
 	clear  *std.Color
 }
 
+// NewCamera creates and sets a new orphan camera
 func NewCamera() *Camera {
 	return &Camera{}
 }
 
+// Set used to define all the require properties of a Camera
 func (c *Camera) Set(s *float32, cl *std.Color) {
-	// func (c *Camera) Set(s *float32, center *std.Vector3, up *std.Vector3) {
 	c.scale = s
 	c.clear = cl
 	e := c.Entity()
@@ -40,24 +42,23 @@ func (c *Camera) Set(s *float32, cl *std.Color) {
 	// c.center = center
 }
 
+// SetTransform set/changes all the vector data values
+//
+// TODO(F): Don't use transform and rather create its own component
 func (c *Camera) SetTransform(t *std.Transform) {
 	c.eye = t.Position()
 	c.center = t.Rotation()
 	c.up = t.Scale()
 }
 
-// func (c *Camera) SetCenter(x float32, y float32, z float32) {
-// 	c.center.X = x
-// 	c.center.Y = y
-// 	c.center.Z = z
-// }
-
+// SetWindow set/changes the window scale values
 func (c *Camera) SetWindow(w float32, h float32) {
 	v := &std.Vector2{w, h}
 	c.window = v
 	// log.Fatal(v)
 }
 
+// PointToRay converts a window position to a world position (Vector2)
 func (c *Camera) PointToRay(x float32, y float32) *std.Vector2 {
 	v := &std.Vector2{
 		(2*x)/c.window.X - 1,
@@ -79,22 +80,27 @@ func (c *Camera) PointToRay(x float32, y float32) *std.Vector2 {
 	return v
 }
 
+// Eye returns the camera origin vector
 func (c *Camera) Eye() *std.Vector3 {
 	return c.eye
 }
 
+// ClearColor returns the camera clear color
 func (c *Camera) ClearColor() *std.Color {
 	return c.clear
 }
 
+// Scale returns the camera scale value
 func (c *Camera) Scale() *float32 {
 	return c.scale
 }
 
+// Center returns the camera lookat vector
 func (c *Camera) Center() *std.Vector3 {
 	return c.center
 }
 
+// Up returns the camera up vector
 func (c *Camera) Up() *std.Vector3 {
 	return c.up
 }

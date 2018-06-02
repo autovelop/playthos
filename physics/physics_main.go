@@ -12,6 +12,7 @@ func init() {
 	engine.NewSystem(&Physics{})
 }
 
+// Physics system used to simulate rigidbodies physics (force, gravity, friction, etc.)
 type Physics struct {
 	// Need to be able to uncomment the below at some point
 	// engine.Updater
@@ -20,14 +21,18 @@ type Physics struct {
 	gravity     *std.Vector3
 }
 
+// InitSystem called when the system plugs into the engine
 func (p *Physics) InitSystem() {
 	p.gravity = &std.Vector3{0, -9.8, 0}
 }
 
+// Destroy called when engine is gracefully shutting down
 func (p *Physics) Destroy() {}
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (p *Physics) AddIntegrant(integrant engine.IntegrantRoutine) {}
 
+// AddComponent unorphans a component by adding it to this system
 func (p *Physics) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *RigidBody:
@@ -36,6 +41,8 @@ func (p *Physics) AddComponent(component engine.ComponentRoutine) {
 		break
 	}
 }
+
+// DeleteEntity removes all entity's compoents from this system
 func (p *Physics) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(p.rigidbodies); i++ {
 		rigidbody := p.rigidbodies[i]
@@ -47,10 +54,12 @@ func (p *Physics) DeleteEntity(entity *engine.Entity) {
 	}
 }
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (p *Physics) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&RigidBody{}}
 }
 
+// Update called by engine to progress this system to the next engine loop
 func (p *Physics) Update() {
 	for _, rigidbody := range p.rigidbodies {
 		if rigidbody.Active() {

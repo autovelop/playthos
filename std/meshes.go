@@ -1,5 +1,6 @@
 package std
 
+// VEB combines vertex and element array buffers
 type VEB struct {
 	VB []float32
 	EB []uint8

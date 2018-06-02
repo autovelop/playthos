@@ -9,24 +9,28 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopherjs/gopherjs/js"
 
-	"github.com/autovelop/playthos/platforms/web"
-	// "github.com/gopherjs/webgl"
-	// "github.com/go-gl/gl/all-core/gl"
-	// "time"
-	// glfw32 "github.com/go-gl/glfw/v3.2/glfw"
-	// "github.com/go-gl/mathgl/mgl32"
-	"log"
-	// "math"
 	"fmt"
-	// "os"
-	// "strings"
+	"github.com/autovelop/playthos/platforms/web"
+	"log"
 )
+
+// BUG(F): Bindings to WebGL has been removed so import from "github.com/gopherjs/webgl" and implement below functions
+// func (c *Context) Str(s string) string {
+// 	return string(s)
+// }
+// func (c *Context) BindVertexArray(vao *js.Object) {
+// 	c.Call("bindVertexArray", vao)
+// }
+// func (c *Context) CreateVertexArray() *js.Object {
+// 	return c.Call("createVertexArray")
+// }
 
 func init() {
 	render.NewRenderSystem(&WebGL{})
 	fmt.Println("> WebGL Added")
 }
 
+// WbGL uses gopherjs render graphics on web browsers
 type WebGL struct {
 	render.Render
 	platform      *web.Web
@@ -44,6 +48,7 @@ type WebGL struct {
 	minorVersion  int
 }
 
+// InitSystem called when the system plugs into the engine
 func (w *WebGL) InitSystem() {
 	w.SetActive(false)
 	w.settings = w.Engine().Settings()
@@ -100,9 +105,11 @@ func (w *WebGL) InitSystem() {
 	// 	os.Exit(0)
 }
 
+// Destroy called when engine is gracefully shutting down
 func (w *WebGL) Destroy() {
 }
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (w *WebGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	switch integrant := integrant.(type) {
 	case *WebGLFactory:
@@ -114,6 +121,7 @@ func (w *WebGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 	}
 }
 
+// AddComponent unorphans a component by adding it to this system
 func (w *WebGL) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *std.Transform:
@@ -131,10 +139,12 @@ func (w *WebGL) AddComponent(component engine.ComponentRoutine) {
 	}
 }
 
+// ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (w *WebGL) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 }
 
+// requestAnimationFrame renders all entity components into scene. Called by browser
 func (w *WebGL) requestAnimationFrame(float32) {
 	gl := w.gl
 	if w.Active() {
@@ -256,6 +266,7 @@ func (w *WebGL) requestAnimationFrame(float32) {
 	}
 }
 
+// createDefaultCamera creates a camera if not set explicitly
 func (w *WebGL) createDefaultCamera() {
 	camera_transform := std.NewTransform()
 	camera_transform.Set(
@@ -270,10 +281,12 @@ func (w *WebGL) createDefaultCamera() {
 	w.cameras = append(w.cameras, camera)
 }
 
+// RegisterTransform tells webgl about a given transform component
 func (w *WebGL) RegisterTransform(transform *std.Transform) {
 	w.transforms = append(w.transforms, transform)
 }
 
+// RegisterCamera tells webgl about a given camera component
 func (w *WebGL) RegisterCamera(camera *render.Camera) {
 	clearColor := camera.ClearColor()
 	w.gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
@@ -284,6 +297,7 @@ func (w *WebGL) RegisterCamera(camera *render.Camera) {
 	w.meshes = append(w.meshes, nil)
 }
 
+// DeleteEntity removes all entity's compoents from this system
 func (w *WebGL) DeleteEntity(entity *engine.Entity) {
 	for i := 0; i < len(w.transforms); i++ {
 		transform := w.transforms[i]
@@ -303,6 +317,7 @@ func (w *WebGL) DeleteEntity(entity *engine.Entity) {
 	}
 }
 
+// RegisterMaterial tells webgl about a given material component
 func (w *WebGL) RegisterMaterial(material *render.Material) {
 	gl := w.gl
 	texture := material.BaseTexture()
@@ -336,6 +351,7 @@ func (w *WebGL) RegisterMaterial(material *render.Material) {
 	w.materials = append(w.materials, webGLMaterial)
 }
 
+// RegisterMesh tells webgl about a given mesh component
 func (w *WebGL) RegisterMesh(mesh *render.Mesh) {
 	gl := w.gl
 	var verticies []float32 = mesh.Vertices()

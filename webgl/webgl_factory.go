@@ -14,14 +14,21 @@ func init() {
 	fmt.Println("> WebGLFactory: Ready")
 }
 
+// WebGLFactory used to override basic render system functions
 type WebGLFactory struct {
 	engine.Integrant
 }
 
-func (w *WebGLFactory) InitIntegrant()                                 {}
-func (w *WebGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
-func (w *WebGLFactory) Destroy()                                       {}
+// InitIntegrant called when the integrant plugs into the engine
+func (w *WebGLFactory) InitIntegrant() {}
 
+// AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
+func (w *WebGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
+
+// Destroy called when engine is gracefully shutting down
+func (w *WebGLFactory) Destroy() {}
+
+// NewShader creates a new vertex and fragment shader
 func (w *WebGLFactory) NewShader(gl *Context, vs string, fs string) *js.Object {
 	version := gl.GetParameter(gl.VERSION)
 	fmt.Printf("> WebGLFactory: Profile = %v\n", version)
@@ -80,46 +87,57 @@ func (w *WebGLFactory) NewShader(gl *Context, vs string, fs string) *js.Object {
 	return shaderProgram
 }
 
+// WebGLMesh defines a mesh (webgl)
 type WebGLMesh struct {
 	m   *render.Mesh
 	vao *js.Object
 }
 
+// SetVAO sets the VAO (webgl)
 func (m *WebGLMesh) SetVAO(vao *js.Object) {
 	m.vao = vao
 }
 
+// VAO returns a webgl VAO
 func (m *WebGLMesh) VAO() *js.Object {
 	return m.vao
 }
 
+// WebGLTexture defines a texture (webgl)
 type WebGLTexture struct {
 	*render.Texture
 	id *js.Object
 }
 
+// ID returns a webgl texture id
 func (t *WebGLTexture) ID() *js.Object {
 	return t.id
 }
 
+// WebGLMaterial defines a material (webgl)
 type WebGLMaterial struct {
 	*render.Material
 	texture *WebGLTexture
 }
 
+// NewWebGLMaterial creates a meterial (webgl)
 func NewWebGLMaterial(m *render.Material) *WebGLMaterial {
 	webGLMaterial := &WebGLMaterial{Material: m}
 	return webGLMaterial
 }
 
+// OverrideTexture overrides base texture (webgl)
 func (w *WebGLMaterial) OverrideTexture(fn func(render.Textureable)) {
 	w.SetTexture = fn
 	w.SetTexture(w.BaseTexture().(*render.Texture))
 }
 
+// Texture returns a webgl texture
 func (w *WebGLMaterial) Texture() *WebGLTexture {
 	return w.texture
 }
+
+// ID returns a webgl material id
 func (w *WebGLMaterial) ID() *js.Object {
 	return w.texture.id
 }

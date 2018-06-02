@@ -7,7 +7,7 @@ import (
 	"github.com/autovelop/playthos/std"
 )
 
-// RigidBody to apply force, velocity, mass, and friction to entity
+// RigidBody defines the force, velocity, mass, and friction properties of an object
 type RigidBody struct {
 	engine.Component
 	velocity *std.Vector3
@@ -33,41 +33,41 @@ func (r *RigidBody) SetVelocity(x float32, y float32, z float32) {
 	r.velocity.Z = z
 }
 
-// Velocity returns current RigidBody velocity (Vector3)
+// Velocity returns current velocity (Vector3)
 func (r *RigidBody) Velocity() *std.Vector3 {
 	return r.velocity
 }
 
-// AddForce adds force to current RigidBody force (3 x float32)
+// AddForce adds force to current force (3 x float32)
 func (r *RigidBody) AddForce(x float32, y float32, z float32) {
 	r.force.X += x
 	r.force.Y += y
 	r.force.Z += z
 }
 
-// SetForce sets new force values for RigidBody
+// SetForce sets/changes force values
 func (r *RigidBody) SetForce(x float32, y float32, z float32) {
 	r.force.X = x
 	r.force.Y = y
 	r.force.Z = z
 }
 
-// Force returns current RigidBody force (Vector3)
+// Force returns current force (Vector3)
 func (r *RigidBody) Force() *std.Vector3 {
 	return r.force
 }
 
-// Friction returns current RigidBody friction (float32)
+// Friction returns current friction (float32)
 func (r *RigidBody) Friction() float32 {
 	return r.friction
 }
 
-// SetMass sets new mass value for RigidBody
+// SetMass sets/changes mass value
 func (r *RigidBody) SetMass(m float32) {
 	r.mass = m
 }
 
-// Mass returns current RigidBody mass (float32)
+// Mass returns current mass (float32)
 func (r *RigidBody) Mass() float32 {
 	return r.mass
 }

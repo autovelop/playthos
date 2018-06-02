@@ -7,14 +7,17 @@ import (
 	"github.com/autovelop/playthos/std"
 )
 
+// Render defines an empty system that will be overwritten by a platform specific system
 type Render struct {
 	engine.System
 }
 
+// NewRenderSystem instructs engine to inject render system
 func NewRenderSystem(render RenderRoutine) {
 	engine.NewSystem(render)
 }
 
+// RenderRoutine interface to allow implemented systems to register drawer components
 type RenderRoutine interface {
 	engine.SystemRoutine
 	// engine.Drawer
@@ -27,6 +30,7 @@ type RenderRoutine interface {
 }
 
 const (
+	// VSHADER OpenGL 4.5 Vertex Shader
 	VSHADER = `#version 450 core
 	layout (location = 0) in vec4 pos;
 	layout (location = 1) in vec3 col;
@@ -49,6 +53,7 @@ const (
 	}
 	` + "\x00"
 
+	// FSHADER OpenGL 4.5 Fragment Shader
 	FSHADER = `#version 450 core
 
 	uniform vec4 color;
@@ -76,6 +81,7 @@ const (
 	}
 	` + "\x00"
 
+	// VSHADERWEB OpenGLES 3.0 Vertex Shader
 	VSHADERWEB = `#version 300 es
 
 	layout (location = 0) in vec4 pos;
@@ -97,6 +103,7 @@ const (
 	}
 	`
 
+	// FSHADERWEB OpenGLES 3.0 Fragment Shader
 	FSHADERWEB = `#version 300 es
 
 	precision mediump float;
@@ -125,6 +132,7 @@ const (
 		}
 	}
 	`
+	// VSHADER41 OpenGL 4.1 Vertex Shader
 	VSHADER41 = `#version 410 core
 	layout (location = 0) in vec4 pos;
 	layout (location = 1) in vec3 col;
@@ -147,6 +155,7 @@ const (
 	}
 	` + "\x00"
 
+	// FSHADER41 OpenGL 4.1 Fragment Shader
 	FSHADER41 = `#version 410 core
 
 	uniform vec4 color;
@@ -173,6 +182,8 @@ const (
 		}
 	}
 	` + "\x00"
+
+	// VSHADER33 OpenGL 3.3 Vertex Shader
 	VSHADER33 = `#version 330 core
 	#extension GL_ARB_separate_shader_objects : enable
 
@@ -197,6 +208,7 @@ const (
 	}
 	` + "\x00"
 
+	// FSHADER33 OpenGL 3.3 Fragment Shader
 	FSHADER33 = `#version 330 core
 	#extension GL_ARB_separate_shader_objects : enable
 
