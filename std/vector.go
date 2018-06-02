@@ -86,7 +86,7 @@ func (v *Vector3) Set(n float32) {
 	v.Z = n
 }
 
-// Div multiplies two vector3 values
+// Mul multiplies two vector3 values
 func (v *Vector3) Mul(d Animatable) {
 	o := d.(*Vector3)
 	v.X = v.X * o.X
@@ -120,7 +120,7 @@ func (v *Vector2) Copy() Animatable {
 	return n
 }
 
-// Div multiplies two vector2 values
+// Mul multiplies two vector2 values
 func (v *Vector2) Mul(d Animatable) {
 	o := d.(*Vector2)
 	v.X = v.X * o.X
@@ -169,7 +169,7 @@ func (v *Integer) Copy() Animatable {
 	return n
 }
 
-// Div multiplies two integer values
+// Mul multiplies two integer values
 func (v *Integer) Mul(d Animatable) {
 	o := d.(*Integer)
 	v.V = v.V * o.V

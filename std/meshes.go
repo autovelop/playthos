@@ -6,7 +6,12 @@ type VEB struct {
 	EB []uint8
 }
 
+// QuadMesh simple predefined quad mesh
 var QuadMesh *VEB
+
+// CircleMesh simple predefined circle mesh
+//
+// TODO(F): Implement a circle mesh
 var CircleMesh *VEB
 
 func init() {

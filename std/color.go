@@ -68,7 +68,7 @@ func (c *Color) Set(n float32) {
 	c.A = n
 }
 
-// Div multiplies two color values
+// Mul multiplies two color values
 func (c *Color) Mul(d Animatable) {
 	o := d.(*Color)
 	c.R = c.R * o.R
