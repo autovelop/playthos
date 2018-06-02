@@ -50,7 +50,7 @@ func (g *GLFW) InitIntegrant() {
 	// Intialize GLFW
 	if err := glfw.Init(); err != nil {
 		glfw.Terminate()
-		panic("failed to initialize glfw")
+		log.Fatalf("Failed to initialize GLFW: %v", err)
 	}
 	glfw.WindowHint(glfw.ContextVersionMajor, g.majorVersion)
 	glfw.WindowHint(glfw.ContextVersionMinor, g.minorVersion)
@@ -62,7 +62,8 @@ func (g *GLFW) InitIntegrant() {
 	// Don't know why this isn't working. TODO: report to go-glfw
 	// glfw.WindowHint(glfw.Iconified, glfw.True)
 
-	glfw.WindowHint(glfw.Decorated, glfw.False)
+	// Might need this line for MacOS true fullscreen
+	// glfw.WindowHint(glfw.Decorated, glfw.False)
 
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 
@@ -80,12 +81,17 @@ func (g *GLFW) InitIntegrant() {
 		}
 	} else {
 		fmt.Printf("> GLFW: Fullscreen = No\n")
+		// Sometimes when the same process run new GLFW instances sequentially, these properties are not reset. Therefore we have to explicitly set them.
+		glfw.WindowHint(glfw.Maximized, glfw.False)
+		glfw.WindowHint(glfw.Floating, glfw.False)
+		glfw.WindowHint(glfw.AutoIconify, glfw.False)
+		g.monitor = nil
 		if int(g.settings.ResolutionX) <= 0 {
 			g.settings.ResolutionX = float32(800)
 			g.settings.ResolutionY = float32(600)
 		}
 	}
-	fmt.Printf("> GLFW: Resolution = %vx%v\n", g.settings.ResolutionX, g.settings.ResolutionY)
+	fmt.Printf("> GLFW: Resolution = %vx%v | Monitor = %v\n", g.settings.ResolutionX, g.settings.ResolutionY, g.monitor)
 	g.window, err = glfw.CreateWindow(int(g.settings.ResolutionX), int(g.settings.ResolutionY), "Game", g.monitor, nil)
 	if err != nil {
 		switch g.majorVersion {
@@ -128,8 +134,6 @@ func (g *GLFW) Destroy() {
 		g.window.SetMonitor(nil, 0, 0, int(g.settings.ResolutionX), int(g.settings.ResolutionY), 0)
 	}
 	g.window.SetShouldClose(true)
-	// g.window.Destroy()
-	// g.window = nil
 }
 
 // AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)

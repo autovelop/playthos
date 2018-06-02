@@ -92,7 +92,6 @@ func (o *OpenGL) InitSystem() {
 	gl.Enable(gl.BLEND)
 	gl.BlendEquation(gl.FUNC_ADD)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
 }
 
 // Destroy called when engine is gracefully shutting down
@@ -451,5 +450,6 @@ func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
 
 	// Unbind Vertex array object
 	gl.BindVertexArray(0)
+
 	o.meshes = append(o.meshes, openGLMesh)
 }

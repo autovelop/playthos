@@ -74,7 +74,7 @@ func New(n string, s ...*Settings) *Engine {
 		game.SetSettings(&Settings{false, 800, 600, true})
 	}
 
-	game.Init()
+	game.init()
 	return game
 }
 
@@ -110,22 +110,34 @@ func LoadAsset(path string) {
 // Engine ties the ECS pattern together, manages application running state, and stores meta information.
 type Engine struct {
 	gameName string
-
 	entities []*Entity
-	updaters []Updater
 	settings *Settings
 	running  bool
+	once     bool
 }
 
 // Start updates engine state and executes the first update call.
 func (e *Engine) Start() {
-	fmt.Println("> Engine: Enjoy!")
+	fmt.Println("> Engine: Running")
 	e.running = true
 	e.update()
 }
 
-// Stop updates engine state and gracefully stops all systems and integrants from running.
+// Once executes a single engine update call.
+func (e *Engine) Once() {
+	fmt.Println("> Engine: Running")
+	e.once = true
+	e.update()
+}
+
+// Stop updates engine state in order to commence gracefully shutdown
 func (e *Engine) Stop() {
+	fmt.Println("> Engine: Stopping")
+	e.running = false
+}
+
+// Stop gracefully stops all systems and integrants from running.
+func (e *Engine) stop() {
 	for _, system := range systems {
 		system.SetActive(false)
 		system.Destroy()
@@ -133,11 +145,10 @@ func (e *Engine) Stop() {
 	for _, integrant := range integrants {
 		integrant.Destroy()
 	}
-	e.running = false
 }
 
-// Init detects which systems work with eachother and pairs them up. This always runs before engine is started (not when deploying).
-func (e *Engine) Init() {
+// init detects which systems work with eachother and pairs them up. This always runs before engine is started (not when deploying).
+func (e *Engine) init() {
 	if play {
 		for _, integrant := range integrants {
 			integrant.initUnit(e)
@@ -179,14 +190,39 @@ func (e *Engine) NewEntity() *Entity {
 
 // Entity returns Entity pointer by given ID
 //
-// BUG(F): Entity() function current returning nil. Find proper way to lookup entities by ID
+// TODO(F): Find better way of searching entities by ID
 func (e *Engine) Entity(id uint) *Entity {
-	// for _, entity := range e.entities {
-	// 	if entity.ID() == id {
-	// 		return entity
-	// 	}
-	// }
+	for _, entity := range e.entities {
+		if entity.ID() == id {
+			return entity
+		}
+	}
 	return nil
+}
+
+// Entities returns slice entity pointers
+func (e *Engine) Entities() []*Entity {
+	return e.entities
+}
+
+// Updaters returns slice updater system pointers
+func (e *Engine) Updaters() []Updater {
+	return updaters
+}
+
+// Listeners returns slice updater system pointers
+func (e *Engine) Listeners() []Listener {
+	return listeners
+}
+
+// Platformer returns platformer integrant pointer
+func (e *Engine) Platformer() Platformer {
+	return platformer
+}
+
+// Drawer returns drawer system pointer
+func (e *Engine) Drawer() Drawer {
+	return drawer
 }
 
 // DeleteEntity removes entity from all systems (also empties its components) and the engine's registry
@@ -236,21 +272,22 @@ func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
 	return nil
 }
 
+const frameCap float64 = 250
+
+var (
+	frames       uint64
+	frameCounter time.Duration
+	frameTime    = time.Duration(1000/frameCap) * time.Millisecond
+	prevTime     = time.Now()
+	unproccTime  time.Duration
+	render       bool
+)
+
 // Game Loop
 //
 // BUG(F): Game loop currently performing very badly on desktop OSs
 func (e *Engine) update() {
-	const frameCap float64 = 250
-	var (
-		frames       uint64
-		frameCounter time.Duration
-		frameTime    time.Duration = time.Duration(1000/frameCap) * time.Millisecond
-		prevTime     time.Time     = time.Now()
-		unproccTime  time.Duration
-		render       bool
-	)
-
-	for e.running {
+	for e.running || e.once {
 		startTime := time.Now()
 		elapsed := startTime.Sub(prevTime)
 		prevTime = startTime
@@ -278,5 +315,11 @@ func (e *Engine) update() {
 		} else {
 			time.Sleep(time.Millisecond)
 		}
+
+		if e.once {
+			e.once = false
+		}
 	}
+	e.stop()
+	time.Sleep(time.Second)
 }
