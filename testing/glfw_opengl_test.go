@@ -1,13 +1,14 @@
 package playthos_test
 
 import (
+	// "bytes"
 	"github.com/autovelop/playthos"
 	_ "github.com/autovelop/playthos/opengl"
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
-	"log"
+	// "log"
 	"os"
-	"runtime"
+	// "runtime"
 	"runtime/pprof"
 	"testing"
 	"time"
@@ -16,16 +17,8 @@ import (
 // All OpenGL tests are conducted in windowed mode
 
 func TestGLFWOpenGL(t *testing.T) {
-	if true {
-		f, err := os.Create("cpuprofile")
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-		defer pprof.StopCPUProfile()
-	}
+	pprof.StartCPUProfile(os.Stdout)
+	defer pprof.StopCPUProfile()
 
 	eng := engine.New("TestGLFWOpenGL", &engine.Settings{
 		false,
@@ -56,15 +49,5 @@ func TestGLFWOpenGL(t *testing.T) {
 	}(eng)
 
 	eng.Once()
-	if true {
-		f, err := os.Create("memprofile")
-		if err != nil {
-			log.Fatal("could not create memory profile: ", err)
-		}
-		runtime.GC() // get up-to-date statistics
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
-		}
-		f.Close()
-	}
+	pprof.WriteHeapProfile(os.Stdout)
 }
