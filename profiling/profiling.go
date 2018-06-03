@@ -12,6 +12,7 @@ import (
 
 var profCPU, profMem bool
 
+// StartProfiling starts either or both CPU and memory profiling. Will output results to terminal or you can manually run pprof on the .pprof file where the test is located
 func StartProfiling(c bool, m bool) {
 	profCPU = c
 	profMem = m
@@ -26,10 +27,13 @@ func StartProfiling(c bool, m bool) {
 		}
 	}
 }
+
+// ReportUPS outputs to terminal the average updates per second the engine is reporting
 func ReportUPS(e *engine.Engine) {
 	fmt.Printf("> Profiling: %v average updates per second\n", e.UPS())
 }
 
+// StopProfiling stops whichever profiling is running
 func StopProfiling() {
 	var (
 		cmdOut []byte
