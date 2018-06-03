@@ -124,8 +124,20 @@ type Engine struct {
 func (e *Engine) Start() {
 	fmt.Println("> Engine: Running")
 	e.running = true
+	go func() {
+		avgIndx := 0
+		for e.running {
+			avgUPS[avgIndx] = ups
+			// fmt.Printf("> Engine: %v UpdatesPerSecond\n", ups)
+			ups = 0
+			avgIndx++
+			if avgIndx == len(avgUPS) {
+				avgIndx = 0
+			}
+			time.Sleep(time.Second)
+		}
+	}()
 	e.update()
-
 }
 
 // Once executes a single engine update call.
@@ -155,7 +167,6 @@ func (e *Engine) stop() {
 // init detects which systems work with eachother and pairs them up. This always runs before engine is started (not when deploying).
 func (e *Engine) init() {
 	if play {
-		ups = 0
 		for _, integrant := range integrants {
 			integrant.initUnit(e)
 			integrant.InitIntegrant()
@@ -172,19 +183,6 @@ func (e *Engine) init() {
 			system.InitSystem()
 			system.SetActive(true)
 		}
-		go func() {
-			avgIndx := 0
-			for e.running {
-				avgUPS[avgIndx] = ups
-				// fmt.Printf("> Engine: %v UpdatesPerSecond\n", ups)
-				ups = 0
-				avgIndx++
-				if avgIndx == len(avgUPS) {
-					avgIndx = 0
-				}
-				time.Sleep(time.Second)
-			}
-		}()
 	}
 }
 
