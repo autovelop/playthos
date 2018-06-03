@@ -30,6 +30,10 @@ var assets []string                // Assets
 var play = true    // Run application immediately.
 var deploy = false // Auto detect package dependencies and build an executable.
 
+// Profiling
+var ups uint
+var avgUPS [4]uint
+
 func init() {
 	fmt.Println("> Engine: Initializing")
 	assets = make([]string, 0)
@@ -121,6 +125,7 @@ func (e *Engine) Start() {
 	fmt.Println("> Engine: Running")
 	e.running = true
 	e.update()
+
 }
 
 // Once executes a single engine update call.
@@ -150,6 +155,7 @@ func (e *Engine) stop() {
 // init detects which systems work with eachother and pairs them up. This always runs before engine is started (not when deploying).
 func (e *Engine) init() {
 	if play {
+		ups = 0
 		for _, integrant := range integrants {
 			integrant.initUnit(e)
 			integrant.InitIntegrant()
@@ -166,6 +172,19 @@ func (e *Engine) init() {
 			system.InitSystem()
 			system.SetActive(true)
 		}
+		go func() {
+			avgIndx := 0
+			for e.running {
+				avgUPS[avgIndx] = ups
+				// fmt.Printf("> Engine: %v UpdatesPerSecond\n", ups)
+				ups = 0
+				avgIndx++
+				if avgIndx == len(avgUPS) {
+					avgIndx = 0
+				}
+				time.Sleep(time.Second)
+			}
+		}()
 	}
 }
 
@@ -203,6 +222,22 @@ func (e *Engine) Entity(id uint) *Entity {
 // Entities returns slice entity pointers
 func (e *Engine) Entities() []*Entity {
 	return e.entities
+}
+
+// UPS returns engine's updates per second (based on the latest 4 seconds)
+func (e *Engine) UPS() float64 {
+	avg := 0.0
+	actualLen := 0.0
+	for _, u := range avgUPS {
+		if u <= 0 {
+			fmt.Println("> Engine: Too early to report accurate UPS")
+			break
+		}
+		actualLen++
+		avg += float64(u)
+	}
+
+	return avg / actualLen
 }
 
 // Updaters returns slice updater system pointers
@@ -272,49 +307,27 @@ func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
 	return nil
 }
 
-const frameCap float64 = 250
-
-var (
-	frames       uint64
-	frameCounter time.Duration
-	frameTime    = time.Duration(1000/frameCap) * time.Millisecond
-	prevTime     = time.Now()
-	unproccTime  time.Duration
-	render       bool
-)
+var fixedUpdateRate = time.Duration(30)
 
 // Game Loop
 //
-// BUG(F): Game loop currently performing very badly on desktop OSs
+// BUG(F): Game loop currently performing very badly on windows
+// TODO(F): This is a fixed game loop. It is not ready for devices that cannot keep up with 30 FPS
 func (e *Engine) update() {
 	for e.running || e.once {
-		startTime := time.Now()
-		elapsed := startTime.Sub(prevTime)
-		prevTime = startTime
+		start := time.Now().UnixNano()
+		ups++
 
-		unproccTime += elapsed
-		frameCounter += elapsed
-
-		for unproccTime > frameTime {
-			unproccTime -= frameTime
-
-			for _, updater := range updaters {
-				updater.Update()
-			}
-
-			if frameCounter >= time.Second {
-				frames = 0
-				frameCounter -= time.Second
-			}
-			render = true
+		for _, updater := range updaters {
+			updater.Update()
 		}
-
-		if render && drawer != nil {
+		if drawer != nil {
 			drawer.Draw()
-			frames++
-		} else {
-			time.Sleep(time.Millisecond)
 		}
+		updateProcTime := time.Now().UnixNano() - start
+		updateProcDuration := time.Duration(updateProcTime) * time.Nanosecond
+
+		time.Sleep(((1000 / fixedUpdateRate) * time.Millisecond) - updateProcDuration)
 
 		if e.once {
 			e.once = false

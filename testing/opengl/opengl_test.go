@@ -1,26 +1,19 @@
 package playthos_test
 
 import (
-	// "bytes"
 	"github.com/autovelop/playthos"
 	_ "github.com/autovelop/playthos/opengl"
+	"github.com/autovelop/playthos/profiling"
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
-	// "log"
-	"os"
-	// "runtime"
-	"runtime/pprof"
 	"testing"
 	"time"
 )
 
-// All OpenGL tests are conducted in windowed mode
+func TestOpenGL(t *testing.T) {
+	profiling.StartProfiling(false, false)
 
-func TestGLFWOpenGL(t *testing.T) {
-	pprof.StartCPUProfile(os.Stdout)
-	defer pprof.StopCPUProfile()
-
-	eng := engine.New("TestGLFWOpenGL", &engine.Settings{
+	eng := engine.New("TestOpenGL", &engine.Settings{
 		false,
 		1024,
 		768,
@@ -38,16 +31,17 @@ func TestGLFWOpenGL(t *testing.T) {
 
 	camera := render.NewCamera()
 	cameraSize := float32(4)
-	camera.Set(&cameraSize, &std.Color{0.27, 0.20, 0.54, 0})
+	camera.Set(&cameraSize, &std.Color{0.2, 0.2, 0.2, 0})
 	camera.SetTransform(tr)
 
 	ent.AddComponent(camera)
 
 	go func(e *engine.Engine) {
-		time.Sleep(6 * time.Second)
+		time.Sleep(5 * time.Second)
 		e.Stop()
 	}(eng)
 
-	eng.Once()
-	pprof.WriteHeapProfile(os.Stdout)
+	eng.Start()
+	profiling.ReportUPS(eng)
+	profiling.StopProfiling()
 }
