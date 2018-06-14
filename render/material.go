@@ -29,14 +29,13 @@ func (m *Material) BaseTexture() Textureable {
 	return m.baseTexture
 }
 
-// Set used to define all the required properties
-func (m *Material) Set(t Textureable, col *std.Color) {
-	m.baseTexture = t
-	m.color = col
-}
+// SetTexture sets/changes texture
+// func (m *Material) SetTexture(t Textureable) {
+// 	m.baseTexture = t
+// }
 
-// SetColor sets/changes material color
-func (m *Material) SetColor(col *std.Color) {
+// Set used to define all the required properties
+func (m *Material) Set(col *std.Color) {
 	m.color = col
 }
 

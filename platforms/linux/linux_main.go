@@ -1,4 +1,4 @@
-// +build deploy lin
+// +build deploy linux
 
 package linux
 

@@ -24,7 +24,7 @@ var drawer Drawer                  // Drawer system (draws with engine loop or w
 var integrants []IntegrantRoutine  // Integrants
 var listeners []Listener           // Listener integrant (on demand calls like input, audio, etc.)
 var platformer Platformer          // Platformer integrant (loading and retrieving assets)
-var assets []string                // Assets
+// var assets []string                // Assets
 
 // Build Flags
 var play = true    // Run application immediately.
@@ -36,8 +36,9 @@ var avgUPS [4]uint
 
 func init() {
 	fmt.Println("> Engine: Initializing")
-	assets = make([]string, 0)
+	// assets = make([]string, 0)
 	packages = make([]*Package, 0)
+	log.SetFlags(log.Lshortfile &^ (log.Ldate | log.Ltime))
 }
 
 // RegisterPackage adds a Package to engine's package registry.
@@ -57,10 +58,10 @@ func RegisterPlatform(n string, p *Platform) {
 	platforms[n] = p
 }
 
-// RegisterAsset adds asset string path engine registry.
-func RegisterAsset(p string) {
-	assets = append(assets, p)
-}
+// RegisterAsset adds asset string path to engine registry.
+// func RegisterAsset(p string) {
+// 	assets = append(assets, p)
+// }
 
 // New initializes an Engine instance that could either deploy (platforms and packages are detected automatically) or run the application with an optional Settings parameter.
 func New(n string, s ...*Settings) *Engine {
@@ -108,6 +109,9 @@ func NewIntegrant(i IntegrantRoutine) {
 
 // LoadAsset instructs the current platform to load the asset correctly to be used for the application (binary, blob, etc.).
 func LoadAsset(path string) {
+	if platformer == nil {
+		log.Fatalf("> Engine: Unable to load assets without a platform.")
+	}
 	platformer.LoadAsset(path)
 }
 
@@ -290,7 +294,7 @@ func (e *Engine) Listener(lookup Listener) Listener {
 			return listener
 		}
 	}
-	log.Fatalf("%T - Listener requested but doens't exist. Make sure all packages are imported", lookup)
+	log.Fatalf("> Engine: %T - Listener requested but doens't exist. Make sure all packages are imported", lookup)
 	return nil
 }
 
@@ -301,7 +305,7 @@ func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
 			return i
 		}
 	}
-	log.Fatalf("%T - Integrant requested but doens't exist. Make sure all packages are imported", lookup)
+	log.Fatalf("> Engine: %T - Integrant requested but doens't exist. Make sure all packages are imported", lookup)
 	return nil
 }
 

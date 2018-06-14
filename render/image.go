@@ -58,7 +58,7 @@ func (i *Image) SetHeight(h int32) {
 	i.height = h
 }
 
-// LoadImage instructs engine to load iamge from path
+// LoadImage instructs engine to load image from path
 func (i *Image) LoadImage(p string) {
 	i.path = p
 	engine.LoadAsset(p)

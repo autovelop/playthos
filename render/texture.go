@@ -36,17 +36,19 @@ func (t *Texture) Height() int32 {
 // SetWidth sets/changes image width
 func (t *Texture) SetWidth(w int32) {
 	t.image.SetWidth(w)
+	t.size.X = float32(w)
 }
 
 // SetHeight sets/changes image height
 func (t *Texture) SetHeight(h int32) {
 	t.image.SetHeight(h)
+	t.size.Y = float32(h)
 }
 
 // SetSize sets/changes texture size
-func (t *Texture) SetSize(x float32, y float32) {
-	t.size = &std.Vector2{x, y}
-}
+// func (t *Texture) SetSize(x float32, y float32) {
+// 	t.size = &std.Vector2{x, y}
+// }
 
 // SetOffset sets/changes texture offset vector
 func (t *Texture) SetOffset(o *std.Vector2) {

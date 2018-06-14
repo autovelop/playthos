@@ -66,6 +66,7 @@ func (g *GLFW) InitIntegrant() {
 	// glfw.WindowHint(glfw.Decorated, glfw.False)
 
 	glfw.WindowHint(glfw.Resizable, glfw.True)
+	// glfw.WindowHint(glfw.Samples, 4)
 
 	var err error
 	if g.settings.Fullscreen {

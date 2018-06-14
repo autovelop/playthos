@@ -18,9 +18,9 @@ func TestHeadless(t *testing.T) {
 	ent := eng.NewEntity()
 	tr := std.NewTransform()
 	tr.Set(
-		&std.Vector3{0, 0, 3}, // POSITION
-		&std.Vector3{0, 0, 0}, // CENTER
-		&std.Vector3{0, 1, 0}, // UP
+		&std.Vector3{0, 0, 0},
+		&std.Vector3{0, 0, 0},
+		&std.Vector3{1, 1, 1},
 	)
 	ent.AddComponent(tr)
 

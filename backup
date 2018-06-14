@@ -18,7 +18,6 @@ import (
 
 	"os"
 	"strings"
-	"time"
 	"unsafe"
 
 	"bytes"
@@ -39,32 +38,26 @@ func init() {
 type OpenGL struct {
 	render.Render
 	// factory             *OpenGLFactory
-	platform          engine.Platformer
-	window            *glfw32.Window
-	screenWidth       float32
-	screenHeight      float32
-	shader            uint32
-	opaqueShader      uint32
-	opaqueFBO         uint32
-	opaqueTex0        uint32
-	sharedDepthBuffer uint32
-	transparentShader uint32
-	transparentFBO    uint32
-	transparentTex0   uint32
-	transparentTex1   uint32
-	compositeShader   uint32
-	framebufferShader uint32
-	cameras           []*render.Camera
-	transforms        []*std.Transform
-	meshes            []*OpenGLMesh
-	materials         []*OpenGLMaterial
-	settings          *engine.Settings
-	majorVersion      int
-	minorVersion      int
-	fbo               uint32
-	rbo               uint32
-	cbo               uint32
-	quadVAO           uint32
+	platform        engine.Platformer
+	window          *glfw32.Window
+	screenWidth     float32
+	screenHeight    float32
+	geometryPass    uint32 // shader program for the first pass
+	compositingPass uint32 // shader program for the final pass
+	accumFBO        uint32 // accumulation frame buffer object
+	accumTex0       uint32 // accumulation frame buffer object
+	accumTex1       uint32 // accumulation frame buffer object
+	cameras         []*render.Camera
+	transforms      []*std.Transform
+	meshes          []*OpenGLMesh
+	materials       []*OpenGLMaterial
+	settings        *engine.Settings
+	majorVersion    int
+	minorVersion    int
+	fbo             uint32
+	rbo             uint32
+	cbo             uint32
+	quadVAO         uint32
 }
 
 // InitSystem called when the system plugs into the engine
@@ -80,11 +73,17 @@ func (o *OpenGL) InitSystem() {
 		panic(err)
 	}
 
+	// var vertexArrayID uint32
+	// gl.GenVertexArrays(1, &vertexArrayID)
+	gl.Viewport(0, 0, int32(o.settings.ResolutionX), int32(o.settings.ResolutionY))
+
 	switch o.majorVersion {
 	case 4:
 		switch o.minorVersion {
 		case 5:
-			o.shader = newShader(render.VSHADER, render.FSHADER)
+			o.geometryPass = newShader(render.VSHADERBLEND, render.FSHADERBLEND)
+			o.compositingPass = newShader(render.VSHADERFINAL, render.FSHADERFINAL)
+			// o.screenShaderProgram = o.factory.newShader(render.VSCREENSHADER, render.FSCREENSHADER)
 			break
 		case 1:
 			// o.shaderProgram = newShader(render.VSHADER41, render.FSHADER41)
@@ -100,11 +99,44 @@ func (o *OpenGL) InitSystem() {
 
 	}
 
-	gl.Viewport(0, 0, int32(o.settings.ResolutionX), int32(o.settings.ResolutionY))
+	gl.Disable(gl.CULL_FACE)
 
-	gl.Enable(gl.DEPTH_TEST)
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	o.accumTex0 = newTexture(gl.TEXTURE_RECTANGLE, gl.RGBA16F, int32(o.screenWidth), int32(o.screenHeight), gl.RGBA, nil)
+	o.accumTex1 = newTexture(gl.TEXTURE_RECTANGLE, gl.R8, int32(o.screenWidth), int32(o.screenHeight), gl.RED, nil)
+
+	o.accumFBO = newFramebuffer([]uint32{o.accumTex0, o.accumTex1})
+	bindFramebuffer(0)
+
+	// gl.Enable(gl.DEPTH_TEST)
+	// gl.Enable(gl.FRONT_AND_BACK)
+	// gl.DepthMask(false)
+	// gl.Enable(gl.BLEND)
+	// gl.BlendFunc(gl.ONE, gl.ONE)
+	// gl.BlendEquation(gl.FUNC_ADD)
+	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	// DRAW OPAQUE OBJECTS
+
+	// geometry pass
+	// gl.GenFramebuffers(1, &o.fbo)
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, o.fbo)
+
+	// gl.GenTextures(1, &o.cbo)
+	// gl.BindTexture(gl.TEXTURE_2D, o.cbo)
+	// gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, int32(o.screenWidth), int32(o.screenHeight), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, o.cbo, 0)
+
+	// gl.GenRenderbuffers(1, &o.rbo)
+	// gl.BindRenderbuffer(gl.RENDERBUFFER, o.rbo)
+	// gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(o.screenWidth), int32(o.screenHeight))
+	// gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, o.rbo)
+	// if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+	// 	log.Fatal("Framebuffer incomplete")
+	// }
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	// geometry pass configuration ends here
 
 	o.registerQuad()
 }
@@ -122,6 +154,9 @@ func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 		o.SetActive(true)
 		fmt.Println("> OpenGL: Discovered GLFW")
 		break
+	// case *OpenGLFactory:
+	// 	o.factory = integrant
+	// 	break
 	case engine.Platformer:
 		o.platform = integrant
 		break
@@ -132,15 +167,18 @@ func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 func (o *OpenGL) AddComponent(component engine.ComponentRoutine) {
 	switch component := component.(type) {
 	case *std.Transform:
+		// log.Println("AddComponent(*std.Transform)")
 		o.RegisterTransform(component)
 		break
 	case *render.Mesh:
 		o.RegisterMesh(component)
 		break
 	case *render.Material:
+		// log.Println("AddComponent(*render.Material)")
 		o.RegisterMaterial(component)
 		break
 	case *render.Camera:
+		// log.Println("AddComponent(*render.Camera)")
 		o.RegisterCamera(component)
 		break
 	}
@@ -151,40 +189,37 @@ func (o *OpenGL) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 }
 
-var once = true
-
 // Draw renders all entity components into scene
 func (o *OpenGL) Draw() {
-	if !once {
-		return
-	}
 	if o.Active() {
-		once = false
 		if len(o.cameras) <= 0 {
 			o.createDefaultCamera()
 		}
 		if o.window.ShouldClose() {
 			o.window.Destroy()
 			defer glfw32.Terminate()
+			// log.Fatal("here")
+			// glfw32.Terminate()
 		} else {
+
 			if len(o.cameras) <= 0 {
 				log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow zero (for simulations) or more than one camera.")
 			}
 			camera := o.cameras[0]
 			clearColor := camera.ClearColor()
-			gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
 
 			camSize := float32(0.2)
 			camX := float32(o.settings.ResolutionX) * camSize
 			camY := float32(o.settings.ResolutionY) * camSize
-			proj := mgl32.Ortho(-camX/20, camX/20, -camY/20, camY/20, 0.1, 100.0)
-
+			proj := mgl32.Ortho(-camX/20, camX/20, -camY/20, camY/20, 0.0, 1000.0)
+			// proj_uni := gl.GetUniformLocation(o.geometryPass, gl.Str("projection\x00"))
 			view := mgl32.LookAtV(
 				mgl32.Vec3{
 					camera.Eye().X,
 					camera.Eye().Y,
-					camera.Eye().Z,
+					-camera.Eye().Z,
 				},
 				mgl32.Vec3{
 					camera.Center().X,
@@ -196,31 +231,37 @@ func (o *OpenGL) Draw() {
 					camera.Up().Y,
 					camera.Up().Z,
 				})
+			// view_uni := gl.GetUniformLocation(o.geometryPass, gl.Str("view\x00"))
+			// model_uni := gl.GetUniformLocation(o.geometryPass, gl.Str("model\x00"))
 
-			if gl.GetError() != 0 {
-				log.Fatal("OpenGL error")
-			}
+			gl.Disable(gl.DEPTH_TEST)
 
-			gl.UseProgram(o.shader)
-			if gl.GetError() != 0 {
-				log.Fatal("OpenGL error")
-			}
-			gl.UniformMatrix4fv(uniformLocation(o.shader, "uViewMatrix\x00"), 1, false, &view[0])
-			if gl.GetError() != 0 {
-				log.Fatal("OpenGL error")
-			}
-			gl.UniformMatrix4fv(uniformLocation(o.shader, "uProjMatrix\x00"), 1, false, &proj[0])
-			if gl.GetError() != 0 {
-				log.Fatal("OpenGL error")
-			}
+			bindFramebuffer(o.accumFBO)
+			gl.DrawBuffers(2, &[]uint32{gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1}[0])
+			gl.ClearBufferfv(gl.COLOR, 0, &[]float32{0, 0, 0, 0}[0])
+			gl.ClearBufferfv(gl.COLOR, 1, &[]float32{1, 1, 1, 1}[0])
+			// gl.Enable(gl.FRONT_AND_BACK)
+			// gl.DepthMask(false)
+			// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+			gl.Enable(gl.BLEND)
+			gl.BlendEquation(gl.FUNC_ADD)
+			gl.BlendFunci(0, gl.ONE, gl.ONE)
+			gl.BlendFunci(1, gl.ZERO, gl.ONE_MINUS_SRC_COLOR)
+
+			gl.UseProgram(o.geometryPass)
+
+			gl.Uniform1f(gl.GetUniformLocation(o.geometryPass, gl.Str("uAlpha\x00")), 0.6)
+			gl.Uniform1f(gl.GetUniformLocation(o.geometryPass, gl.Str("uDepthScale\x00")), 0.5)
+
+			// gl.Uniform4fv(gl.GetUniformLocation(o.geometryPass, gl.Str("uNormalMatrix\x00")), 1, &color.R)
+			gl.Uniform4fv(gl.GetUniformLocation(o.geometryPass, gl.Str("uViewMatrix\x00")), 1, &view[0])
+			gl.Uniform4fv(gl.GetUniformLocation(o.geometryPass, gl.Str("uProjMatrix\x00")), 1, &proj[0])
+
 			for idx, mesh := range o.meshes {
 				if mesh == nil {
 					continue
 				}
 				gl.BindVertexArray(mesh.VAO())
-				if gl.GetError() != 0 {
-					log.Fatal("OpenGL error")
-				}
 
 				transform := o.transforms[idx]
 
@@ -236,55 +277,62 @@ func (o *OpenGL) Draw() {
 				scale := transform.Scale()
 
 				model := mgl32.Ident4()
-				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
+				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, -position.Z))
 				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
 				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
 				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
 				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
+				gl.Uniform4fv(gl.GetUniformLocation(o.geometryPass, gl.Str("uModelMatrix\x00")), 1, &model[0])
 
-				if idx >= len(o.materials) {
-					gl.BindVertexArray(0)
-					continue
-				}
-				material := o.materials[idx]
-				if material == nil {
-					gl.BindVertexArray(0)
-					continue
-				} else if !material.Active() {
-					gl.BindVertexArray(0)
-					continue
-				}
+				// if idx >= len(o.materials) {
+				// 	gl.BindVertexArray(0)
+				// 	continue
+				// }
+				// material := o.materials[idx]
+				// if material == nil {
+				// 	gl.BindVertexArray(0)
+				// 	continue
+				// } else if !material.Active() {
+				// 	gl.BindVertexArray(0)
+				// 	continue
+				// }
 
-				color := material.Color()
-				if color != nil {
-					gl.Uniform4fv(uniformLocation(o.shader, "uColor\x00"), 1, &color.R)
-					if gl.GetError() != 0 {
-						log.Fatal("OpenGL error")
-					}
-				}
+				// color := material.Color()
+				// if color != nil {
+				// 	gl.Uniform4fv(gl.GetUniformLocation(o.geometryPass, gl.Str("color\x00")), 1, &color.R)
+				// }
 
-				texture := material.Texture()
-				if texture != nil {
-					gl.ActiveTexture(gl.TEXTURE0)
-					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
-					gl.Uniform1i(uniformLocation(o.shader, "uTexture\x00"), 0)
-					gl.Uniform1i(uniformLocation(o.shader, "uTextured\x00"), 1)
-					if gl.GetError() != 0 {
-						log.Fatal("OpenGL error")
-					}
-				}
+				// texture := material.Texture()
+				// if texture != nil {
+				// 	gl.Uniform2fv(gl.GetUniformLocation(o.geometryPass, gl.Str("spriteScaler\x00")), 1, &texture.SizeN().X)
+				// 	gl.Uniform2fv(gl.GetUniformLocation(o.shaderProgram, gl.Str("spriteOffset\x00")), 1, &texture.Offset().X)
+				// 	gl.ActiveTexture(gl.TEXTURE0)
+				// 	gl.BindTexture(gl.TEXTURE_2D, texture.ID())
+				// 	gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("texture\x00")), 0)
+				// 	gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 1)
+				// } else {
+				// 	gl.Uniform1i(gl.GetUniformLocation(o.shaderProgram, gl.Str("hasTexture\x00")), 0)
+				// }
 
-				gl.UniformMatrix4fv(uniformLocation(o.shader, "uModelMatrix\x00"), 1, false, &model[0])
-				if gl.GetError() != 0 {
-					log.Fatal("OpenGL error")
-				}
+				// gl.UniformMatrix4fv(model_uni, 1, false, &model[0])
+				// gl.UniformMatrix4fv(proj_uni, 1, false, &proj[0])
+				// gl.UniformMatrix4fv(view_uni, 1, false, &view[0])
 
 				gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
-				if gl.GetError() != 0 {
-					log.Fatal("OpenGL error")
-				}
 				gl.BindVertexArray(0)
 			}
+
+			gl.UseProgram(0)
+			gl.Disalbe(gl.BLEND)
+
+			bindFramebuffer(gl.FRAMEBUFFER, 0)
+			gl.DrawBuffer(gl.BACK)
+
+			gl.UseProgram(o.compositingPass)
+			gl.Uniform3f(gl.GetUniformLocation(o.compositingPass, gl.Str("uBackgroundColor\x00")), &[]float32{0, 0, 0}[0])
+			bindTexture(0, o.accumTex0)
+			bindTexture(1, o.accumTex1)
+
 			gl.UseProgram(0)
 
 			o.window.SwapBuffers()
@@ -297,9 +345,9 @@ func (o *OpenGL) Draw() {
 func (o *OpenGL) createDefaultCamera() {
 	camera_transform := std.NewTransform()
 	camera_transform.Set(
-		&std.Vector3{0, 0, -5}, // POSITION
-		&std.Vector3{0, 0, 0},  // CENTER
-		&std.Vector3{0, 1, 0},  // UP
+		&std.Vector3{0, 0, -10}, // POSITION
+		&std.Vector3{0, 0, 0},   // CENTER
+		&std.Vector3{0, 1, 0},   // UP
 	)
 	camera := render.NewCamera()
 	cameraSize := float32(40.0)
@@ -318,6 +366,7 @@ func (o *OpenGL) RegisterCamera(camera *render.Camera) {
 	clearColor := camera.ClearColor()
 	gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
 	camera.SetWindow(o.settings.ResolutionX, o.settings.ResolutionY)
+	// gl.Viewport(0, 0, int32(), int32(o.settings.ResolutionY))
 	o.cameras = append(o.cameras, camera)
 	o.materials = append(o.materials, nil)
 	o.meshes = append(o.meshes, nil)
@@ -369,7 +418,26 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 			pix := rgba.Pix
 			draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
-			tid := newTexture(gl.TEXTURE_2D, gl.RGBA, t.Width(), t.Height(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
+			tid := newTexture(gl.TEXTURE_2D, gl.RGBA, t.Width(), t.Height(), gl.RGBA, gl.Ptr(pix))
+			// gl.GenTextures(1, &tid)
+			// gl.ActiveTexture(gl.TEXTURE0)
+			// gl.BindTexture(gl.TEXTURE_2D, tid)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+			// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+			// gl.TexImage2D(
+			// 	gl.TEXTURE_2D,
+			// 	0,
+			// 	gl.RGBA,
+			// 	t.Width(),
+			// 	t.Height(),
+			// 	0,
+			// 	gl.RGBA,
+			// 	gl.UNSIGNED_BYTE,
+			// 	gl.Ptr(pix))
 
 			openGLMaterial.texture = &OpenGLTexture{t.(*render.Texture), tid}
 		})
@@ -385,26 +453,33 @@ func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
 	var vertexArrayID uint32
 	gl.GenVertexArrays(1, &vertexArrayID)
 	gl.BindVertexArray(vertexArrayID)
+	// log.Printf("LoadRenderer > VAO > ID: %v", vertexArrayID)
 
 	// Vertex buffer
 	var vertexBuffer uint32
 	gl.GenBuffers(1, &vertexBuffer)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	// log.Printf("LoadRenderer > VBO > Verticies Length: %v", len(vertices))
 
 	// Element buffer
 	var elementBuffer uint32
 	gl.GenBuffers(1, &elementBuffer)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indicies)*4, gl.Ptr(indicies), gl.STATIC_DRAW)
+	// log.Printf("LoadRenderer > EBO > Indicies Length: %v", len(indicies))
 
 	// Linking vertex attributes
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(0)
 
-	// Linking texture attributes
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	// Linking fragment attributes
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(3*4))
 	gl.EnableVertexAttribArray(1)
+
+	// Linking texture attributes
+	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
+	gl.EnableVertexAttribArray(2)
 
 	var openGLMesh *OpenGLMesh
 	openGLMesh = &OpenGLMesh{m: mesh}
@@ -420,10 +495,10 @@ func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
 // registerQuad has to exist in every rendering system to allow for multipass rendering
 func (o *OpenGL) registerQuad() {
 	vertices := []float32{
-		1.0, 1.0, 1.0, 0.0,
-		1.0, -1.0, 1.0, 1.0,
-		-1.0, -1.0, 0.0, 1.0,
-		-1.0, 1.0, 0.0, 0.0,
+		1.0, 1.0, 1.0, 1.0, // 0 top right
+		1.0, -1.0, 1.0, 0.0, // 1 bot right
+		-1.0, -1.0, 0.0, 0.0, // 2 bot left
+		-1.0, 1.0, 0.0, 1.0, // 3 top left
 	}
 	indicies := []uint8{
 		0, 1, 3,
@@ -458,34 +533,6 @@ func (o *OpenGL) registerQuad() {
 
 	// Unbind Vertex array object
 	gl.BindVertexArray(0)
-}
-
-func (o *OpenGL) renderFramebuffer(fbo uint32, tid uint32) {
-	// FBO DEBUGGER
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	gl.UseProgram(o.framebufferShader)
-
-	if gl.GetError() != 0 {
-		log.Fatal("OpenGL error")
-	}
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_RECTANGLE, tid)
-	gl.Uniform1i(uniformLocation(o.framebufferShader, "Texture\x00"), int32(0))
-	if gl.GetError() != 0 {
-		log.Fatal("OpenGL error")
-	}
-	gl.BindVertexArray(o.quadVAO)
-	if gl.GetError() != 0 {
-		log.Fatal("OpenGL error")
-	}
-	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
-	if gl.GetError() != 0 {
-		log.Fatal("OpenGL error")
-	}
-	gl.BindVertexArray(0)
-	gl.UseProgram(0)
-	o.window.SwapBuffers()
-	time.Sleep(100 * time.Second)
 }
 
 // newShader creates a new vertex and fragment shader
@@ -558,82 +605,80 @@ func newShader(vs string, fs string) uint32 {
 		os.Exit(0)
 	}
 
+	// Use this program for all upcoming render calls
+	// gl.UseProgram(shaderProgram)
+
+	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+
 	return shaderProgram
 }
 
 // newTexture creates a new texture
 // (target, internal format, width, height, format)
-func newTexture(ta uint32, i int32, w int32, h int32, f uint32, ty uint32, p unsafe.Pointer) uint32 {
+func newTexture(t uint32, i int32, w int32, h int32, f uint32, p unsafe.Pointer) uint32 {
 	var id uint32
 	gl.GenTextures(1, &id)
-	gl.BindTexture(ta, id)
-	gl.TexParameteri(ta, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(ta, gl.TEXTURE_WRAP_T, gl.REPEAT)
-	gl.TexParameteri(ta, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(ta, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexImage2D(ta, 0, i, w, h, 0, f, ty, p)
+	gl.BindTexture(t, id)
+	gl.TexParameteri(t, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	gl.TexParameteri(t, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.TexParameteri(t, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(t, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexImage2D(
+		t,
+		0,
+		i,
+		w,
+		h,
+		0,
+		f,
+		gl.UNSIGNED_BYTE,
+		p)
 	return id
 }
 
-func uniformLocation(p uint32, n string) int32 {
-	l := gl.GetUniformLocation(p, gl.Str(n))
-	if l == -1 {
-		log.Fatalf("> OpenGL: Uniform %vnot found in shader %v (remember that if you don't use the uniform, it wil automatically get removed by the compiler)\n", n, p)
-	}
-	log.Printf("> DEBUG: Uniform %vat location %v in shader %v\n", n, l, p)
-	return l
-}
-
 // bindTexture binds texture
-func bindTexture(idx uint32, t uint32, id uint32, p uint32, n string) {
-	// gl.ActiveTexture(gl.TEXTURE0 + idx)
-	// gl.BindTexture(t, id)
-	// gl.Uniform1i(uniformLocation(p, n), int32(idx))
-	// gl.ActiveTexture(gl.TEXTURE0)
-}
-
-// attachFramebufferTextures attaches textures to an existing framebuffer
-func (o *OpenGL) attachFramebufferTextures(fib uint32, a []attachment) {
-	for _, att := range a {
-		if *att.textureID <= 0 {
-			gl.GenTextures(1, att.textureID)
-			gl.ActiveTexture(gl.TEXTURE0)
-			gl.BindTexture(gl.TEXTURE_RECTANGLE, *att.textureID)
-			gl.TexImage2D(gl.TEXTURE_RECTANGLE, 0, att.internalFormat, int32(o.screenWidth), int32(o.screenHeight), 0, att.format, att.typ, nil)
-			gl.TexParameteri(gl.TEXTURE_RECTANGLE, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-			gl.TexParameteri(gl.TEXTURE_RECTANGLE, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		} else {
-			log.Printf("> DEBUG: Texture %v seems to be shared with another framebuffers", *att.textureID)
-			gl.ActiveTexture(gl.TEXTURE0)
-			gl.BindTexture(gl.TEXTURE_RECTANGLE, *att.textureID)
-		}
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, att.point, gl.TEXTURE_RECTANGLE, *att.textureID, 0)
-	}
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		log.Fatalf("Framebuffer Error Hex: 0x%x\nNow go look it up here: https://raw.githubusercontent.com/go-gl/gl/master/v4.5-core/gl/package.go", gl.CheckFramebufferStatus(gl.FRAMEBUFFER))
-	}
-	// return err here someday
+func (o *OpenGL) bindTexture(idx uint32, t uint32, id uint32) {
+	// WARNING WARNING
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	gl.ActiveTexture(gl.TEXTURE0 + idx) // EXPLORE POSSIBLE BUG AREA!! DOES IT INCREMENT CORRECTLY?!
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	// WARNING WARNING
+	gl.BindTexture(t, id)
 }
 
 // newFramebuffer creates a new framebuffer
-func newFramebuffer() uint32 {
+func newFramebuffer(c []uint32) uint32 {
 	var fid uint32
 	gl.GenFramebuffers(1, &fid)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fid)
+
+	for idx, cid := range c {
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0+uint32(idx), gl.TEXTURE_2D, cid, 0)
+	}
+	// gl.GenRenderbuffers(1, &o.rbo)
+	// gl.BindRenderbuffer(gl.RENDERBUFFER, o.rbo)
+	// gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(o.screenWidth), int32(o.screenHeight))
+	// gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, o.rbo)
+	// if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+	// 	log.Fatal("Framebuffer incomplete")
+	// }
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	return fid
 }
 
 func bindFramebuffer(id uint32) {
-	// gl.BindTexture(gl.TEXTURE_2D, 0)
-	// gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, id)
-	gl.Viewport(0, 0, int32(1024), int32(576))
-}
-
-type attachment struct {
-	textureID      *uint32
-	internalFormat int32
-	format         uint32
-	typ            uint32
-	point          uint32
 }
