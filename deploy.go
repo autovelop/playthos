@@ -4,6 +4,7 @@ package engine
 
 import (
 	"fmt"
+	"go/build"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,8 +18,6 @@ func init() {
 
 // TODO: This function is still a mess. Need to make Deploy system in order to tidy it up.
 func initDeploy(n string, p string) {
-	packageSplit := strings.Split(p, "/")
-	repoName := packageSplit[len(packageSplit)-1]
 
 	fmt.Printf("> Engine: Deploying...\n")
 	for name, platform := range platforms {
@@ -36,7 +35,7 @@ func initDeploy(n string, p string) {
 
 				err := cmdDep.Start()
 				if err != nil {
-					fmt.Printf("> Engine: Error during deploy (installing build dependency) - %v\n", err)
+					fmt.Printf("> Engine: Error during deploy (installing build dependency): %v\n", err)
 					os.Exit(0)
 				}
 				errOutput, _ := ioutil.ReadAll(cmdErrDep)
@@ -46,12 +45,12 @@ func initDeploy(n string, p string) {
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
 				"-v",
-				fmt.Sprintf("-o=%v/bin/%v%v", os.Getenv("GOPATH"), repoName, platform.DeployFileExtension),
+				fmt.Sprintf("-o=%v/bin/%v/%v%v", build.Default.GOPATH, p, n, platform.DeployFileExtension),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
 			fmt.Printf("> Engine: Deploy tags %v\n", fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")))
 			fmt.Printf("> Engine: Deploy source %v\n", p)
-			fmt.Printf("> Engine: Deploy destination %v\n", fmt.Sprintf("%v/bin/%v%v", os.Getenv("GOPATH"), repoName, platform.DeployFileExtension))
+			fmt.Printf("> Engine: Deploy destination %v\n", fmt.Sprintf("%v/bin/%v/%v%v", build.Default.GOPATH, p, n, platform.DeployFileExtension))
 			platform.Args = append(platform.Args, p)
 
 			cmd := exec.Command(platform.Command, platform.Args...)
@@ -75,13 +74,13 @@ func initDeploy(n string, p string) {
 
 			startErr := cmd.Start()
 			if startErr != nil {
-				fmt.Printf("> Engine: Error during deploy - %v\n", startErr)
+				fmt.Printf("> Engine: Error 0 during deploy: %v\n", startErr)
 				os.Exit(0)
 			}
 
 			errOutput, _ := ioutil.ReadAll(cmdErr)
 			if len(errOutput) > 0 {
-				fmt.Printf("> Engine: Error during deploy - %v\n", string(errOutput))
+				fmt.Printf("> Engine: Error 1 during deploy: %v\n", string(errOutput))
 			}
 
 		} else {
@@ -91,11 +90,11 @@ func initDeploy(n string, p string) {
 	}
 
 	// Copy assets
-	fmt.Printf("> Engine: Deploying assets\n")
-	assetDest := fmt.Sprintf("%v/bin/", os.Getenv("GOPATH"))
-	assetSrc := fmt.Sprintf("%v/src/%v/", os.Getenv("GOPATH"), p)
-	for _, asset := range assetRegistry {
-		assetPath := fmt.Sprintf("%v%v", assetDest, asset)
+	fmt.Printf("> Engine: Deploying assets: %v\n", len(assets))
+	assetDest := fmt.Sprintf("%v/bin/%v", build.Default.GOPATH, p)
+	assetSrc := fmt.Sprintf("%v/src/%v/", build.Default.GOPATH, p)
+	for _, asset := range assets {
+		assetPath := fmt.Sprintf("%v/%v", assetDest, asset)
 		assetPathSplit := strings.Split(assetPath, "/")
 		assetDir := strings.Join(assetPathSplit[:len(assetPathSplit)-1], "/")
 		if _, err := os.Stat(assetDir); os.IsNotExist(err) {

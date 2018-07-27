@@ -11,7 +11,11 @@ package engine
 import (
 	"fmt"
 	"log"
-	"os"
+	// "os"
+	"go/build"
+	"path"
+	"runtime"
+	"strings"
 	"time"
 )
 
@@ -24,7 +28,7 @@ var drawer Drawer                  // Drawer system (draws with engine loop or w
 var integrants []IntegrantRoutine  // Integrants
 var listeners []Listener           // Listener integrant (on demand calls like input, audio, etc.)
 var platformer Platformer          // Platformer integrant (loading and retrieving assets)
-// var assets []string                // Assets
+var assets []string                // Assets
 
 // Build Flags
 var play = true    // Run application immediately.
@@ -36,7 +40,7 @@ var avgUPS [4]uint
 
 func init() {
 	fmt.Println("> Engine: Initializing")
-	// assets = make([]string, 0)
+	assets = make([]string, 0)
 	packages = make([]*Package, 0)
 	log.SetFlags(log.Lshortfile &^ (log.Ldate | log.Ltime))
 }
@@ -58,7 +62,7 @@ func RegisterPlatform(n string, p *Platform) {
 	platforms[n] = p
 }
 
-// RegisterAsset adds asset string path to engine registry.
+// RegisterAsset adds asset string path to engine registry. Only used when deploying.
 // func RegisterAsset(p string) {
 // 	assets = append(assets, p)
 // }
@@ -66,21 +70,24 @@ func RegisterPlatform(n string, p *Platform) {
 // New initializes an Engine instance that could either deploy (platforms and packages are detected automatically) or run the application with an optional Settings parameter.
 func New(n string, s ...*Settings) *Engine {
 	if deploy {
-		initDeploy(n, os.Args[1])
-		return nil
-	}
-	game := &Engine{}
-	game.gameName = n
-
-	if len(s) > 0 {
-		settings := s[0]
-		game.SetSettings(settings)
+		// Just need a minimal engine when deploying
+		game := &Engine{}
+		game.gameName = n
+		return game
 	} else {
-		game.SetSettings(&Settings{false, 800, 600, true})
-	}
+		game := &Engine{}
+		game.gameName = n
 
-	game.init()
-	return game
+		if len(s) > 0 {
+			settings := s[0]
+			game.SetSettings(settings)
+		} else {
+			game.SetSettings(&Settings{false, 800, 600, true})
+		}
+
+		game.init()
+		return game
+	}
 }
 
 // NewSystem registers and organises the system into its appropriate registries (Drawer, Updater).
@@ -112,6 +119,12 @@ func LoadAsset(path string) {
 	if platformer == nil {
 		log.Fatalf("> Engine: Unable to load assets without a platform.")
 	}
+	if deploy {
+		platformer.IsDeploy()
+		// Engine has list if asset paths to deploy assets with binary
+		assets = append(assets, path)
+	}
+	// Platform has list of assets due to how differently they are loaded
 	platformer.LoadAsset(path)
 }
 
@@ -126,6 +139,25 @@ type Engine struct {
 
 // Start updates engine state and executes the first update call.
 func (e *Engine) Start() {
+	if deploy {
+		// ex, err := os.Executable()
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// exPath := filepath.Dir(ex)
+		// dirs := strings.Split(ex, "/")
+		_, filename, _, ok := runtime.Caller(1)
+		if !ok {
+			panic("No caller information")
+		}
+		// fmt.Printf("Filename : %q, Dir : %q\n", filename, strings.Replace(path.Dir(filename), fmt.Sprintf("%v/src/", build.Default.GOPATH), "", -1))
+		packageDir := strings.Replace(path.Dir(filename), fmt.Sprintf("%v/src/", build.Default.GOPATH), "", -1)
+		// fmt.Println(dirs[len(dirs)-1])
+		// fmt.Println(os.Args)
+		// initDeploy(n, fmt.Sprintf("github.com/autovelop/playthos/tests/%v", dirs[len(dirs)-1]))
+		initDeploy(e.gameName, packageDir)
+		return
+	}
 	fmt.Println("> Engine: Running")
 	e.running = true
 	go func() {

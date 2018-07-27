@@ -1,4 +1,4 @@
-package playthos_test
+package main
 
 import (
 	"github.com/autovelop/playthos"
@@ -6,16 +6,12 @@ import (
 	_ "github.com/autovelop/playthos/platforms/linux"
 	_ "github.com/autovelop/playthos/platforms/web"
 	_ "github.com/autovelop/playthos/platforms/windows"
-	"github.com/autovelop/playthos/profiling"
 	"github.com/autovelop/playthos/render"
 	"github.com/autovelop/playthos/std"
-	"testing"
 	// "time"
 )
 
-func TestOpenGLTexture(t *testing.T) {
-	profiling.StartProfiling(false, false)
-
+func main() {
 	eng := engine.New("TestOpenGLTexture", &engine.Settings{
 		false,
 		1024,
@@ -55,6 +51,4 @@ func TestOpenGLTexture(t *testing.T) {
 	newTextureObject(&std.Vector3{-4, 4, 1}, &std.Vector3{2, 2, 1}, 1, "../window.png")
 
 	eng.Start()
-	profiling.ReportUPS(eng)
-	profiling.StopProfiling()
 }

@@ -310,11 +310,17 @@ func (o *OpenGL) createDefaultCamera() {
 
 // RegisterTransform tells opengl about a given transform component
 func (o *OpenGL) RegisterTransform(transform *std.Transform) {
+	if o.platform == nil {
+		return
+	}
 	o.transforms = append(o.transforms, transform)
 }
 
 // RegisterCamera tells opengl about a given camera component
 func (o *OpenGL) RegisterCamera(camera *render.Camera) {
+	if o.platform == nil {
+		return
+	}
 	clearColor := camera.ClearColor()
 	gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
 	camera.SetWindow(o.settings.ResolutionX, o.settings.ResolutionY)
@@ -345,6 +351,9 @@ func (o *OpenGL) DeleteEntity(entity *engine.Entity) {
 
 // RegisterMaterial tells opengl about a given material component
 func (o *OpenGL) RegisterMaterial(material *render.Material) {
+	if o.platform == nil {
+		return
+	}
 	texture := material.BaseTexture()
 	openGLMaterial := &OpenGLMaterial{Material: material}
 	if texture != nil {
@@ -379,6 +388,9 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 
 // RegisterMesh tells opengl about a given mesh component
 func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
+	if o.platform == nil {
+		return
+	}
 	var vertices []float32 = mesh.Vertices()
 	var indicies []uint8 = mesh.Indicies()
 
