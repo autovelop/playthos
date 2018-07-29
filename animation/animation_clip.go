@@ -11,8 +11,8 @@ import (
 // Clip is the sequence of all the frames of a animation. It also controls the state, direction, repetition, and speed of the animation.
 type Clip struct {
 	engine.Component
-	frames          []*AnimationKeyFrame
-	currentKeyFrame *AnimationKeyFrame
+	frames          []*KeyFrame
+	currentKeyFrame *KeyFrame
 	value           std.Animatable
 	running         bool
 	paused          bool
@@ -91,7 +91,7 @@ func (a *Clip) Loop() {
 // AddKeyFrame appends an animation frame to the clip.
 func (a *Clip) AddKeyFrame(i float64, d float64, t std.Animatable) {
 	// calculate and set keyframe step
-	k := &AnimationKeyFrame{}
+	k := &KeyFrame{}
 	k.set(i, d, t)
 	a.frames = append(a.frames, k)
 	if len(a.frames) > 1 {

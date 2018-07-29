@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"log"
 )
 
 // Entity is used to group components with an unique identifier in order to form a virtual/game object

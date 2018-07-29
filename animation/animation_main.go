@@ -14,7 +14,7 @@ func init() {
 // Animation system used to update all clips to animation to their targets
 type Animation struct {
 	engine.System
-	clips []*AnimationClip
+	clips []*Clip
 }
 
 // InitSystem called when the system plugs into the engine
@@ -45,18 +45,18 @@ func (a *Animation) Update() {
 }
 
 // NewClip creates and sets a new orphan clip
-func NewClip(s float64, c float64, v std.Animatable) *AnimationClip {
-	a := &AnimationClip{}
+func NewClip(s float64, f float64, v std.Animatable) *Clip {
+	a := &Clip{}
 	// not active until it has a property
 	// a.SetActive(true)
-	a.Set(s, c, v)
+	a.Set(s, f, v)
 	return a
 }
 
 // AddComponent unorphans a component by adding it to this system
 func (a *Animation) AddComponent(component engine.ComponentRoutine) {
 	switch clip := component.(type) {
-	case *AnimationClip:
+	case *Clip:
 		a.clips = append(a.clips, clip)
 		break
 	}
@@ -64,7 +64,7 @@ func (a *Animation) AddComponent(component engine.ComponentRoutine) {
 
 // ComponentTypes helps the engine determine which components this system recognizes (Dependency Injection)
 func (a *Animation) ComponentTypes() []engine.ComponentRoutine {
-	return []engine.ComponentRoutine{&AnimationClip{}}
+	return []engine.ComponentRoutine{&Clip{}}
 }
 
 // AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)

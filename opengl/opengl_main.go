@@ -184,7 +184,7 @@ func (o *OpenGL) Draw() {
 				mgl32.Vec3{
 					camera.Eye().X,
 					camera.Eye().Y,
-					camera.Eye().Z,
+					-camera.Eye().Z,
 				},
 				mgl32.Vec3{
 					camera.Center().X,
@@ -236,7 +236,7 @@ func (o *OpenGL) Draw() {
 				scale := transform.Scale()
 
 				model := mgl32.Ident4()
-				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
+				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, -position.Z))
 				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
 				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
 				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
