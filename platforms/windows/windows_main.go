@@ -44,22 +44,24 @@ func (l *Windows) LoadAsset(p string) {
 
 	d := splits[0]
 	f := d
-	if len(splits) > 1 {
-		f = splits[1]
-	}
+	if d != p {
+		if len(splits) > 1 {
+			f = splits[1]
+		}
 
-	dir, err := build.ImportDir(d, build.FindOnly)
-	if err != nil {
-		log.Println("> Engine: Invalid path to load asset for Windows platform")
-		log.Println("          PLATFORM: windows")
-		log.Printf("          PATH: %v\n", p)
-		log.Fatalf("          CWD: %v", wd)
-	}
+		dir, err := build.ImportDir(d, build.FindOnly)
+		if err != nil {
+			log.Println("> Engine: Invalid path to load asset for Windows platform")
+			log.Println("          PLATFORM: windows")
+			log.Printf("          PATH: %v\n", p)
+			log.Fatalf("          CWD: %v", wd)
+		}
 
-	err = os.Chdir(dir.Dir)
-	if err != nil {
-		wd, _ := os.Getwd()
-		log.Fatalf("unable to navigate to destination folder %v from %v", dir.Dir, wd)
+		err = os.Chdir(dir.Dir)
+		if err != nil {
+			wd, _ := os.Getwd()
+			log.Fatalf("unable to navigate to destination folder %v from %v", dir.Dir, wd)
+		}
 	}
 
 	file, err := os.Open(f)
@@ -73,7 +75,7 @@ func (l *Windows) LoadAsset(p string) {
 
 	buf, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Fatalf("unable to read detination file or folder: %v", p)
+		log.Fatalf("unable to read destination file or folder: %v", p)
 	}
 	file.Close()
 
@@ -82,7 +84,7 @@ func (l *Windows) LoadAsset(p string) {
 	// go back to root dir
 	err = os.Chdir(wd)
 	if err != nil {
-		log.Fatalf("unable to navigate to parent from detination folder", err)
+		log.Fatalf("unable to navigate to parent from destination folder", err)
 	}
 
 	l.assets[p] = buf

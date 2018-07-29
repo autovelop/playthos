@@ -25,6 +25,7 @@ type Listener interface {
 // Platformer interface used to load and retrieve platform specific assets.
 type Platformer interface {
 	IntegrantRoutine
+	IsDeploy()
 	LoadAsset(string)
 	Asset(string) []byte
 }
