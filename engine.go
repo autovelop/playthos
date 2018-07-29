@@ -12,10 +12,8 @@ import (
 	"fmt"
 	"log"
 	// "os"
-	"go/build"
-	"path"
-	"runtime"
-	"strings"
+	// "go/build"
+	// "strings"
 	"time"
 )
 
@@ -140,22 +138,7 @@ type Engine struct {
 // Start updates engine state and executes the first update call.
 func (e *Engine) Start() {
 	if deploy {
-		// ex, err := os.Executable()
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// exPath := filepath.Dir(ex)
-		// dirs := strings.Split(ex, "/")
-		_, filename, _, ok := runtime.Caller(1)
-		if !ok {
-			panic("No caller information")
-		}
-		// fmt.Printf("Filename : %q, Dir : %q\n", filename, strings.Replace(path.Dir(filename), fmt.Sprintf("%v/src/", build.Default.GOPATH), "", -1))
-		packageDir := strings.Replace(path.Dir(filename), fmt.Sprintf("%v/src/", build.Default.GOPATH), "", -1)
-		// fmt.Println(dirs[len(dirs)-1])
-		// fmt.Println(os.Args)
-		// initDeploy(n, fmt.Sprintf("github.com/autovelop/playthos/tests/%v", dirs[len(dirs)-1]))
-		initDeploy(e.gameName, packageDir)
+		initDeploy(e.gameName)
 		return
 	}
 	fmt.Println("> Engine: Running")

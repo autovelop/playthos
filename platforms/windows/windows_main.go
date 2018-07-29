@@ -19,7 +19,8 @@ func init() {
 
 type Windows struct {
 	engine.Integrant
-	assets map[string][]byte
+	assets   map[string][]byte
+	isDeploy bool
 }
 
 func (l *Windows) InitIntegrant() {
@@ -30,11 +31,21 @@ func (l *Windows) AddIntegrant(engine.IntegrantRoutine) {}
 
 func (l *Windows) Destroy() {}
 
+func (l *Windows) IsDeploy() {
+	l.isDeploy = true
+}
+
 func (l *Windows) Asset(p string) []byte {
+	if l.isDeploy {
+		return nil
+	}
 	return l.assets[p]
 }
 
 func (l *Windows) LoadAsset(p string) {
+	if l.isDeploy {
+		return
+	}
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Println("> Engine: Unable to get working directory for Windows platform")
