@@ -8,7 +8,9 @@ import (
 	"github.com/autovelop/playthos/std"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopherjs/gopherjs/js"
+	"github.com/gopherjs/webgl"
 
+	"errors"
 	"fmt"
 	"github.com/autovelop/playthos/platforms/web"
 	"log"
@@ -24,18 +26,56 @@ import (
 // func (c *Context) CreateVertexArray() *js.Object {
 // 	return c.Call("createVertexArray")
 // }
+func glStr(s string) string {
+	return string(s)
+}
+func (w *WebGL) BindVertexArray(vao *js.Object) {
+	w.gl.Call("bindVertexArray", vao)
+}
+func (w *WebGL) CreateVertexArray() *js.Object {
+	return w.gl.Call("createVertexArray")
+}
+
+func NewContext(canvas *js.Object, ca *webgl.ContextAttributes) (*webgl.Context, error) {
+	if js.Global.Get("WebGLRenderingContext") == js.Undefined {
+		return nil, errors.New("Your browser doesn't appear to support webgl.")
+	}
+
+	if ca == nil {
+		ca = webgl.DefaultAttributes()
+	}
+
+	attrs := map[string]bool{
+		"alpha":                 ca.Alpha,
+		"depth":                 ca.Depth,
+		"stencil":               ca.Stencil,
+		"antialias":             ca.Antialias,
+		"premultipliedAlpha":    ca.PremultipliedAlpha,
+		"preserveDrawingBuffer": ca.PreserveDrawingBuffer,
+	}
+	gl := canvas.Call("getContext", "webgl2", attrs)
+	if gl == nil {
+		gl = canvas.Call("getContext", "webgl", attrs)
+		if gl == nil {
+			return nil, errors.New("Creating a webgl context has failed.")
+		}
+	}
+	ctx := new(webgl.Context)
+	ctx.Object = gl
+	return ctx, nil
+}
 
 func init() {
 	render.NewRenderSystem(&WebGL{})
 	fmt.Println("> WebGL Added")
 }
 
-// WbGL uses gopherjs render graphics on web browsers
+// WebGL uses gopherjs render graphics on web browsers
 type WebGL struct {
 	render.Render
 	platform      *web.Web
 	factory       *WebGLFactory
-	gl            *Context
+	gl            *webgl.Context
 	screenWidth   float32
 	screenHeight  float32
 	shaderProgram *js.Object
@@ -69,7 +109,7 @@ func (w *WebGL) InitSystem() {
 	canvas.Get("style").Set("max-height", "100vh")
 	document.Get("body").Call("appendChild", canvas)
 
-	attrs := DefaultAttributes()
+	attrs := webgl.DefaultAttributes()
 	attrs.Alpha = false
 
 	var err error
@@ -83,6 +123,10 @@ func (w *WebGL) InitSystem() {
 	w.platform.Loaded = func() {
 		js.Global.Call("requestAnimationFrame", w.requestAnimationFrame)
 	}
+
+	w.gl.Enable(w.gl.DEPTH_TEST)
+	w.gl.Enable(w.gl.BLEND)
+	w.gl.BlendFunc(w.gl.SRC_ALPHA, w.gl.ONE_MINUS_SRC_ALPHA)
 
 	// gl.ClearColor(0.8, 0.3, 0.01, 1)
 	// gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -111,6 +155,7 @@ func (w *WebGL) Destroy() {
 
 // AddIntegration helps the engine determine which integrants this system recognizes (Dependency Injection)
 func (w *WebGL) AddIntegrant(integrant engine.IntegrantRoutine) {
+	// fmt.Printf("asdasd: %+v", integrant)
 	switch integrant := integrant.(type) {
 	case *WebGLFactory:
 		w.factory = integrant
@@ -151,9 +196,6 @@ func (w *WebGL) requestAnimationFrame(float32) {
 		if len(w.cameras) <= 0 {
 			w.createDefaultCamera()
 		} else {
-			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-			gl.UseProgram(w.shaderProgram)
 
 			if len(w.cameras) <= 0 {
 				log.Fatal("Your scene needs atleast one camera. Later versions of engine might allow zero (for simulations) or more than one camera.")
@@ -161,19 +203,22 @@ func (w *WebGL) requestAnimationFrame(float32) {
 			camera := w.cameras[0]
 			clearColor := camera.ClearColor()
 			gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-			proj := mgl32.Ortho(0, float32(w.settings.ResolutionX)/(*camera.Scale()), 0, float32(w.settings.ResolutionY)/(*camera.Scale()), -1000.0, 1000.0)
-			proj_uni := gl.GetUniformLocation(w.shaderProgram, string("projection"))
+			camSize := float32(0.2)
+			camX := float32(w.settings.ResolutionX) * camSize
+			camY := float32(w.settings.ResolutionY) * camSize
+			proj := mgl32.Ortho(-camX/20, camX/20, -camY/20, camY/20, 0.1, 100.0)
 
 			view := mgl32.LookAtV(
 				mgl32.Vec3{
-					camera.Eye().X - ((w.settings.ResolutionX / 2) / (*camera.Scale())),
-					camera.Eye().Y - ((w.settings.ResolutionY / 2) / (*camera.Scale())),
-					camera.Eye().Z,
+					camera.Eye().X,
+					camera.Eye().Y,
+					-camera.Eye().Z,
 				},
 				mgl32.Vec3{
-					camera.Center().X - ((w.settings.ResolutionX / 2) / (*camera.Scale())),
-					camera.Center().Y - ((w.settings.ResolutionY / 2) / (*camera.Scale())),
+					camera.Center().X,
+					camera.Center().Y,
 					camera.Center().Z,
 				},
 				mgl32.Vec3{
@@ -181,29 +226,20 @@ func (w *WebGL) requestAnimationFrame(float32) {
 					camera.Up().Y,
 					camera.Up().Z,
 				})
-			// float32(math.Cos(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
-			// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().Y)))),
-			// float32(math.Sin(float64(mgl32.DegToRad(camera.Direction().X))) * math.Cos(float64(mgl32.DegToRad(camera.Direction().Y)))),
 
-			// front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-			// front.y = sin(glm::radians(pitch));
-			// front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+			gl.UseProgram(w.shaderProgram)
 
-			view_uni := gl.GetUniformLocation(w.shaderProgram, gl.Str("view"))
-
-			model_uni := gl.GetUniformLocation(w.shaderProgram, gl.Str("model"))
-
-			// if len(o.meshes) != len(o.transforms) || len(o.meshes) != len(o.materials) {
-			// 	log.Println("Skew components")
-			// 	log.Fatalf("meshes: %v | transforms: %v | materials: %v", len(o.meshes), len(o.transforms), len(o.materials))
-			// }
+			view_uni := gl.GetUniformLocation(w.shaderProgram, glStr("uViewMatrix"))
+			gl.UniformMatrix4fv(view_uni, false, view[:])
+			proj_uni := gl.GetUniformLocation(w.shaderProgram, string("uProjMatrix"))
+			gl.UniformMatrix4fv(proj_uni, false, proj[:])
 
 			for idx, mesh := range w.meshes {
 				// mesh := o.meshes[idx]
 				if mesh == nil {
 					continue
 				}
-				gl.BindVertexArray(mesh.VAO())
+				w.BindVertexArray(mesh.VAO())
 
 				transform := w.transforms[idx]
 				// this is a shortcut. should rather remove component from system registry
@@ -219,47 +255,44 @@ func (w *WebGL) requestAnimationFrame(float32) {
 				scale := transform.Scale()
 
 				model := mgl32.Ident4()
-				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, position.Z))
+				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, -position.Z))
 				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
 				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
 				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
-				model = model.Mul4(mgl32.Translate3D(-scale.X/2, -scale.Y/2, -scale.Z/2))
 				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
 
 				if idx >= len(w.materials) {
-					gl.BindVertexArray(nil)
+					w.BindVertexArray(nil)
 					continue
 				}
 				material := w.materials[idx]
 				if material == nil {
-					gl.BindVertexArray(nil)
+					w.BindVertexArray(nil)
 					continue
 				} else if !material.Active() {
-					gl.BindVertexArray(nil)
+					w.BindVertexArray(nil)
 					continue
 				}
 
 				color := material.Color()
 				if color != nil {
-					gl.Uniform4f(gl.GetUniformLocation(w.shaderProgram, gl.Str("color")), color.R, color.G, color.B, color.A)
+					gl.Uniform4f(gl.GetUniformLocation(w.shaderProgram, glStr("uColor")), color.R, color.G, color.B, color.A)
 				}
 				texture := material.Texture()
 				if texture != nil {
-					gl.Uniform2f(gl.GetUniformLocation(w.shaderProgram, gl.Str("spriteScaler")), texture.SizeN().X, texture.SizeN().Y)
-					gl.Uniform2f(gl.GetUniformLocation(w.shaderProgram, gl.Str("spriteOffset")), texture.Offset().X, texture.Offset().Y)
 					gl.ActiveTexture(gl.TEXTURE0)
 					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
-					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("texture")), 0)
-					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("hasTexture")), 1)
-				} else {
-					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, gl.Str("hasTexture")), 0)
+					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, glStr("uTexture")), 0)
+					gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, glStr("uTextured")), 1)
+					// } else {
+					// 	gl.Uniform1i(gl.GetUniformLocation(w.shaderProgram, glStr("hasTexture")), 0)
 				}
 
+				model_uni := gl.GetUniformLocation(w.shaderProgram, glStr("uModelMatrix"))
 				gl.UniformMatrix4fv(model_uni, false, model[:])
-				gl.UniformMatrix4fv(view_uni, false, view[:])
-				gl.UniformMatrix4fv(proj_uni, false, proj[:])
+
 				gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0)
-				gl.BindVertexArray(nil)
+				w.BindVertexArray(nil)
 			}
 		}
 		js.Global.Call("requestAnimationFrame", w.requestAnimationFrame)
@@ -270,24 +303,30 @@ func (w *WebGL) requestAnimationFrame(float32) {
 func (w *WebGL) createDefaultCamera() {
 	camera_transform := std.NewTransform()
 	camera_transform.Set(
-		&std.Vector3{0, 0, 3}, // POSITION
-		&std.Vector3{0, 0, 0}, // CENTER
-		&std.Vector3{0, 1, 0}, // UP
+		&std.Vector3{0, 0, -5}, // POSITION
+		&std.Vector3{0, 0, 0},  // CENTER
+		&std.Vector3{0, 1, 0},  // UP
 	)
 	camera := render.NewCamera()
-	cameraSize := float32(1.0)
-	camera.Set(&cameraSize, &std.Color{0, 0, 0, 0})
+	cameraSize := float32(40.0)
+	camera.Set(&cameraSize, &std.Color{0, 0, 0, 1})
 	camera.SetTransform(camera_transform)
 	w.cameras = append(w.cameras, camera)
 }
 
 // RegisterTransform tells webgl about a given transform component
 func (w *WebGL) RegisterTransform(transform *std.Transform) {
+	if w.platform == nil {
+		return
+	}
 	w.transforms = append(w.transforms, transform)
 }
 
 // RegisterCamera tells webgl about a given camera component
 func (w *WebGL) RegisterCamera(camera *render.Camera) {
+	if w.platform == nil {
+		return
+	}
 	clearColor := camera.ClearColor()
 	w.gl.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
 	// camera.SetWindow(w.settings.ResolutionX, w.settings.ResolutionY)
@@ -319,6 +358,9 @@ func (w *WebGL) DeleteEntity(entity *engine.Entity) {
 
 // RegisterMaterial tells webgl about a given material component
 func (w *WebGL) RegisterMaterial(material *render.Material) {
+	if w.platform == nil {
+		return
+	}
 	gl := w.gl
 	texture := material.BaseTexture()
 	webGLMaterial := &WebGLMaterial{Material: material}
@@ -353,12 +395,15 @@ func (w *WebGL) RegisterMaterial(material *render.Material) {
 
 // RegisterMesh tells webgl about a given mesh component
 func (w *WebGL) RegisterMesh(mesh *render.Mesh) {
+	if w.platform == nil {
+		return
+	}
 	gl := w.gl
 	var verticies []float32 = mesh.Vertices()
 	var indicies []uint8 = mesh.Indicies()
 
-	vertexArrayID := gl.CreateVertexArray()
-	gl.BindVertexArray(vertexArrayID)
+	vertexArrayID := w.CreateVertexArray()
+	w.BindVertexArray(vertexArrayID)
 	// log.Printf("LoadRenderer > VAO > ID: %v", vertexArrayID)
 
 	// Vertex buffer
@@ -374,22 +419,22 @@ func (w *WebGL) RegisterMesh(mesh *render.Mesh) {
 	// log.Printf("LoadRenderer > EBO > Indicies Length: %v", len(indicies))
 
 	// Linking vertex attributes
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 8*4, 0)
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, 0)
 	gl.EnableVertexAttribArray(0)
 
 	// Linking fragment attributes
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 8*4, 3*4)
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, 2*4)
 	gl.EnableVertexAttribArray(1)
 
 	// Linking texture attributes
-	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8*4, 6*4)
-	gl.EnableVertexAttribArray(2)
+	// gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8*4, 6*4)
+	// gl.EnableVertexAttribArray(2)
 
 	webGLMesh := &WebGLMesh{m: mesh}
 
 	webGLMesh.SetVAO(vertexArrayID)
 
 	// Unbind Vertex array object
-	gl.BindVertexArray(nil)
+	w.BindVertexArray(nil)
 	w.meshes = append(w.meshes, webGLMesh)
 }

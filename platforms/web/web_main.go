@@ -17,9 +17,10 @@ func init() {
 
 type Web struct {
 	engine.Integrant
-	assets  map[string]*js.Object
-	Loaded  func()
-	waiting int
+	assets   map[string]*js.Object
+	isDeploy bool
+	Loaded   func()
+	waiting  int
 }
 
 func (w *Web) AddIntegrant(engine.IntegrantRoutine) {}
@@ -45,11 +46,21 @@ func (w *Web) InitIntegrant() {
 
 func (w *Web) Destroy() {}
 
+func (w *Web) IsDeploy() {
+	w.isDeploy = true
+}
+
 func (w *Web) Asset(p string) *js.Object {
+	if w.isDeploy {
+		return nil
+	}
 	return w.assets[p]
 }
 
 func (w *Web) LoadAsset(p string) {
+	if w.isDeploy {
+		return
+	}
 	ready := make(chan bool)
 	dotSplit := strings.Split(p, ".")
 	ext := dotSplit[len(dotSplit)-1]

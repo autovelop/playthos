@@ -39,7 +39,7 @@ func init() {
 type OpenGL struct {
 	render.Render
 	// factory             *OpenGLFactory
-	platform          engine.Platformer
+	platform          engine.Desktoper
 	window            *glfw32.Window
 	screenWidth       float32
 	screenHeight      float32
@@ -122,7 +122,7 @@ func (o *OpenGL) AddIntegrant(integrant engine.IntegrantRoutine) {
 		o.SetActive(true)
 		fmt.Println("> OpenGL: Discovered GLFW")
 		break
-	case engine.Platformer:
+	case engine.Desktoper:
 		o.platform = integrant
 		break
 	}
@@ -355,7 +355,7 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 		return
 	}
 	texture := material.BaseTexture()
-	openGLMaterial := &OpenGLMaterial{Material: material}
+	openGLMaterial := NewOpenGLMaterial(material)
 	if texture != nil {
 		openGLMaterial.OverrideTexture(func(t render.Textureable) {
 			raw := o.platform.Asset(t.Path())
@@ -411,11 +411,11 @@ func (o *OpenGL) RegisterMesh(mesh *render.Mesh) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indicies)*4, gl.Ptr(indicies), gl.STATIC_DRAW)
 
 	// Linking vertex attributes
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(0)
 
 	// Linking texture attributes
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
 	gl.EnableVertexAttribArray(1)
 
 	var openGLMesh *OpenGLMesh

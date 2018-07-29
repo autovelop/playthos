@@ -27,5 +27,10 @@ type Platformer interface {
 	IntegrantRoutine
 	IsDeploy()
 	LoadAsset(string)
+}
+
+// Desktoper interface used to load Assets for desktops and return []byte
+type Desktoper interface {
+	Platformer
 	Asset(string) []byte
 }

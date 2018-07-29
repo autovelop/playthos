@@ -65,14 +65,18 @@ func initDeploy(n string) {
 			vars["ext"] = platform.DeployFileExtension
 			vars["platform"] = name
 
-			fmt.Printf("> Engine: Deploying platform '%v'\n", name)
+			fmt.Printf("\n> Engine: Deploying platform '%v'\n", name)
 			if platform.BuildDependency != "" {
 				fmt.Printf("> Engine: Resolving build dependency '%v'\n", platform.BuildDependency)
 
 				// consider manually forcing a update check via user interface
 				// cmdDep := exec.Command("go", "get", "-u", platform.BuildDependency)
 
-				cmdDep := exec.Command("go", "get", "-v", platform.BuildDependency)
+				cmdDep := exec.Command("go",
+					"get",
+					// "-v",
+					platform.BuildDependency,
+				)
 				cmdErrDep, _ := cmdDep.StderrPipe()
 
 				err := cmdDep.Start()
@@ -86,14 +90,13 @@ func initDeploy(n string) {
 
 			platform.Tags = append(platform.Tags, deps...)
 			platform.Args = append(platform.Args,
-				"-v",
-				"-a", // NOT NECESSARY IN PRODUCTION
-				newPath("-o={{.gopath}}{{.seperator}}bin{{.seperator}}{{.package}}{{.seperator}}{{.name}}{{.ext}}"),
+				// "-v",
+				newPath("-o={{.gopath}}{{.seperator}}bin{{.seperator}}{{.package}}{{.seperator}}{{.platform}}{{.seperator}}{{.name}}{{.ext}}"),
 				fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")),
 			)
 			fmt.Printf("> Engine: Deploy tags %v\n", fmt.Sprintf("%v=%v", platform.TagsArg, strings.Trim(fmt.Sprintf("%v", platform.Tags), "[]")))
 			fmt.Printf("> Engine: Deploy source %v\n", newPath("{{.fullpath}}"))
-			fmt.Printf("> Engine: Deploy destination %v\n", newPath("{{.gopath}}{{.seperator}}bin{{.seperator}}{{.package}}{{.seperator}}{{.name}}{{.ext}}"))
+			fmt.Printf("> Engine: Deploy destination %v\n", newPath("{{.gopath}}{{.seperator}}bin{{.seperator}}{{.package}}{{.seperator}}{{.platform}}{{.seperator}}{{.name}}{{.ext}}"))
 			platform.Args = append(platform.Args, newPath("{{.package}}"))
 
 			cmd := exec.Command(platform.Command, platform.Args...)
@@ -112,7 +115,11 @@ func initDeploy(n string) {
 			// if len(cc) > 0 {
 			// 	cmd.Env = append(cmd.Env, cc)
 			// }
-			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", simpleName))
+			if platform.GOOS != "" {
+				cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
+				cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
+			}
+			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", "linux"))
 			cmdErr, _ := cmd.StderrPipe()
 
 			startErr := cmd.Start()
@@ -125,7 +132,7 @@ func initDeploy(n string) {
 			errOutput, _ := ioutil.ReadAll(cmdErr)
 			if len(errOutput) > 0 {
 				fmt.Printf("> Engine: Error 1 during deploy: %v\n", string(errOutput))
-				continue
+				// continue
 			}
 
 			// Copy assets
@@ -143,7 +150,7 @@ func initDeploy(n string) {
 				err := cp(assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
 				if err != nil {
 					fmt.Printf("> Engine: Deploying asset '%v' failed - %v\n", asset, err)
-					continue
+					// continue
 					// os.Exit(0)
 				}
 			}
@@ -154,7 +161,7 @@ func initDeploy(n string) {
 		}
 	}
 
-	fmt.Printf("> Engine: Deployment completely successfully\n")
+	fmt.Printf("\n> Engine: Deployment completely successfully\n")
 	os.Exit(0)
 }
 

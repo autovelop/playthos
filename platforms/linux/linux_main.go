@@ -64,7 +64,6 @@ func (l *Linux) LoadAsset(p string) {
 		if err != nil {
 			log.Println("> Engine: Invalid path to load asset for Linux platform")
 			log.Println("          PLATFORM: linux")
-			log.Printf("          DIRECTORY: %v\n", d)
 			log.Printf("          PATH: %v\n", p)
 			log.Fatalf("          CWD: %v", wd)
 		}
@@ -91,52 +90,10 @@ func (l *Linux) LoadAsset(p string) {
 	}
 	file.Close()
 
-	// l.Decode(buf)
-
-	// go back to root dir
 	err = os.Chdir(wd)
 	if err != nil {
 		log.Fatalf("unable to navigate to parent from destination folder", err)
 	}
 
 	l.assets[p] = buf
-	// splits := strings.Split(p, "/")
-	// d := splits[0]
-	// f := splits[1]
-
-	// dir, err := build.ImportDir(d, build.FindOnly)
-	// if err != nil {
-	// 	log.Fatalf("destination file or folder doesn't exist: %v", p)
-	// 	return
-	// }
-
-	// err = os.Chdir(dir.Dir)
-	// if err != nil {
-	// 	wd, _ := os.Getwd()
-	// 	log.Fatalf("unable to navigate to destination folder %v from %v", dir.Dir, wd)
-	// 	return
-	// }
-
-	// file, err := os.Open(f)
-	// if err != nil {
-	// 	log.Fatalf("unable to open destination file: %v", f)
-	// 	return
-	// }
-	// defer file.Close()
-
-	// buf, err := ioutil.ReadAll(file)
-	// if err != nil {
-	// 	log.Fatalf("unable to read destination file or folder: %v", p)
-	// 	return
-	// }
-
-	// // l.Decode(buf)
-
-	// // go back to root dir
-	// err = os.Chdir("../")
-	// if err != nil {
-	// 	return
-	// }
-
-	// l.assets[p] = buf
 }

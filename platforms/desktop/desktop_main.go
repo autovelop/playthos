@@ -1,6 +1,6 @@
-// +build deploy windows
+// +build deploy desktop
 
-package windows
+package desktop
 
 import (
 	"fmt"
@@ -13,42 +13,42 @@ import (
 )
 
 func init() {
-	engine.NewIntegrant(&Windows{})
-	fmt.Println("> Windows: Ready")
+	engine.NewIntegrant(&Desktop{})
+	fmt.Println("> Desktop: Ready")
 }
 
-type Windows struct {
+type Desktop struct {
 	engine.Integrant
 	assets   map[string][]byte
 	isDeploy bool
 }
 
-func (l *Windows) InitIntegrant() {
+func (l *Desktop) InitIntegrant() {
 	l.assets = make(map[string][]byte, 0)
 }
 
-func (l *Windows) AddIntegrant(engine.IntegrantRoutine) {}
+func (l *Desktop) AddIntegrant(engine.IntegrantRoutine) {}
 
-func (l *Windows) Destroy() {}
+func (l *Desktop) Destroy() {}
 
-func (l *Windows) IsDeploy() {
+func (l *Desktop) IsDeploy() {
 	l.isDeploy = true
 }
 
-func (l *Windows) Asset(p string) []byte {
+func (l *Desktop) Asset(p string) []byte {
 	if l.isDeploy {
 		return nil
 	}
 	return l.assets[p]
 }
 
-func (l *Windows) LoadAsset(p string) {
+func (l *Desktop) LoadAsset(p string) {
 	if l.isDeploy {
 		return
 	}
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Println("> Engine: Unable to get working directory for Windows platform")
+		log.Println("> Engine: Unable to get working directory for Desktop platform")
 	}
 
 	splits := strings.Split(p, "/")
@@ -62,8 +62,8 @@ func (l *Windows) LoadAsset(p string) {
 
 		dir, err := build.ImportDir(d, build.FindOnly)
 		if err != nil {
-			log.Println("> Engine: Invalid path to load asset for Windows platform")
-			log.Println("          PLATFORM: windows")
+			log.Println("> Engine: Invalid path to load asset for Desktop platform")
+			log.Println("          PLATFORM: desktop")
 			log.Printf("          PATH: %v\n", p)
 			log.Fatalf("          CWD: %v", wd)
 		}
@@ -77,8 +77,8 @@ func (l *Windows) LoadAsset(p string) {
 
 	file, err := os.Open(f)
 	if err != nil {
-		log.Println("> Engine: Unable to open asset file for Windows platform. Could be in use.")
-		log.Println("          PLATFORM: windows")
+		log.Println("> Engine: Unable to open asset file for Desktop platform. Could be in use.")
+		log.Println("          PLATFORM: desktop")
 		log.Printf("          PATH: %v\n", p)
 		log.Printf("          CWD: %v\n", wd)
 		log.Fatalf("          Error: %v", err)

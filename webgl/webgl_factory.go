@@ -7,6 +7,7 @@ import (
 	"github.com/autovelop/playthos"
 	"github.com/autovelop/playthos/render"
 	"github.com/gopherjs/gopherjs/js"
+	"github.com/gopherjs/webgl"
 )
 
 func init() {
@@ -29,7 +30,7 @@ func (w *WebGLFactory) AddIntegrant(integrant engine.IntegrantRoutine) {}
 func (w *WebGLFactory) Destroy() {}
 
 // NewShader creates a new vertex and fragment shader
-func (w *WebGLFactory) NewShader(gl *Context, vs string, fs string) *js.Object {
+func (w *WebGLFactory) NewShader(gl *webgl.Context, vs string, fs string) *js.Object {
 	version := gl.GetParameter(gl.VERSION)
 	fmt.Printf("> WebGLFactory: Profile = %v\n", version)
 

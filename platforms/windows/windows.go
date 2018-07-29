@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	engine.RegisterPlatform("windows", &engine.Platform{"go", []string{"build", "-v"}, "-tags", []string{}, ".exe", ""})
+	engine.RegisterPlatform("windows", &engine.Platform{"go", []string{"build"}, "-tags", []string{}, "", ".exe", ""})
 	engine.RegisterPackage(&engine.Package{"windows", []string{}, []string{"asset_loader"}, []string{"windows"}})
 	fmt.Println("> Windows: Initializing")
 }
