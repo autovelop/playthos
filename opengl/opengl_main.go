@@ -38,7 +38,6 @@ func init() {
 // OpenGL uses GLFW window to render graphics on desktop devices
 type OpenGL struct {
 	render.Render
-	// factory             *OpenGLFactory
 	platform          engine.Desktoper
 	window            *glfw32.Window
 	screenWidth       float32
@@ -151,15 +150,9 @@ func (o *OpenGL) ComponentTypes() []engine.ComponentRoutine {
 	return []engine.ComponentRoutine{&std.Transform{}, &render.Mesh{}, &render.Material{}, &render.Camera{}}
 }
 
-var once = true
-
 // Draw renders all entity components into scene
 func (o *OpenGL) Draw() {
-	if !once {
-		return
-	}
 	if o.Active() {
-		once = false
 		if len(o.cameras) <= 0 {
 			o.createDefaultCamera()
 		}
@@ -592,16 +585,7 @@ func uniformLocation(p uint32, n string) int32 {
 	if l == -1 {
 		log.Fatalf("> OpenGL: Uniform %vnot found in shader %v (remember that if you don't use the uniform, it wil automatically get removed by the compiler)\n", n, p)
 	}
-	log.Printf("> DEBUG: Uniform %vat location %v in shader %v\n", n, l, p)
 	return l
-}
-
-// bindTexture binds texture
-func bindTexture(idx uint32, t uint32, id uint32, p uint32, n string) {
-	// gl.ActiveTexture(gl.TEXTURE0 + idx)
-	// gl.BindTexture(t, id)
-	// gl.Uniform1i(uniformLocation(p, n), int32(idx))
-	// gl.ActiveTexture(gl.TEXTURE0)
 }
 
 // attachFramebufferTextures attaches textures to an existing framebuffer
@@ -615,7 +599,6 @@ func (o *OpenGL) attachFramebufferTextures(fib uint32, a []attachment) {
 			gl.TexParameteri(gl.TEXTURE_RECTANGLE, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 			gl.TexParameteri(gl.TEXTURE_RECTANGLE, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 		} else {
-			log.Printf("> DEBUG: Texture %v seems to be shared with another framebuffers", *att.textureID)
 			gl.ActiveTexture(gl.TEXTURE0)
 			gl.BindTexture(gl.TEXTURE_RECTANGLE, *att.textureID)
 		}
@@ -636,8 +619,6 @@ func newFramebuffer() uint32 {
 }
 
 func bindFramebuffer(id uint32) {
-	// gl.BindTexture(gl.TEXTURE_2D, 0)
-	// gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, id)
 	gl.Viewport(0, 0, int32(1024), int32(576))
 }

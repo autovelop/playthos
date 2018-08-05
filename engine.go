@@ -105,9 +105,15 @@ func NewIntegrant(i IntegrantRoutine) {
 	integrants = append(integrants, i)
 
 	if p, ok := i.(Platformer); ok {
+		if deploy {
+			p.IsDeploy()
+		}
 		platformer = p
 	}
 	if l, ok := i.(Listener); ok {
+		if deploy {
+			l.IsDeploy()
+		}
 		listeners = append(listeners, l)
 	}
 }
@@ -118,7 +124,7 @@ func LoadAsset(path string) {
 		log.Fatalf("> Engine: Unable to load assets without a platform.")
 	}
 	if deploy {
-		platformer.IsDeploy()
+		// platformer.IsDeploy()
 		// Engine has list if asset paths to deploy assets with binary
 		assets = append(assets, path)
 	}
@@ -324,7 +330,7 @@ func (e *Engine) Integrant(lookup IntegrantRoutine) IntegrantRoutine {
 	return nil
 }
 
-var fixedUpdateRate = time.Duration(30)
+var fixedUpdateRate = time.Duration(60)
 
 // Game Loop
 //

@@ -18,6 +18,7 @@ type IntegrantRoutine interface {
 type Listener interface {
 	IntegrantRoutine
 	On(int, func(...int))
+	IsDeploy()
 	IsSet(int) bool
 	Emit(int, int)
 }

@@ -16,6 +16,11 @@ func (e *Entity) ID() uint {
 	return e.id
 }
 
+// ID returns unique entity identifier
+func (e *Entity) Components() []ComponentRoutine {
+	return e.components
+}
+
 // AddComponent adds a new component to an entity
 func (e *Entity) AddComponent(component ComponentRoutine) {
 	if play {
@@ -34,12 +39,14 @@ func (e *Entity) AddComponent(component ComponentRoutine) {
 	}
 }
 
+// The below method is more tedious and resource intensive but generic way to get components of any type that implements ComponentRoutine
 // Component returns a ComponentRoutine based on the given Component type
-func (e *Entity) Component(lookup interface{}) ComponentRoutine {
-	for _, component := range e.components {
-		if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", lookup) {
-			return component
-		}
-	}
-	return nil
-}
+// func (e *Entity) Component(lookup interface{}) ComponentRoutine {
+// 	for _, component := range e.components {
+//		if reflect.TypeOf(component) == reflect.TypeOf(&Transform{}) {
+// 		if fmt.Sprintf("%T", component) == fmt.Sprintf("%T", lookup) {
+// 			return component
+// 		}
+// 	}
+// 	return nil
+// }

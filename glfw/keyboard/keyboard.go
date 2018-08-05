@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	engine.RegisterPackage(&engine.Package{"glfwkeyboard", []string{"window_context"}, []string{"keyboard_input"}, []string{"windows", "linux", "darwin"}})
-	fmt.Println("> Keyboard (GLFW): Initializing")
+	engine.RegisterPackage(&engine.Package{"glfw_keyboard", []string{"window_context"}, []string{"keyboard_input"}, []string{"windows", "linux", "darwin"}})
+	fmt.Println("> GLFW (Keyboard): Initializing")
 }

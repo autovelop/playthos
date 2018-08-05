@@ -1,8 +1,9 @@
-// +build deploy glfwkeyboard
+// +build deploy glfw,keyboard
 
 package keyboard
 
 import (
+	"fmt"
 	"github.com/autovelop/playthos"
 	glfw "github.com/autovelop/playthos/glfw"
 	"github.com/autovelop/playthos/keyboard"
@@ -11,6 +12,7 @@ import (
 
 func init() {
 	engine.NewIntegrant(&GLFWKeyboard{})
+	fmt.Println("> GLFW (Keyboard): Ready")
 }
 
 type GLFWKeyboard struct {

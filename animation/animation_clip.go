@@ -23,6 +23,15 @@ type Clip struct {
 	tick            float64
 }
 
+// NewClip creates and sets a new orphan clip
+func NewClip(s float64, f float64, v std.Animatable) *Clip {
+	a := &Clip{}
+	// not active until it has a property
+	// a.SetActive(true)
+	a.Set(s, f, v)
+	return a
+}
+
 // Set used to define all the require properties of a Clip
 func (a *Clip) Set(s float64, f float64, o std.Animatable) {
 	a.speed = s
@@ -35,7 +44,7 @@ func (a *Clip) Set(s float64, f float64, o std.Animatable) {
 // Update is called on every tick of the game loop if running is set to true
 func (a *Clip) Update() {
 	if a.running {
-		if a.tick > a.frameCount {
+		if a.tick >= a.frameCount {
 			a.tick = 0
 
 			// do a proper uncalculated reset without math

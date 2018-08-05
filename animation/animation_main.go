@@ -4,7 +4,6 @@ package animation
 
 import (
 	"github.com/autovelop/playthos"
-	"github.com/autovelop/playthos/std"
 )
 
 func init() {
@@ -42,15 +41,6 @@ func (a *Animation) Update() {
 			clip.Update()
 		}
 	}
-}
-
-// NewClip creates and sets a new orphan clip
-func NewClip(s float64, f float64, v std.Animatable) *Clip {
-	a := &Clip{}
-	// not active until it has a property
-	// a.SetActive(true)
-	a.Set(s, f, v)
-	return a
 }
 
 // AddComponent unorphans a component by adding it to this system

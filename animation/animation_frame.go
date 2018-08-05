@@ -10,7 +10,7 @@ import (
 type KeyFrame struct {
 	frameIndex float64
 
-	// will hold the same frame for this duration
+	// will hold the same frame for this index
 	duration float64
 
 	target std.Animatable

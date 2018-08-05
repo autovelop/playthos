@@ -3,16 +3,19 @@
 package keyboard
 
 import (
+	"fmt"
 	"github.com/autovelop/playthos"
 )
 
 func init() {
 	engine.NewIntegrant(&Keyboard{})
+	fmt.Println("> Keyboard: Ready")
 }
 
 // Keyboard defines all the keyboard related actions (press, release, hold)
 type Keyboard struct {
 	engine.Integrant
+	isDeploy bool
 	keypress []func(...int)
 }
 
@@ -23,6 +26,10 @@ func (k *Keyboard) InitIntegrant() {
 
 // Destroy called when engine is gracefully shutting down
 func (k *Keyboard) Destroy() {
+}
+
+func (k *Keyboard) IsDeploy() {
+	k.isDeploy = true
 }
 
 // AddComponent unorphans a component by adding it to this system
@@ -52,6 +59,9 @@ func (k *Keyboard) Emit(kc int, a int) {
 
 // On defines the action of a given key press
 func (k *Keyboard) On(key int, fn func(...int)) {
+	if k.isDeploy {
+		return
+	}
 	k.keypress[key] = fn
 }
 

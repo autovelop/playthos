@@ -1,4 +1,4 @@
-// +build glfwkeyboard,!deploy
+// +build glfw,keyboard,!deploy
 
 package keyboard
 

@@ -31,7 +31,7 @@ func (c *Camera) Set(s *float32, cl *std.Color) {
 	if e == nil {
 		return
 	}
-	t := e.Component(&std.Transform{}).(*std.Transform)
+	t := std.GetTransform(e)
 	if t == nil {
 		return
 	}
@@ -68,7 +68,7 @@ func (c *Camera) PointToRay(x float32, y float32) *std.Vector2 {
 	if e == nil {
 		return nil
 	}
-	t := e.Component(&std.Transform{}).(*std.Transform)
+	t := std.GetTransform(e)
 	if t == nil {
 		return nil
 	}
