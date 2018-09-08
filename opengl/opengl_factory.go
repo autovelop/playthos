@@ -50,7 +50,10 @@ func NewOpenGLMaterial(m *render.Material) *OpenGLMaterial {
 // OverrideTexture overrides base texture (opengl)
 func (o *OpenGLMaterial) OverrideTexture(fn func(render.Textureable)) {
 	o.SetTexture = fn
-	o.SetTexture(o.BaseTexture().(*render.Texture))
+	baseTexture := o.BaseTexture()
+	if baseTexture != nil {
+		o.SetTexture(baseTexture.(*render.Texture))
+	}
 }
 
 // Texture returns a opengl texture

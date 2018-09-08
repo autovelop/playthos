@@ -85,6 +85,9 @@ func (o *OpenGL) InitSystem() {
 		case 5:
 			o.shader = newShader(render.VSHADER, render.FSHADER)
 			break
+		case 3:
+			o.shader = newShader(render.VSHADER43, render.FSHADER43)
+			break
 		case 1:
 			// o.shaderProgram = newShader(render.VSHADER41, render.FSHADER41)
 			break
@@ -198,88 +201,92 @@ func (o *OpenGL) Draw() {
 			if gl.GetError() != 0 {
 				log.Fatal("OpenGL error")
 			}
-			gl.UniformMatrix4fv(uniformLocation(o.shader, "uViewMatrix\x00"), 1, false, &view[0])
-			if gl.GetError() != 0 {
-				log.Fatal("OpenGL error")
-			}
-			gl.UniformMatrix4fv(uniformLocation(o.shader, "uProjMatrix\x00"), 1, false, &proj[0])
-			if gl.GetError() != 0 {
-				log.Fatal("OpenGL error")
-			}
-			for idx, mesh := range o.meshes {
-				if mesh == nil {
-					continue
-				}
-				gl.BindVertexArray(mesh.VAO())
+
+			// We should check if there are actually meshes to draw before going into the uniforms
+			// This is necessary for if there are entities that have transforms but no mesh (sound sources, lights, etc.)
+			if len(o.meshes) > 0 {
+				gl.UniformMatrix4fv(uniformLocation(o.shader, "uViewMatrix\x00"), 1, false, &view[0])
 				if gl.GetError() != 0 {
 					log.Fatal("OpenGL error")
 				}
-
-				transform := o.transforms[idx]
-
-				// this is a shortcut. should rather remove component from system registry
-				if transform == nil {
-					continue
-				} else if !transform.Active() {
-					continue
+				gl.UniformMatrix4fv(uniformLocation(o.shader, "uProjMatrix\x00"), 1, false, &proj[0])
+				if gl.GetError() != 0 {
+					log.Fatal("OpenGL error")
 				}
-
-				position := transform.Position()
-				rotation := transform.Rotation()
-				scale := transform.Scale()
-
-				model := mgl32.Ident4()
-				model = model.Mul4(mgl32.Translate3D(position.X, position.Y, -position.Z))
-				model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
-				model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
-				model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
-				model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
-
-				if idx >= len(o.materials) {
-					gl.BindVertexArray(0)
-					continue
-				}
-				material := o.materials[idx]
-				if material == nil {
-					gl.BindVertexArray(0)
-					continue
-				} else if !material.Active() {
-					gl.BindVertexArray(0)
-					continue
-				}
-
-				color := material.Color()
-				if color != nil {
-					gl.Uniform4fv(uniformLocation(o.shader, "uColor\x00"), 1, &color.R)
+				for idx, mesh := range o.meshes {
+					if mesh == nil {
+						continue
+					}
+					gl.BindVertexArray(mesh.VAO())
 					if gl.GetError() != 0 {
 						log.Fatal("OpenGL error")
 					}
-				}
 
-				texture := material.Texture()
-				if texture != nil {
-					gl.ActiveTexture(gl.TEXTURE0)
-					gl.BindTexture(gl.TEXTURE_2D, texture.ID())
-					gl.Uniform1i(uniformLocation(o.shader, "uTexture\x00"), 0)
-					gl.Uniform1i(uniformLocation(o.shader, "uTextured\x00"), 1)
+					transform := o.transforms[idx]
+
+					// this is a shortcut. should rather remove component from system registry
+					if transform == nil {
+						continue
+					} else if !transform.Active() {
+						continue
+					}
+
+					position := transform.Position()
+					rotation := transform.Rotation()
+					scale := transform.Scale()
+
+					model := mgl32.Ident4()
+					model = model.Mul4(mgl32.Translate3D(position.X, position.Y, -position.Z))
+					model = model.Mul4(mgl32.Rotate3DX(mgl32.DegToRad(rotation.X / 1)).Mat4())
+					model = model.Mul4(mgl32.Rotate3DY(mgl32.DegToRad(rotation.Y / 1)).Mat4())
+					model = model.Mul4(mgl32.Rotate3DZ(mgl32.DegToRad(rotation.Z / 1)).Mat4())
+					model = model.Mul4(mgl32.Scale3D(scale.X, scale.Y, scale.Z))
+
+					if idx >= len(o.materials) {
+						gl.BindVertexArray(0)
+						continue
+					}
+					material := o.materials[idx]
+					if material == nil {
+						gl.BindVertexArray(0)
+						continue
+					} else if !material.Active() {
+						gl.BindVertexArray(0)
+						continue
+					}
+
+					color := material.Color()
+					if color != nil {
+						gl.Uniform4fv(uniformLocation(o.shader, "uColor\x00"), 1, &color.R)
+						if gl.GetError() != 0 {
+							log.Fatal("OpenGL error")
+						}
+					}
+
+					texture := material.Texture()
+					if texture != nil {
+						gl.ActiveTexture(gl.TEXTURE0)
+						gl.BindTexture(gl.TEXTURE_2D, texture.ID())
+						gl.Uniform1i(uniformLocation(o.shader, "uTexture\x00"), 0)
+						gl.Uniform1i(uniformLocation(o.shader, "uTextured\x00"), 1)
+						if gl.GetError() != 0 {
+							log.Fatal("OpenGL error")
+						}
+					}
+
+					gl.UniformMatrix4fv(uniformLocation(o.shader, "uModelMatrix\x00"), 1, false, &model[0])
 					if gl.GetError() != 0 {
 						log.Fatal("OpenGL error")
 					}
-				}
 
-				gl.UniformMatrix4fv(uniformLocation(o.shader, "uModelMatrix\x00"), 1, false, &model[0])
-				if gl.GetError() != 0 {
-					log.Fatal("OpenGL error")
+					gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
+					if gl.GetError() != 0 {
+						log.Fatal("OpenGL error")
+					}
+					gl.BindVertexArray(0)
 				}
-
-				gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, gl.PtrOffset(0))
-				if gl.GetError() != 0 {
-					log.Fatal("OpenGL error")
-				}
-				gl.BindVertexArray(0)
+				gl.UseProgram(0)
 			}
-			gl.UseProgram(0)
-
 			o.window.SwapBuffers()
 			glfw32.PollEvents()
 		}
@@ -347,35 +354,36 @@ func (o *OpenGL) RegisterMaterial(material *render.Material) {
 	if o.platform == nil {
 		return
 	}
-	texture := material.BaseTexture()
+	// texture := material.BaseTexture()
 	openGLMaterial := NewOpenGLMaterial(material)
-	if texture != nil {
-		openGLMaterial.OverrideTexture(func(t render.Textureable) {
-			raw := o.platform.Asset(t.Path())
+	// chances are the below if was there for a reason. It was commented because when a Material component is add without a texture and then given a texture at runtime, it doesn't render because the below OverrideTexture was never called.
+	//if texture != nil {
+	openGLMaterial.OverrideTexture(func(t render.Textureable) {
+		raw := o.platform.Asset(t.Path())
 
-			img, _, err := image.Decode(bytes.NewReader(raw))
-			if err != nil {
-				log.Println(err)
-				return
-			}
+		img, _, err := image.Decode(bytes.NewReader(raw))
+		if err != nil {
+			log.Println(err)
+			return
+		}
 
-			rgba := image.NewRGBA(img.Bounds())
-			if rgba.Stride != rgba.Rect.Size().X*4 {
-				log.Println("rgba stride error")
-				return
-			}
+		rgba := image.NewRGBA(img.Bounds())
+		if rgba.Stride != rgba.Rect.Size().X*4 {
+			log.Println("rgba stride error")
+			return
+		}
 
-			t.SetHeight(int32(rgba.Rect.Size().Y))
-			t.SetWidth(int32(rgba.Rect.Size().X))
+		t.SetHeight(int32(rgba.Rect.Size().Y))
+		t.SetWidth(int32(rgba.Rect.Size().X))
 
-			pix := rgba.Pix
-			draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+		pix := rgba.Pix
+		draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
-			tid := newTexture(gl.TEXTURE_2D, gl.RGBA, t.Width(), t.Height(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
+		tid := newTexture(gl.TEXTURE_2D, gl.RGBA, t.Width(), t.Height(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
 
-			openGLMaterial.texture = &OpenGLTexture{t.(*render.Texture), tid}
-		})
-	}
+		openGLMaterial.texture = &OpenGLTexture{t.(*render.Texture), tid}
+	})
+	//}
 	o.materials = append(o.materials, openGLMaterial)
 }
 

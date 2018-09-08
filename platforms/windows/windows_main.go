@@ -4,12 +4,13 @@ package windows
 
 import (
 	"fmt"
-	"github.com/autovelop/playthos"
 	"go/build"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/autovelop/playthos"
 )
 
 func init() {
@@ -77,7 +78,7 @@ func (l *Windows) LoadAsset(p string) {
 
 	file, err := os.Open(f)
 	if err != nil {
-		log.Println("> Engine: Unable to open asset file for Windows platform. Could be in use.")
+		log.Println("> Engine: Unable to open asset file. Could be in use.")
 		log.Println("          PLATFORM: windows")
 		log.Printf("          PATH: %v\n", p)
 		log.Printf("          CWD: %v\n", wd)
@@ -86,7 +87,13 @@ func (l *Windows) LoadAsset(p string) {
 
 	buf, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Fatalf("unable to read destination file or folder: %v", p)
+		// log.Fatalf("unable to read destination file or folder: %v", p)
+		panic("BUG: Unable to recursive navigate to files deeper than one directory level.")
+		log.Println("> Engine: Unable to read asset file. Could be in use.")
+		log.Println("          PLATFORM: windows")
+		log.Printf("          PATH: %v\n", p)
+		log.Printf("          CWD: %v\n", wd)
+		log.Fatalf("          Error: %v", err)
 	}
 	file.Close()
 

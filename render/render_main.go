@@ -204,6 +204,46 @@ const (
 	}
 	` + "\x00"
 
+	// VSHADER OpenGL 4.3 Vertex Shader
+	VSHADER43 = `#version 430 core
+	layout (location = 0) in vec4 iVertexPosition;
+	layout (location = 1) in vec2 iTexCoord;
+
+	uniform mat4 uModelMatrix;
+	uniform mat4 uViewMatrix;
+	uniform mat4 uProjMatrix;
+
+	layout (location = 0) out vec2 oTexCoord;
+
+	void main( void ) {
+		gl_Position = uProjMatrix * uViewMatrix * uModelMatrix * iVertexPosition;
+		oTexCoord = iTexCoord;
+	}
+	` + "\x00"
+
+	// FSHADER OpenGL 4.3 Fragment Shader
+	FSHADER43 = `#version 430 core
+
+	uniform vec4 uColor;
+
+	uniform int uTextured;
+	uniform sampler2D uTexture;
+
+	layout (location = 0) in vec2 iTexCoord;
+
+	uniform vec2 uTextureOffset;
+	uniform vec2 uTextureTiling;
+
+	layout (location = 0) out vec4 oColor;
+
+	void main(void) {
+		oColor = uColor;
+		if (uTextured == 1) {
+			oColor *= texture(uTexture, (iTexCoord * (1.0 - uTextureTiling)) + (uTextureOffset * (1.0 - uTextureTiling)));
+		}
+	}
+	` + "\x00"
+
 	// VSCREENSHADER OpenGL 4.5 Vertex Screen Shader (Multipass Rendering)
 	VSCREENSHADER = `#version 450 core
 	layout (location = 0) in vec2 pos;

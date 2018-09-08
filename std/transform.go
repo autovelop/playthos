@@ -2,7 +2,6 @@ package std
 
 import (
 	"github.com/autovelop/playthos"
-	"reflect"
 )
 
 // Transform defines the position, orientiation, and scale
@@ -64,12 +63,7 @@ func (t *Transform) Scale() *Vector3 {
 	return t.scale
 }
 
-// GetTransform searching and returns an entity's component by the given type
+// GetTransform searching and returns an entity's Transform component
 func GetTransform(e *engine.Entity) *Transform {
-	for _, component := range e.Components() {
-		if reflect.TypeOf(component) == reflect.TypeOf(&Transform{}) {
-			return component.(*Transform)
-		}
-	}
-	return nil
+	return e.Component(&Transform{}).(*Transform)
 }

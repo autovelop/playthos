@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"reflect"
 )
 
 // Entity is used to group components with an unique identifier in order to form a virtual/game object
@@ -50,3 +51,12 @@ func (e *Entity) AddComponent(component ComponentRoutine) {
 // 	}
 // 	return nil
 // }
+
+func (e *Entity) Component(lookup interface{}) ComponentRoutine {
+	for _, component := range e.components {
+		if reflect.TypeOf(component) == reflect.TypeOf(lookup) {
+			return component
+		}
+	}
+	return nil
+}

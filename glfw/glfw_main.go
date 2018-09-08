@@ -4,10 +4,11 @@ package glfw
 
 import (
 	"fmt"
-	"github.com/autovelop/playthos"
-	"github.com/go-gl/glfw/v3.2/glfw"
 	"log"
 	"runtime"
+
+	"github.com/autovelop/playthos"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 func init() {
@@ -95,10 +96,14 @@ func (g *GLFW) InitIntegrant() {
 	fmt.Printf("> GLFW: Resolution = %vx%v | Monitor = %v\n", g.settings.ResolutionX, g.settings.ResolutionY, g.monitor)
 	g.window, err = glfw.CreateWindow(int(g.settings.ResolutionX), int(g.settings.ResolutionY), "Game", g.monitor, nil)
 	if err != nil {
+		log.Printf("An error occured with the active version of GLFW.\nerr:%v", err)
 		switch g.majorVersion {
 		case 4:
 			switch g.minorVersion {
 			case 5:
+				g.minorVersion = 3
+				break
+			case 3:
 				g.minorVersion = 1
 				break
 			case 1:

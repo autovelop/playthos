@@ -29,11 +29,6 @@ func (m *Material) BaseTexture() Textureable {
 	return m.baseTexture
 }
 
-// SetTexture sets/changes texture
-// func (m *Material) SetTexture(t Textureable) {
-// 	m.baseTexture = t
-// }
-
 // Set used to define all the required properties
 func (m *Material) Set(col *std.Color) {
 	m.color = col
@@ -42,4 +37,9 @@ func (m *Material) Set(col *std.Color) {
 // Color returns the material color
 func (m *Material) Color() *std.Color {
 	return m.color
+}
+
+// GetMaterial searching and returns an entity's Material component
+func GetMaterial(e *engine.Entity) *Material {
+	return e.Component(&Material{}).(*Material)
 }
