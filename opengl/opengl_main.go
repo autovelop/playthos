@@ -214,7 +214,7 @@ func (o *OpenGL) Draw() {
 					log.Fatal("OpenGL error")
 				}
 				for idx, mesh := range o.meshes {
-					if mesh == nil {
+					if mesh == nil || !mesh.Entity().Active() {
 						continue
 					}
 					gl.BindVertexArray(mesh.VAO())
@@ -269,6 +269,14 @@ func (o *OpenGL) Draw() {
 						gl.BindTexture(gl.TEXTURE_2D, texture.ID())
 						gl.Uniform1i(uniformLocation(o.shader, "uTexture\x00"), 0)
 						gl.Uniform1i(uniformLocation(o.shader, "uTextured\x00"), 1)
+
+						// move this into material so it only happens once when texture is loaded
+						tiling := texture.Tiling()
+						xTile := 1 - (float32(texture.Width()/int32(tiling.X)) / float32(texture.Width()))
+						yTile := 1 - (float32(texture.Height()/int32(tiling.Y)) / float32(texture.Height()))
+						gl.Uniform2fv(uniformLocation(o.shader, "uTextureTiling\x00"), 1, &(&std.Vector2{float32(xTile), float32(yTile)}).X)
+
+						gl.Uniform2fv(uniformLocation(o.shader, "uTextureOffset\x00"), 1, &texture.Offset().X)
 						if gl.GetError() != 0 {
 							log.Fatal("OpenGL error")
 						}

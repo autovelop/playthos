@@ -9,13 +9,14 @@ import (
 // Texture defines the image, size, and offset
 type Texture struct {
 	image  *Image
+	tiling *std.Vector2
 	size   *std.Vector2
 	offset *std.Vector2
 }
 
 // NewTexture creates and sets a new orphan texture
 func NewTexture(i *Image) *Texture {
-	return &Texture{i, &std.Vector2{0, 0}, &std.Vector2{0, 0}}
+	return &Texture{i, &std.Vector2{1, 1}, &std.Vector2{0, 0}, &std.Vector2{0, 0}}
 }
 
 // Path returns path string of image
@@ -46,9 +47,9 @@ func (t *Texture) SetHeight(h int32) {
 }
 
 // SetSize sets/changes texture size
-// func (t *Texture) SetSize(x float32, y float32) {
-// 	t.size = &std.Vector2{x, y}
-// }
+func (t *Texture) SetTiling(i *std.Vector2) {
+	t.tiling = i
+}
 
 // SetOffset sets/changes texture offset vector
 func (t *Texture) SetOffset(o *std.Vector2) {
@@ -58,6 +59,11 @@ func (t *Texture) SetOffset(o *std.Vector2) {
 // Size returns size vector
 func (t *Texture) Size() *std.Vector2 {
 	return t.size
+}
+
+// Tiling returns tiling vector of texture
+func (t *Texture) Tiling() *std.Vector2 {
+	return t.tiling
 }
 
 // SizeN returns size vector of texture relative to image dimensions

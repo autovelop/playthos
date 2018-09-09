@@ -57,8 +57,10 @@ func initDeploy(n string) {
 		"name":      n,
 	}
 	vars["package"] = strings.Replace(vars["fullpath"], newPath("{{.gopath}}{{.seperator}}src{{.seperator}}"), "", -1)
+	fmt.Println(vars["package"])
 
 	fmt.Printf("> Engine: Deploying...\n")
+	errs := false
 	for name, platform := range platforms {
 		valid, deps := validate(name)
 		if valid {
@@ -131,8 +133,17 @@ func initDeploy(n string) {
 
 			errOutput, _ := ioutil.ReadAll(cmdErr)
 			if len(errOutput) > 0 {
-				fmt.Printf("> Engine: Error 1 during deploy: %v\n", string(errOutput))
-				// continue
+				fmt.Println("> Engine: Error 1 during deploy.")
+				fmt.Printf("          PLATFORM: %v\n", name)
+				wd, err := os.Getwd()
+				if err != nil {
+					fmt.Printf("> Engine: Unable to get working directory for %v platform\n", name)
+				} else {
+					fmt.Printf("          CWD: %v\n", wd)
+				}
+				fmt.Printf("          Error: %v", string(errOutput))
+				errs = true
+				continue
 			}
 
 			// Copy assets
@@ -140,17 +151,19 @@ func initDeploy(n string) {
 			assetDest := newPath("{{.gopath}}{{.seperator}}bin{{.seperator}}{{.package}}{{.seperator}}{{.platform}}")
 			assetSrc := newPath("{{.gopath}}{{.seperator}}src{{.seperator}}{{.package}}{{.seperator}}")
 			for _, asset := range assets {
+				asset = strings.Replace(asset, "/", "\\", -1)
 				assetPath := fmt.Sprintf("%v%v%v", assetDest, string(os.PathSeparator), asset)
 				assetPathSplit := strings.Split(assetPath, string(os.PathSeparator))
 				assetDir := strings.Join(assetPathSplit[:len(assetPathSplit)-1], string(os.PathSeparator))
 				if _, err := os.Stat(assetDir); os.IsNotExist(err) {
 					os.MkdirAll(assetDir, os.ModePerm)
 				}
-				fmt.Printf("> Engine: Copying asset to '%v' from '%v'...\n", assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
+				fmt.Printf("> Engine: Copying asset to '%v' from '%v'...\n", assetPath, fmt.Sprintf("%v||%v", assetSrc, asset))
 				err := cp(assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
 				if err != nil {
 					fmt.Printf("> Engine: Deploying asset '%v' failed - %v\n", asset, err)
-					// continue
+					errs = true
+					continue
 					// os.Exit(0)
 				}
 			}
@@ -161,7 +174,11 @@ func initDeploy(n string) {
 		}
 	}
 
-	fmt.Printf("\n> Engine: Deployment completely successfully\n")
+	if errs {
+		fmt.Printf("> Engine: Deployment completely with errors.\n")
+	} else {
+		fmt.Printf("> Engine: Deployment completely successfully.\n")
+	}
 	os.Exit(0)
 }
 

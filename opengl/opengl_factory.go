@@ -4,7 +4,7 @@ package opengl
 
 import (
 	// "fmt"
-	// "github.com/autovelop/playthos"
+	"github.com/autovelop/playthos"
 	"github.com/autovelop/playthos/render"
 )
 
@@ -15,13 +15,18 @@ type OpenGLMesh struct {
 }
 
 // SetVAO sets the VAO (opengl)
-func (m *OpenGLMesh) SetVAO(vao uint32) {
-	m.vao = vao
+func (o *OpenGLMesh) SetVAO(vao uint32) {
+	o.vao = vao
 }
 
 // VAO returns a opengl VAO
-func (m *OpenGLMesh) VAO() uint32 {
-	return m.vao
+func (o *OpenGLMesh) VAO() uint32 {
+	return o.vao
+}
+
+// Entity returns the entity of the mesh component
+func (o *OpenGLMesh) Entity() *engine.Entity {
+	return o.m.Entity()
 }
 
 // OpenGLTexture defines a texture (opengl)
