@@ -148,7 +148,7 @@ func initDeploy(n string) {
 			assetDest := newPath("{{.gopath}}{{.seperator}}bin{{.seperator}}{{.package}}{{.seperator}}{{.platform}}")
 			assetSrc := newPath("{{.gopath}}{{.seperator}}src{{.seperator}}{{.package}}{{.seperator}}")
 			for _, asset := range assets {
-				asset = strings.Replace(asset, "/", "\\", -1)
+				asset = strings.Replace(asset, "/", string(os.PathSeparator), -1)
 				assetPath := fmt.Sprintf("%v%v%v", assetDest, string(os.PathSeparator), asset)
 				assetPathSplit := strings.Split(assetPath, string(os.PathSeparator))
 				assetDir := strings.Join(assetPathSplit[:len(assetPathSplit)-1], string(os.PathSeparator))
