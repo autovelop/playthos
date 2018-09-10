@@ -118,7 +118,7 @@ func initDeploy(n string) {
 			// if len(platform.CC) > 0 {
 			// 	cmd.Env = append(cmd.Env, platform.CC)
 			// }
-			if platform.GOOS != "" {
+			if platform.GOOS != "" { // when this is true, windows deploys break for some reason
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
 			}
