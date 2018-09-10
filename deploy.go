@@ -84,7 +84,8 @@ func initDeploy(n string) {
 				err := cmdDep.Start()
 				if err != nil {
 					fmt.Printf("> Engine: Error during deploy (installing build dependency): %v\n", err)
-					os.Exit(0)
+					errs = true
+					continue
 				}
 				errOutput, _ := ioutil.ReadAll(cmdErrDep)
 				fmt.Printf("%s", errOutput)
@@ -109,26 +110,26 @@ func initDeploy(n string) {
 			// if cgo {
 			// 	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 			// }
-			if len(platform.ARCH) > 0 {
-				cmd.Env = append(cmd.Env, fmt.Sprintf("GOARCH=%v", platform.ARCH))
-			} else {
-				cmd.Env = append(cmd.Env, "GOARCH=amd64")
-			}
-
-			if len(platform.CC) > 0 {
-				cmd.Env = append(cmd.Env, platform.CC)
-			}
-
+			// if len(platform.ARCH) > 0 {
+			// 	cmd.Env = append(cmd.Env, fmt.Sprintf("GOARCH=%v", platform.ARCH))
+			// } else {
+			// 	cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			// }
+			// if len(platform.CC) > 0 {
+			// 	cmd.Env = append(cmd.Env, platform.CC)
+			// }
 			if platform.GOOS != "" {
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
 			}
+
 			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", "linux"))
 			cmdErr, _ := cmd.StderrPipe()
 
 			startErr := cmd.Start()
 			if startErr != nil {
 				fmt.Printf("> Engine: Error 0 during deploy: %v\n", startErr)
+				errs = true
 				continue
 				// os.Exit(0)
 			}
@@ -137,12 +138,6 @@ func initDeploy(n string) {
 			if len(errOutput) > 0 {
 				fmt.Println("> Engine: Error 1 during deploy.")
 				fmt.Printf("          PLATFORM: %v\n", name)
-				wd, err := os.Getwd()
-				if err != nil {
-					fmt.Printf("> Engine: Unable to get working directory for %v platform\n", name)
-				} else {
-					fmt.Printf("          CWD: %v\n", wd)
-				}
 				fmt.Printf("          Error: %v", string(errOutput))
 				errs = true
 				continue
@@ -160,28 +155,26 @@ func initDeploy(n string) {
 				if _, err := os.Stat(assetDir); os.IsNotExist(err) {
 					os.MkdirAll(assetDir, os.ModePerm)
 				}
-				fmt.Printf("> Engine: Copying asset to '%v' from '%v'...\n", assetPath, fmt.Sprintf("%v||%v", assetSrc, asset))
+				fmt.Printf("> Engine: Copying asset to '%v' from '%v'...\n", assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
 				err := cp(assetPath, fmt.Sprintf("%v%v", assetSrc, asset))
 				if err != nil {
 					fmt.Printf("> Engine: Deploying asset '%v' failed - %v\n", asset, err)
 					errs = true
 					continue
-					// os.Exit(0)
 				}
 			}
 
 		} else {
 			fmt.Printf("> Engine: Deploying platform '%v' has the following unresolved dependencies %v...\n", name, deps)
-			os.Exit(0)
+			errs = true
 		}
 	}
 
 	if errs {
-		fmt.Printf("> Engine: Deployment completeled with errors.\n")
+		fmt.Printf("> Engine: Deployment completed with errors.\n")
 	} else {
-		fmt.Printf("> Engine: Deployment completeled successfully.\n")
+		fmt.Printf("> Engine: Deployment completed successfully.\n")
 	}
-	os.Exit(0)
 }
 
 func cp(dst, src string) error {
