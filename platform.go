@@ -7,6 +7,8 @@ type Platform struct {
 	TagsArg             string
 	Tags                []string
 	GOOS                string
+	CC                  string
+	ARCH                string
 	DeployFileExtension string
 	BuildDependency     string
 }

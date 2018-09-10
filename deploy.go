@@ -109,18 +109,20 @@ func initDeploy(n string) {
 			// if cgo {
 			// 	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 			// }
-			// if arch386 {
-			// 	cmd.Env = append(cmd.Env, "GOARCH=386")
-			// } else {
-			// 	cmd.Env = append(cmd.Env, "GOARCH=amd64")
-			// }
-			// if len(cc) > 0 {
-			// 	cmd.Env = append(cmd.Env, cc)
-			// }
-			if platform.GOOS != "" {
-				cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
-				cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
+			if len(platform.ARCH) > 0 {
+				cmd.Env = append(cmd.Env, fmt.Sprintf("GOARCH=%v", platform.ARCH))
+				// } else {
+				// 	cmd.Env = append(cmd.Env, "GOARCH=386")
+				// 	cmd.Env = append(cmd.Env, "GOARCH=amd64")
 			}
+
+			if len(platform.CC) > 0 {
+				cmd.Env = append(cmd.Env, platform.CC)
+			}
+			// if platform.GOOS != "" {
+			// 	cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
+			// 	cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
+			// }
 			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", "linux"))
 			cmdErr, _ := cmd.StderrPipe()
 
@@ -175,9 +177,9 @@ func initDeploy(n string) {
 	}
 
 	if errs {
-		fmt.Printf("> Engine: Deployment completely with errors.\n")
+		fmt.Printf("> Engine: Deployment completeled with errors.\n")
 	} else {
-		fmt.Printf("> Engine: Deployment completely successfully.\n")
+		fmt.Printf("> Engine: Deployment completeled successfully.\n")
 	}
 	os.Exit(0)
 }
