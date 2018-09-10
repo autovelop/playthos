@@ -111,18 +111,18 @@ func initDeploy(n string) {
 			// }
 			if len(platform.ARCH) > 0 {
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GOARCH=%v", platform.ARCH))
-				// } else {
-				// 	cmd.Env = append(cmd.Env, "GOARCH=386")
-				// 	cmd.Env = append(cmd.Env, "GOARCH=amd64")
+			} else {
+				cmd.Env = append(cmd.Env, "GOARCH=amd64")
 			}
 
 			if len(platform.CC) > 0 {
 				cmd.Env = append(cmd.Env, platform.CC)
 			}
-			// if platform.GOOS != "" {
-			// 	cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
-			// 	cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
-			// }
+
+			if platform.GOOS != "" {
+				cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", platform.GOOS))
+				cmd.Env = append(cmd.Env, fmt.Sprintf("GOPATH=%v", build.Default.GOPATH))
+			}
 			// cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%v", "linux"))
 			cmdErr, _ := cmd.StderrPipe()
 
